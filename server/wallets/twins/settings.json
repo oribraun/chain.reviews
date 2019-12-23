@@ -1,0 +1,34 @@
+{
+    "coin": "twins",
+    "cli": "twins-cli",
+    "daemon": "twinsd",
+    "commands": {
+        "startwallet": "-daemon",
+        "stopwallet": "stop",
+        "getblock": "getblock",
+        "getblockhash": "getblockhash",
+        "getallmasternodes": "listmasternodes",
+        "getrawtransaction": "getrawtransaction",
+        "getblockcount": "getblockcount",
+        "getmaxmoney": "getmaxmoney",
+        "getmaxvote": "getmaxvote",
+        "getvote": "getvote",
+        "getphase": "getphase",
+        "getreward": "getreward",
+        "getnextrewardestimate": "getnextrewardestimate",
+        "getnextrewardwhenstr": "getnextrewardwhenstr",
+        "getconnectioncount": "getconnectioncount",
+        "getpeerinfo": "getpeerinfo",
+        "getmasternodecount": "getmasternodecount",
+        "getdifficulty": "getdifficulty",
+        "getnetworkhashps": "getnetworkhashps",
+        "getmininginfo": "getmininginfo"
+    },
+    "dbsettings": {
+        "user": "masternodetwinsuser",
+        "password": "b9wh42mB$jLfi(#nYVMc",
+        "database": "twinsdb",
+        "address" : "localhost",
+        "port" : 27017
+    }
+}
