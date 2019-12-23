@@ -2,6 +2,8 @@
     "coin": "fix",
     "cli": "fix-cli",
     "daemon": "fixd",
+    "example_txid": "17d377a8a6d988698164f5fc9ffa8d5d03d0d1187e3a0ed886c239b3eae4be2f",
+    "example_hash": "000000428366d3a156c38c5061d74317d201781f539460aeeeaae1091de6e4cc",
     "commands": {
         "startwallet": "-daemon",
         "stopwallet": "stop",

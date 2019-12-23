@@ -59,10 +59,13 @@ var generalCommand = function(command, args, execFileOpts, options) {
 }
 
 var startWallet = function(wallet) {
-    var wallet_daemon = settings[wallet]['daemon'];
-    var start_wallet_command = settings[wallet]['commands']['startwallet'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_daemon = settings[wallet]['daemon'];
+        var start_wallet_command = settings[wallet]['commands']['startwallet'];
         var proc = spawn(wallet_daemon, [start_wallet_command], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
                 // console.error('Error:', err.stack);
@@ -113,10 +116,13 @@ var startWallet = function(wallet) {
 }
 
 var stopWallet = function(wallet) {
-    var wallet_cli = settings[wallet]['cli'];
-    var stop_wallet_command = settings[wallet]['commands']['stopwallet'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var stop_wallet_command = settings[wallet]['commands']['stopwallet'];
         var proc = spawn(wallet_cli, [stop_wallet_command], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
                 // console.error('Error:', err.stack);
@@ -169,10 +175,13 @@ var stopWallet = function(wallet) {
 var resyncWallet = function() {}
 
 var getBlockCount = function(wallet) {
-    var wallet_cli = settings[wallet]['cli'];
-    var get_block_count_command = settings[wallet]['commands']['getblockcount'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var get_block_count_command = settings[wallet]['commands']['getblockcount'];
         var proc = spawn(wallet_cli, [get_block_count_command], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
                 // console.error('Error:', err.stack);
@@ -223,10 +232,13 @@ var getBlockCount = function(wallet) {
 }
 
 var getBlock = function(wallet, hash) {
-    var wallet_cli = settings[wallet]['cli'];
-    var get_block_command = settings[wallet]['commands']['getblock'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var get_block_command = settings[wallet]['commands']['getblock'];
         var proc = spawn(wallet_cli, [get_block_command, hash.toString()], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
                 // console.error('Error:', err.stack);
@@ -281,10 +293,16 @@ var getBlock = function(wallet, hash) {
 }
 
 var getBlockHash = function(wallet, index) {
-    var wallet_cli = settings[wallet]['cli'];
-    var get_block_hash_command = settings[wallet]['commands']['getblockhash'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        if(isNaN(index)) {
+            reject('index is not a number');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var get_block_hash_command = settings[wallet]['commands']['getblockhash'];
         var proc = spawn(wallet_cli, [get_block_hash_command, index.toString()], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
                 // console.error('Error:', err.stack);
@@ -339,6 +357,9 @@ var getBlockHash = function(wallet, index) {
 var getAllBlocks = function(wallet, callback) {
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
         getBlockCount(wallet).then(function (blockCount) {
             var split_proccess = 4;
             var blockCount = blockCount;
@@ -390,6 +411,9 @@ var getAllBlocks = function(wallet, callback) {
 
 var reindex = function(wallet, callback) {
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
         getBlockCount(wallet).then(function (blockCount) {
             var blockCount = blockCount;
             // console.log('getBlockCount', blockCount);
@@ -436,6 +460,9 @@ var reindex = function(wallet, callback) {
 
 var getNewBlocks = function(wallet, callback) {
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
         getBlockCount(wallet).then(function (blockCount) {
             var blockCount = blockCount;
             // console.log('getBlockCount', blockCount);
@@ -481,10 +508,13 @@ var getNewBlocks = function(wallet, callback) {
 }
 
 var getAllMasternodes = function(wallet) {
-    var wallet_cli = settings[wallet]['cli'];
-    var get_allmasternodes_command = settings[wallet]['commands']['getallmasternodes'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var get_allmasternodes_command = settings[wallet]['commands']['getallmasternodes'];
         var proc = spawn(wallet_cli, [get_allmasternodes_command], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
                 // console.error('Error:', err.stack);
@@ -539,10 +569,13 @@ var getAllMasternodes = function(wallet) {
 }
 
 var getMasternodeCount = function(wallet) {
-    var wallet_cli = settings[wallet]['cli'];
-    var get_allmasternodes_command = settings[wallet]['commands']['getmasternodecount'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var get_allmasternodes_command = settings[wallet]['commands']['getmasternodecount'];
         var proc = spawn(wallet_cli, [get_allmasternodes_command], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
                 // console.error('Error:', err.stack);
@@ -597,10 +630,13 @@ var getMasternodeCount = function(wallet) {
 }
 
 var getRawTransaction = function(wallet, txid) {
-    var wallet_cli = settings[wallet]['cli'];
-    var get_rawtransaction_command = settings[wallet]['commands']['getrawtransaction'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var get_rawtransaction_command = settings[wallet]['commands']['getrawtransaction'];
         var verbose = 1;
         var proc = spawn(wallet_cli, [get_rawtransaction_command, txid.toString(), verbose.toString()], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
@@ -656,10 +692,13 @@ var getRawTransaction = function(wallet, txid) {
 }
 
 var getRawTransactionFull = function(wallet, txid) {
-    var wallet_cli = settings[wallet]['cli'];
-    var get_rawtransaction_command = settings[wallet]['commands']['getrawtransaction'];
     var results = "";
     var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var get_rawtransaction_command = settings[wallet]['commands']['getrawtransaction'];
         var verbose = 1;
         var proc = spawn(wallet_cli, [get_rawtransaction_command, txid.toString(), verbose.toString()], { execFileOpts, options }, function done(err, stdout, stderr) {
             if (err) {
