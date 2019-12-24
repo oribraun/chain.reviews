@@ -952,7 +952,8 @@ if (wallet) {
                                 RichlistController.updateOne(richlist, function(err) {
                                     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
                                         console.log('latestTx', latestTx);
-                                        StatsController.update(settings[wallet].coin, {last: latestTx.blockindex}, function(err) {
+                                        console.log('settings[wallet].coin', settings[wallet].coin);
+                                        StatsController.updateOne({coin: settings[wallet].coin, last: latestTx[0].blockindex}, function(err) {
                                             if(err) {
                                                 console.log(err)
                                             }

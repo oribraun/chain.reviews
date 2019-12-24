@@ -31,7 +31,7 @@ function updateOne(obj, cb) { // update or create
             })
         } else {
             var newRichlist = new Richlist({
-                coin: coin,
+                coin: obj.coin,
                 received: [],
                 balance: [],
             });
@@ -39,7 +39,7 @@ function updateOne(obj, cb) { // update or create
                 if (err) {
                     return cb(err);
                 } else {
-                    console.log("initial richlist entry created for %s", coin);
+                    console.log("initial richlist entry created for %s", obj.coin);
                     //console.log(newRichlist);
                     return cb();
                 }

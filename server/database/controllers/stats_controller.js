@@ -36,7 +36,12 @@ function updateOne(obj, cb) { // update or create
         } else { // create new
             // console.log('new')
             var newStats = new Stats({
-                coin: coin,
+                coin: obj.coin,
+                count: obj.count,
+                last: obj.last,
+                supply: obj.supply,
+                connections: obj.connections,
+                last_price: obj.last_price,
             });
 
             newStats.save(function(err) {
@@ -44,7 +49,7 @@ function updateOne(obj, cb) { // update or create
                     console.log(err);
                     return cb();
                 } else {
-                    console.log("initial stats entry created for %s", coin);
+                    console.log("initial stats entry created for %s", obj.coin);
                     //console.log(newStats);
                     return cb();
                 }

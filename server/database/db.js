@@ -10,6 +10,8 @@ var adminSettings = {
     "port" : 27017
     // db.createUser({user:"admin", pwd:"KtG#v$pJf4DCEbk5GGZV", roles:[{role:"root", db:"admin"}]})
 }
+
+var isConnected = false;
 var db = {
     connect: function(dbSettings) {
         var dbString = 'mongodb://' + dbSettings.user;
@@ -17,7 +19,7 @@ var db = {
         dbString = dbString + '@' + dbSettings.address;
         dbString = dbString + ':' + dbSettings.port;
         dbString = dbString + '/' + dbSettings.database;
-        console.log(dbString)
+        // console.log(dbString)
         mongoose.connect(dbString,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, function(err, database) {
             if (err) {
                 console.log(err)
@@ -26,6 +28,7 @@ var db = {
                 process.exit(1);
 
             }
+            isConnected = true;
             console.log('Successfully connected to MongoDB');
             // return cb();
         });
@@ -38,6 +41,7 @@ var db = {
         });
     },
     disconnect: function() {
+        isConnected = false;
         mongoose.connection.close();
     },
     createDb: function(dbSettings) {
@@ -83,7 +87,7 @@ var db = {
         dbString = dbString + '@' + dbSettings.address;
         dbString = dbString + ':' + dbSettings.port;
         dbString = dbString + '/' + dbSettings.database;
-        mongoose.mongo.MongoClient.connect(dbString, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, function(err, db) {
+        mongoose.connect(dbString, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, function(err, db) {
             if (err) {
                 console.log(err)
                 console.log('Unable to connect to database: %s', dbString);
@@ -92,26 +96,33 @@ var db = {
 
             }
             console.log('Successfully connected to MongoDB');
-            console.log(db)
-            db.createUser({
-                user: dbSettings.user,
-                pwd: dbSettings.password,
-                roles: [
-                    {role: "dbOwner", db: dbSettings.database}
-                ]
-            })
-        });
-        db.once('connected', function (err) {
-
+            // var admin_db = db.admin();
+            // admin_db.authenticate('adminusername', 'password')
+            // console.log(db)
+            db.admin().addUser( dbSettings.user, dbSettings.password, { roles: [ {role: "dbOwner", db: dbSettings.database} ] } );
+            // db.createUser({
+            //     user: dbSettings.user,
+            //     pwd: dbSettings.password,
+            //     roles: [
+            //         {role: "dbOwner", db: dbSettings.database}
+            //     ]
+            // })
+            // db.createUser(
+            //     {
+            //         user: "masternodetwinsuser",
+            //         pwd: "b9wh42mB$jLfi(#nYVMc",
+            //         roles: [ { role: "dbOwner", db: "twinsdb" } ]
+            //     }
+            // )
         });
     },
     createAdmin: function(){
-        // db.createUser(
-        //     {
-        //         user: "admin",
-        //         pwd: "KtG#v$pJf4DCEbk5GGZV",
-        //         roles:[{role:"root", db:"admin"}],
-        //     })
+        db.createUser(
+            {
+                user: "admin",
+                pwd: "KtG#v$pJf4DCEbk5GGZV",
+                roles:[{role:"root", db:"admin"}],
+            })
 
     },
     dropUser: function(dbSttings) {
@@ -128,6 +139,9 @@ var db = {
     listOfMongoPid: function() {
         // ps ax | grep mongod
         // sudo lsof -iTCP -sTCP:LISTEN -n -P
+    },
+    isConnected: function() {
+        return isConnected;
     }
 }
 

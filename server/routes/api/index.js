@@ -23,19 +23,28 @@ for (var wallet in settings) {
                 .replace(':txid', txid));
         }
     }
-    for(var i in db.stack) {
-        if(db.stack[i] && db.stack[i].route) {
-            routes[wallet].push('/api/db' + db.stack[i].route.path
-                .replace(':wallet', wallet)
-                .replace(':hash', hash)
-                .replace(':number', 0)
-                .replace(':txid', txid));
-        }
-    }
 }
 var string = "";
+
+var wallet = process.argv[2];
+
+string += '<h1>' + 'connected to ' + wallet + ' database' + '</h1>';
+for(var i in db.stack) {
+    if(db.stack[i] && db.stack[i].route) {
+        db_routes.push('/api/db' + db.stack[i].route.path
+            .replace(':wallet', wallet)
+            .replace(':hash', hash)
+            .replace(':number', 0)
+            .replace(':coin', wallet)
+            .replace(':txid', txid));
+        string += "<a href='" + db_routes[i] + "' target='_blank'>" + db_routes[i] + "</a>";
+        string += '<br>';
+    }
+}
+
+string += '<h1>' + 'available wallets' + '</h1>';
 for(var w in routes) {
-    string += '<h1>' + w + '</h1>' + '<br>';
+    string += '<h2>' + w + '</h2>' + '<br>';
     for(var i in routes[w]) {
         string += "<a href='" + routes[w][i] + "' target='_blank'>" + routes[w][i] + "</a>";
         string += '<br>';
