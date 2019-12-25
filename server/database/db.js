@@ -12,6 +12,8 @@ var adminSettings = {
 }
 
 var isConnected = false;
+var connections = {};
+var currentConnection;
 var db = {
     connect: function(dbSettings) {
         var dbString = 'mongodb://' + dbSettings.user;
@@ -43,6 +45,73 @@ var db = {
     disconnect: function() {
         isConnected = false;
         mongoose.connection.close();
+    },
+    multipleConnect: function(obj) {
+        for(var i in obj) {
+            var dbString = 'mongodb://' + obj[i].dbSettings.user;
+            dbString = dbString + ':' + obj[i].dbSettings.password;
+            dbString = dbString + '@' + obj[i].dbSettings.address;
+            dbString = dbString + ':' + obj[i].dbSettings.port;
+            dbString = dbString + '/' + obj[i].dbSettings.database;
+            // console.log(dbString)
+            var conn  = mongoose.createConnection(dbString, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true},function(err) {
+                // console.log('err', err)
+            });
+            // connections[i] = mongoose.connection;
+            // '0': 'disconnected',
+            //     '1': 'connected',
+            //     '2': 'connecting',
+            //     '3': 'disconnecting',
+            //     '99': 'uninitialized',
+
+            // const db = mongoose;
+            connections[i] = conn;
+            // function test(i) {
+            // // console.log(conn.collection("masternode1"));
+            //     var Masternode1 = connections[i].model('Masternode1', new mongoose.Schema({rank: {type: String, default: 0}}));
+            //     var MN = new Masternode1({
+            //         rank: i
+            //     });
+            //     Masternode1.deleteMany({},function(err, numberRemoved){
+            //         // console.log(MN)
+            //         MN.save(function(err) {
+            //             if (err) {
+            //                 console.log(err)
+            //             } else {
+            //                 //console.log('txid: ');
+            //                 // console.log('created')
+            //                 Masternode1.find({}, function(err, tx) {
+            //                     if(tx) {
+            //                         console.log(tx)
+            //                     } else {
+            //                         // console.log('empty')
+            //                     }
+            //                 });
+            //             }
+            //         });
+            //     })
+            // }
+            // test(i);
+            connections[i].on("error", () => {
+                console.log('db._readyState error', conn._readyState)
+                console.log("> error occurred from the database");
+            });
+            connections[i].once("open", () => {
+                console.log('db._readyState', conn._readyState)
+                console.log("> successfully opened the database");
+            });
+        }
+    },
+    setCurrentConnection: function(key) {
+        currentConnection = connections[key];
+    },
+    getCurrentConnection: function() {
+        return currentConnection;
+    },
+    multipleDisconnect: function() {
+        for(var i in connections) {
+            connections[i].close();
+        }
     },
     createDb: function(dbSettings) {
         var dbString = 'mongodb://';

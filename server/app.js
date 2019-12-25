@@ -10,7 +10,7 @@ var app = express();
 const routes = require('./routes');
 var http = require('http').createServer(app);
 // // var io = require('socket.io')(http);
-var updateDbCron = require('./cronJobs/update_db');
+// var updateDbCron = require('./cronJobs/update_db');
 // var isWin = process.platform === "win32";
 var port = process.env.PORT || 3000;
 
@@ -32,7 +32,7 @@ http.listen(port, function() {
 var wallet = process.argv[2];
 
 if(settings[wallet]) {
-    db.connect(settings[wallet].dbsettings);
+    db.connect(settings[wallet].dbSettings);
 } else {
     console.log('no database found');
 }

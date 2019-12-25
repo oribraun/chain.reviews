@@ -6,6 +6,8 @@ const TEN_MEGABYTES = 1000 * 1000 * 10;
 const options = {};
 const execFileOpts = { encoding: 'utf8' ,maxBuffer: TEN_MEGABYTES };
 
+var forceStop = false;
+
 var generalCommand = function(command, args, execFileOpts, options) {
     var results = "";
     var promise = new Promise(function(resolve, reject) {
@@ -751,7 +753,7 @@ var getRawTransactionFull = function(wallet, txid) {
                         }
                         helpers.calculate_total(obj.vout).then(function (total) {
                             // console.log(tx, nvin, vout, total, addreses_to_update)
-                            resolve({tx: tx, vin: obj.nvin, vout: obj.vout, total: total, addreses_to_update: addreses_to_update});
+                            resolve({tx: tx, nvin: obj.nvin, vout: obj.vout, total: total, addreses_to_update: addreses_to_update});
                         })
                     }).catch(function(err) {
                         console.log('error getting prepare_vout', err)
@@ -797,24 +799,16 @@ var getAllBlocksCluster = function(wallet, from, to, callback) {
             getBlockHash(wallet, index).then(function (hash) {
                 callback(index, hash);
                 if (index >= to) {
-                    endTime = new Date();
-                    // console.log('startTime', startTime)
-                    // console.log('endTime', endTime)
-                    var diff = endTime - startTime;
-                    var msec = diff;
-                    var hh = Math.floor(msec / 1000 / 60 / 60);
-                    msec -= hh * 1000 * 60 * 60;
-                    var mm = Math.floor(msec / 1000 / 60);
-                    msec -= mm * 1000 * 60;
-                    var ss = Math.floor(msec / 1000);
-                    msec -= ss * 1000;
-                    // console.log('endTime - startTime', hh + ":" + mm + ":" + ss + "." + msec);
-                    // console.log('blocks.length', blocks.length);
-                    resolve(hh + ":" + mm + ":" + ss + "." + msec);
+                    resolve(helpers.getFinishTime(startTime));
                 } else {
                     // console.log('getBlockHash - ' + index, hash);
                     // blocks.push(hash);
-                    getBlocksHash(++index)
+                    if(!forceStop) {
+                        getBlocksHash(++index)
+                    } else {
+                        resolve(helpers.getFinishTime(startTime));
+                        resetForceStop();
+                    }
                 }
             }).catch(function (err) {
                 // console.log('getBlockHash err', err)
@@ -839,25 +833,17 @@ var getAllBlocksClusterLiner = function(wallet, from, to, jump, callback) {
             getBlockHash(wallet, index).then(function (hash) {
                 callback(index, hash);
                 if (index + jump > to) {
-                    endTime = new Date();
-                    // console.log('startTime', startTime)
-                    // console.log('endTime', endTime)
-                    var diff = endTime - startTime;
-                    var msec = diff;
-                    var hh = Math.floor(msec / 1000 / 60 / 60);
-                    msec -= hh * 1000 * 60 * 60;
-                    var mm = Math.floor(msec / 1000 / 60);
-                    msec -= mm * 1000 * 60;
-                    var ss = Math.floor(msec / 1000);
-                    msec -= ss * 1000;
-                    // console.log('endTime - startTime', hh + ":" + mm + ":" + ss + "." + msec);
-                    // console.log('blocks.length', blocks.length);
-                    resolve(hh + ":" + mm + ":" + ss + "." + msec);
+                    resolve(helpers.getFinishTime(startTime));
                 } else {
                     // console.log('getBlockHash - ' + index, hash);
                     // blocks.push(hash);
                     index += jump;
-                    getBlocksHash(index)
+                    if(!forceStop) {
+                        getBlocksHash(index)
+                    } else {
+                        resolve(helpers.getFinishTime(startTime));
+                        resetForceStop();
+                    }
                 }
             }).catch(function (err) {
                 // console.log('getBlockHash err', err)
@@ -1009,6 +995,14 @@ var getAllBlocksClusterLiner = function(wallet, from, to, jump, callback) {
 //     return promise;
 // };
 
+var setForceStop = function(_forceStop) {
+    forceStop = _forceStop;
+}
+
+var resetForceStop = function() {
+    forceStop = false;
+}
+
 module.exports.startWallet = startWallet; // starting wallet
 module.exports.stopWallet = stopWallet; // stopping wallet
 module.exports.getBlockCount = getBlockCount; // returning current block count
@@ -1026,6 +1020,8 @@ module.exports.getRawTransactionFull = getRawTransactionFull; // getting transac
 module.exports.getAllBlocksCluster = getAllBlocksCluster;
 module.exports.getAllBlocksClusterLiner = getAllBlocksClusterLiner;
 
+module.exports.setForceStop = setForceStop;
+
 
 // const TEN_MEGABYTES = 1000 * 1000 * 10;
 // const options = {};
@@ -1034,6 +1030,14 @@ module.exports.getAllBlocksClusterLiner = getAllBlocksClusterLiner;
 // startProc('fix-cli', ['getinfo'], execFileOpts, options);
 // startProc('fix-cli', ['getblockcount'], execFileOpts, options);
 // startProc('fix-cli', ['getblockhash', '0'], execFileOpts, options);
+
+// find all sync process
+// ps aux | grep -i sync.js
+// pkill -f sync.js
+
+//  (echo y | nohup node /var/www/html/server/sync.js twins reindexclusterlinear)
+
+// ps -ef | grep 'sync.js' | grep -v grep | awk '{print $2}' | xargs -r kill -9
 
 
 

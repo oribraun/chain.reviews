@@ -1,7 +1,7 @@
 var fs = require("fs");
 var jsonminify = require("jsonminify");
 
-exports.dbsettings = {
+exports.dbSettings = {
   "user": "iquidus",
   "password": "3xp!0reR",
   "database": "blockchaindb",

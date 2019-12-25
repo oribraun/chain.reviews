@@ -36,6 +36,7 @@ for(var i in db.stack) {
             .replace(':hash', hash)
             .replace(':number', 0)
             .replace(':coin', wallet)
+            .replace(':limit', 10)
             .replace(':txid', txid));
         string += "<a href='" + db_routes[i] + "' target='_blank'>" + db_routes[i] + "</a>";
         string += '<br>';

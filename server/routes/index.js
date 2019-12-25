@@ -11,7 +11,7 @@ app.get('/', function(req, res) {
 
 // app.use("/:wallet/api", function(req, res, next) {
 //     var wallet = req.params['wallet'];
-//     db.connect(settings[wallet].dbsettings);
+//     db.connect(settings[wallet].dbSettings);
 //     process.on('SIGINT', function() {
 //         console.log("Caught interrupt signal");
 //         db.disconnect();
