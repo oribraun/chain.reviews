@@ -2,25 +2,46 @@ const wallet_commands = require('./wallet_commands');
 const helpers = require('./helpers');
 const cluster = require('cluster');
 const fs = require('fs-extra');
+const exec = require('child_process').exec;
 const numCPUs = require('os').cpus().length;
 
 const db = require('./database/db');
 const settings = require('./wallets/all_settings');
 
-var Tx = require('./database/models/tx');
-var TxController = require('./database/controllers/tx_controller');
-var Stats = require('./database/models/stats');
-var StatsController = require('./database/controllers/stats_controller');
-var Richlist = require('./database/models/richlist');
-var RichlistController = require('./database/controllers/richlist_controller');
-var Address = require('./database/models/address');
-var AddressController = require('./database/controllers/address_controller');
-var Masternode = require('./database/models/masternode');
-var MasternodeController = require('./database/controllers/masternode_controller');
-
 var wallet = process.argv[2];
 var type = process.argv[3];
 var hash_number = process.argv[4];
+
+var commands_require_db = [
+    'reindex',
+    'update',
+    'reindexcluster',
+    'reindexclusterlinear',
+    'updatecluster',
+    'updateclusterlinear',
+    'updatemasternodes',
+    'count',
+]
+if(settings[wallet]) {
+    if(commands_require_db.indexOf(type) > -1) {
+        db.connect2(wallet, settings[wallet].dbSettings);
+        db.setCurrentConnection(wallet);
+    }
+} else {
+    console.log('no wallet found');
+    process.exit();
+}
+
+var Tx = require('./database/models/tx')[db.getCurrentConnection()];
+var TxController = require('./database/controllers/tx_controller');
+var Stats = require('./database/models/stats')[db.getCurrentConnection()];
+var StatsController = require('./database/controllers/stats_controller');
+var Richlist = require('./database/models/richlist')[db.getCurrentConnection()];
+var RichlistController = require('./database/controllers/richlist_controller');
+var Address = require('./database/models/address')[db.getCurrentConnection()];
+var AddressController = require('./database/controllers/address_controller');
+var Masternode = require('./database/models/masternode')[db.getCurrentConnection()];
+var MasternodeController = require('./database/controllers/masternode_controller');
 // console.log('wallet', wallet)
 // console.log('type', type)
 // console.log('hash_number', hash_number)
@@ -61,8 +82,8 @@ process.on('SIGINT', function() {
     // if(!cluster.worker) {
     //     deleteFile(); // TODO you canot delete file when other process already running
     // }
-    // db.disconnect();
-    // process.exit();
+    db.multipleDisconnect();
+    process.exit();
 });
 
 process.on('SIGTERM', function () {
@@ -125,13 +146,13 @@ if (wallet) {
                     cluster.fork();
                 }
 
-                db.connect(settings[wallet].dbSettings);
+                // db.connect(settings[wallet].dbSettings);
                 var exit_count = 0;
                 cluster.on('exit', (worker, code, signal) => {
                     exit_count++;
-                    if(exit_count === numCPUs) {
-                        db.disconnect();
-                    }
+                    // if(exit_count === numCPUs) {
+                    //     db.multipleDisconnect();
+                    // }
                     console.log(`worker ${worker.process.pid} died`);
                 });
             } else {
@@ -170,13 +191,13 @@ if (wallet) {
                     cluster.fork();
                 }
 
-                db.connect(settings[wallet].dbSettings);
+                // db.connect(settings[wallet].dbSettings);
                 var exit_count = 0;
                 cluster.on('exit', (worker, code, signal) => {
                     exit_count++;
-                    if(exit_count === numCPUs) {
-                        db.disconnect();
-                    }
+                    // if(exit_count === numCPUs) {
+                    //     db.multipleDisconnect();
+                    // }
                     console.log(`worker ${worker.process.pid} died`);
                 });
             } else {
@@ -232,7 +253,7 @@ if (wallet) {
                 cluster.on('exit', (worker, code, signal) => {
                     exit_count++;
                     // if(exit_count === numCPUs) {
-                    //     db.disconnect();
+                    //     db.multipleDisconnect();
                     // }
                     console.log(`worker ${worker.process.pid} died`);
                 });
@@ -327,13 +348,13 @@ if (wallet) {
                     cluster.fork();
                 }
 
-                db.connect(settings[wallet].dbSettings);
+                // db.connect(settings[wallet].dbSettings);
                 var exit_count = 0;
                 cluster.on('exit', (worker, code, signal) => {
                     exit_count++;
-                    if(exit_count === numCPUs) {
-                        db.disconnect();
-                    }
+                    // if(exit_count === numCPUs) {
+                    //     db.multipleDisconnect();
+                    // }
                     console.log(`worker ${worker.process.pid} died`);
                 });
             } else {
@@ -445,7 +466,7 @@ if (wallet) {
                 return;
             }
             createFile();
-            db.connect(settings[wallet].dbSettings);
+            // db.connect(settings[wallet].dbSettings);
             var startTime = new Date();
             deleteDb(startReIndex);
             function startReIndex() {
@@ -560,7 +581,7 @@ if (wallet) {
                         console.log('finish getting blocks', time);
                     }).catch(function (err) {
                         console.log('error getting blocks', err);
-                        db.disconnect();
+                        db.multipleDisconnect();
                         process.exit();
                     })
                 }).catch(function (err) {
@@ -583,7 +604,7 @@ if (wallet) {
                                         console.log('reindex complete - ', latestTx[0].blockindex)
                                         console.log('took - ', helpers.getFinishTime(startTime));
                                         deleteFile();
-                                        db.disconnect();
+                                        db.multipleDisconnect();
                                         process.exit();
                                     });
 
@@ -597,10 +618,11 @@ if (wallet) {
         case 'update': // 0:27:35.915
             if(fileExist()) {
                 console.log('reindex is in progress');
+                process.exit()
                 return;
             }
             createFile();
-            db.connect(settings[wallet].dbSettings);
+            // db.connect(settings[wallet].dbSettings);
             var startTime = new Date();
             function startUpdate() {
                 TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
@@ -715,7 +737,7 @@ if (wallet) {
                         }).catch(function (err) {
                             console.log('error getting blocks', err);
                             deleteFile();
-                            db.disconnect();
+                            db.multipleDisconnect();
                             process.exit();
                         })
                     }).catch(function (err) {
@@ -739,7 +761,7 @@ if (wallet) {
                                         console.log('update complete - ', latestTx[0].blockindex)
                                         console.log('took - ', helpers.getFinishTime(startTime));
                                         deleteFile();
-                                        db.disconnect();
+                                        db.multipleDisconnect();
                                         process.exit();
                                     });
 
@@ -762,15 +784,17 @@ if (wallet) {
                         killPidFromFile();
                         deleteFile();
                         createFile();
-                        db.connect(settings[wallet].dbSettings);
+                        // db.connect(settings[wallet].dbSettings);
                         deleteDb(startReIndexClusterAll);
+                    }, function(){
+                        db.multipleDisconnect();
                     })
                     return;
                 }
                 createFile();
 
                 // Fork workers.
-                db.connect(settings[wallet].dbSettings);
+                // db.connect(settings[wallet].dbSettings);
                 deleteDb(startReIndexClusterAll);
 
                 function startReIndexClusterAll() {
@@ -847,7 +871,7 @@ if (wallet) {
                                             console.log('reindex cluster complete - ', latestTx[0].blockindex);
                                             console.log('took - ', helpers.getFinishTime(startTime));
                                             deleteFile();
-                                            db.disconnect();
+                                            db.multipleDisconnect();
                                             process.exit();
                                         });
 
@@ -861,10 +885,10 @@ if (wallet) {
                 // Workers can share any TCP connection
                 // In this case it is an HTTP server
                 function startReIndexCluster() {
-                    db.connect(settings[wallet].dbSettings);
+                    // db.connect(settings[wallet].dbSettings);
                     wallet_commands.getBlockCount(wallet).then(function (blockCount) {
                         var current_cluster_id = cluster.worker.id;
-                        var allBlocksCount = 10;
+                        var allBlocksCount = blockCount;
                         var offset = Math.ceil(allBlocksCount / numCPUs);
                         var from = (cluster.worker.id - 1) * offset;
                         var to = cluster.worker.id * offset - 1;
@@ -962,7 +986,7 @@ if (wallet) {
                     })
                 }
                 function endReIndexCluster() {
-                    db.disconnect();
+                    db.multipleDisconnect();
                     process.exit();
                 }
                 startReIndexCluster();
@@ -979,15 +1003,17 @@ if (wallet) {
                         killPidFromFile();
                         deleteFile();
                         createFile();
-                        db.connect(settings[wallet].dbSettings);
+                        // db.connect(settings[wallet].dbSettings);
                         deleteDb(startReIndexClusterLinerAll);
+                    }, function(){
+                        db.multipleDisconnect();
                     })
                     return;
                 }
                 createFile();
 
                 // Fork workers.
-                db.connect(settings[wallet].dbSettings);
+                // db.connect(settings[wallet].dbSettings);
                 deleteDb(startReIndexClusterLinerAll);
 
                 function startReIndexClusterLinerAll() {
@@ -1065,7 +1091,7 @@ if (wallet) {
                                             console.log('reindex cluster complete - ', latestTx[0].blockindex)
                                             console.log('took - ', helpers.getFinishTime(startTime));
                                             deleteFile();
-                                            db.disconnect();
+                                            db.multipleDisconnect();
                                             process.exit();
                                         });
 
@@ -1079,10 +1105,10 @@ if (wallet) {
                 // Workers can share any TCP connection
                 // In this case it is an HTTP server
                 function startReIndexClusterLiner() {
-                    db.connect(settings[wallet].dbSettings);
+                    // db.connect(settings[wallet].dbSettings);
                     wallet_commands.getBlockCount(wallet).then(function (blockCount) {
                         var current_cluster_id = cluster.worker.id;
-                        var allBlocksCount = 1000;
+                        var allBlocksCount = blockCount;
                         var from = cluster.worker.id - 1;
                         var to = allBlocksCount;
                         var txInsertCount = 0;
@@ -1167,7 +1193,7 @@ if (wallet) {
                     })
                 }
                 function endReIndexClusterLiner() {
-                    db.disconnect();
+                    db.multipleDisconnect();
                     process.exit();
                 }
                 startReIndexClusterLiner();
@@ -1178,6 +1204,7 @@ if (wallet) {
                 var startTime = new Date();
                 if(fileExist()) {
                     console.log('reindex is in progress');
+                    process.exit()
                     return;
                 }
                 createFile();
@@ -1265,7 +1292,7 @@ if (wallet) {
                                             console.log('reindex cluster complete - ', latestTx[0].blockindex);
                                             console.log('took - ', helpers.getFinishTime(startTime));
                                             deleteFile();
-                                            db.disconnect();
+                                            db.multipleDisconnect();
                                             process.exit();
                                         });
 
@@ -1275,7 +1302,7 @@ if (wallet) {
                         })
                     })
                 }
-                db.connect(settings[wallet].dbSettings);
+                // db.connect(settings[wallet].dbSettings);
                 startUpdateClusterAll();
             } else {
                 // Workers can share any TCP connection
@@ -1285,7 +1312,7 @@ if (wallet) {
                     blockindex = msg.blockindex;
                 });
                 function startUpdateCluster() {
-                    db.connect(settings[wallet].dbSettings);
+                    // db.connect(settings[wallet].dbSettings);
                     wallet_commands.getBlockCount(wallet).then(function (blockCount) {
                         var current_cluster_id = cluster.worker.id;
                         var allBlocksCount = blockCount;
@@ -1390,7 +1417,7 @@ if (wallet) {
                     })
                 }
                 function endUpdateCluster() {
-                    db.disconnect();
+                    db.multipleDisconnect();
                     process.exit();
                 }
                 startUpdateCluster();
@@ -1401,6 +1428,7 @@ if (wallet) {
                 var startTime = new Date();
                 if(fileExist()) {
                     console.log('reindex is in progress');
+                    process.exit()
                     // forceProcess(function(){
                     //     killPidFromFile();
                     //     deleteFile();
@@ -1494,7 +1522,7 @@ if (wallet) {
                                             console.log('reindex cluster complete - ', latestTx[0].blockindex);
                                             console.log('took - ', helpers.getFinishTime(startTime));
                                             deleteFile();
-                                            db.disconnect();
+                                            db.multipleDisconnect();
                                             process.exit();
                                         });
 
@@ -1504,7 +1532,7 @@ if (wallet) {
                         })
                     })
                 }
-                db.connect(settings[wallet].dbSettings);
+                // db.connect(settings[wallet].dbSettings);
                 startUpdateClusterLinerAll();
             } else {
                 // Workers can share any TCP connection
@@ -1514,7 +1542,7 @@ if (wallet) {
                     blockindex = msg.blockindex;
                 });
                 function startUpdateClusterLiner() {
-                    db.connect(settings[wallet].dbSettings);
+                    // db.connect(settings[wallet].dbSettings);
                     wallet_commands.getBlockCount(wallet).then(function (blockCount) {
                         var current_cluster_id = cluster.worker.id;
                         var allBlocksCount = blockCount;
@@ -1605,7 +1633,7 @@ if (wallet) {
                     })
                 }
                 function endUpdateClusterLiner() {
-                    db.disconnect();
+                    db.multipleDisconnect();
                     process.exit();
                 }
                 startUpdateClusterLiner();
@@ -1613,7 +1641,7 @@ if (wallet) {
             break;
         case 'updatemasternodes':
             wallet_commands.getAllMasternodes(wallet).then(function(masternodes) {
-                db.connect(settings[wallet].dbSettings);
+                // db.connect(settings[wallet].dbSettings);
                 var masternodes = JSON.parse(masternodes);
                 console.log('got all masternodes', masternodes.length);
                 MasternodeController.deleteAll(function () {
@@ -1626,7 +1654,7 @@ if (wallet) {
                                 if (i < masternodes.length - 1) {
                                     updateMasternode(++i);
                                 } else {
-                                    db.disconnect();
+                                    db.multipleDisconnect();
                                     process.exit();
                                 }
                             })
@@ -1643,11 +1671,24 @@ if (wallet) {
             })
             break;
         case 'count': {
-            db.connect(settings[wallet].dbSettings);
-            TxController.getAll(0, 'desc', 0, function(res){
+            TxController.getAll('blockindex', 'desc', 1000, function(res){
                 console.log('res.length', res.length);
-                db.disconnect();
+                db.multipleDisconnect();
+                process.exit();
             })
+            break;
+        }
+        case 'killall': {
+            findProccessCount().then(function(count){
+                if(count) {
+                    killAll();
+                    deleteFile();
+                    console.log('killed ' + count + ' process');
+                }
+            }).catch(function(err) {
+
+            });
+            break;
         }
         default:
             console.log('command not allowed or not exist')
@@ -1699,6 +1740,22 @@ function forceProcess(onYes, onNo) {
             console.log('please write Y or N')
         }
     });
+}
+
+function killAll() {
+    exec('ps -ef | grep \'sync.js\' | grep -v grep | awk \'{print $2}\' | xargs -r kill -9');
+}
+function findProccessCount() {
+    var promise = new Promise(function(resolve, reject) {
+        exec('ps aux | grep -i "sync.js ' + wallet + '" |  wc -l',(err, stdout, stderr) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(stdout - 3)
+        });
+    });
+    return promise;
 }
 // example commands
 

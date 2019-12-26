@@ -42,6 +42,34 @@ var db = {
             console.log("> successfully opened the database");
         });
     },
+    connect2: function(wallet, dbSettings) {
+        var dbString = 'mongodb://' + dbSettings.user;
+        dbString = dbString + ':' + dbSettings.password;
+        dbString = dbString + '@' + dbSettings.address;
+        dbString = dbString + ':' + dbSettings.port;
+        dbString = dbString + '/' + dbSettings.database;
+        // console.log(dbString)
+        mongoose.connect(dbString,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, function(err, database) {
+            if (err) {
+                console.log(err)
+                console.log('Unable to connect to database: %s', dbString);
+                console.log('Aborting');
+                process.exit(1);
+
+            }
+            isConnected = true;
+            console.log('Successfully connected to MongoDB');
+            // return cb();
+        });
+        const conn = mongoose.connection;
+        connections[wallet] = conn;
+        conn.on("error", () => {
+            console.log("> error occurred from the database");
+        });
+        conn.once("open", () => {
+            console.log("> successfully opened the database");
+        });
+    },
     disconnect: function() {
         isConnected = false;
         mongoose.connection.close();

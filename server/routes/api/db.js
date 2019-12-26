@@ -12,9 +12,9 @@ var MasternodeController = require('./../../database/controllers/masternode_cont
 
 var wallet = process.argv[2];
 
-router.get('/', (req, res) => {
-    res.json({item: wallet + ' db api'});
-});
+// router.get('/', (req, res) => {
+//     res.json({item: res.locals.wallet + ' db api'});
+// });
 
 router.get('/getAllTx/:limit', (req, res) => {
     // if(!db.isConnected()) {
@@ -30,19 +30,19 @@ router.get('/getAllTx/:limit', (req, res) => {
     })
 });
 
-router.get('/getAllStats/:limit', (req, res) => {
-    // if(!db.isConnected()) {
-    //     res.send('no database connected');
-    //     return;
-    // }
-    if(isNaN(parseInt(req.params['limit']))) {
-        res.send('limit value have to be number');
-        return;
-    }
-    StatsController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
-        res.send(results);
-    })
-})
+// router.get('/getAllStats/:limit', (req, res) => {
+//     // if(!db.isConnected()) {
+//     //     res.send('no database connected');
+//     //     return;
+//     // }
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     StatsController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
+//         res.send(results);
+//     })
+// })
 
 router.get('/getStats/:coin', (req, res) => {
     // if(!db.isConnected()) {
