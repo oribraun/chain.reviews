@@ -1,9 +1,10 @@
 var Tx = require('../models/tx');
+var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Tx.find({}).sort(sort).limit(limit).exec( function(err, tx) {
+    Tx[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -13,7 +14,7 @@ function getAll(sortBy, order, limit, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Tx.findOne({txid: obj.txid}, function(err, tx) {
+    Tx[db.getCurrentConnection()].findOne({txid: obj.txid}, function(err, tx) {
         if(err) {
             return cb(err);
         }
@@ -50,7 +51,7 @@ function updateOne(obj, cb) { // update or create
             // });
         } else { // create new
             // console.log('new')
-            var newTx = new Tx({
+            var newTx = new Tx[db.getCurrentConnection()]({
                 txid: obj.txid,
                 vin: obj.vin,
                 vout: obj.vout,
@@ -72,7 +73,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(txid, cb) {
-    Tx.findOne({txid: txid}, function(err, tx) {
+    Tx[db.getCurrentConnection()].findOne({txid: txid}, function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -82,7 +83,7 @@ function getOne(txid, cb) {
 }
 
 function deleteOne(txid, cb) {
-    Tx.deleteOne({txid: txid}, function(err, tx) {
+    Tx[db.getCurrentConnection()].deleteOne({txid: txid}, function(err, tx) {
         if(tx) {
             return cb();
         } else {
@@ -92,13 +93,13 @@ function deleteOne(txid, cb) {
 }
 
 function deleteAll(cb) {
-    Tx.deleteMany({},function(err, numberRemoved){
+    Tx[db.getCurrentConnection()].deleteMany({},function(err, numberRemoved){
         return cb(numberRemoved)
     })
 }
 
 function getTxBlockindex(blockindex, cb) {
-    Tx.findOne({blockindex: blockindex}, function(err, tx) {
+    Tx[db.getCurrentConnection()].findOne({blockindex: blockindex}, function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -108,7 +109,7 @@ function getTxBlockindex(blockindex, cb) {
 }
 
 function update(coin, options, cb) {
-    Tx.updateOne({coin: coin}, options, function(err) {
+    Tx[db.getCurrentConnection()].updateOne({coin: coin}, options, function(err) {
         if(err) {
             return cb(err);
         }

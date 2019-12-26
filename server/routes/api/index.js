@@ -5,7 +5,15 @@ const settings = require('./../../wallets/all_settings');
 const walletRoute = require('./wallet');
 router.use('/wallet', walletRoute);
 const db = require('./db');
-router.use('/db', db);
+const database = require('./../../database/db');
+router.use('/db/:wallet',function(req, res, next){
+    if(!settings[req.params['wallet']]) {
+        res.send('wallet not found');
+        return;
+    }
+    database.setCurrentConnection(req.params['wallet']);
+    next();
+}, db);
 
 var wallet_routes = [];
 var db_routes = [];
@@ -23,27 +31,35 @@ for (var wallet in settings) {
                 .replace(':txid', txid));
         }
     }
+    for(var i in db.stack) {
+        if(db.stack[i] && db.stack[i].route) {
+            routes[wallet].push('/api/db/' + wallet + db.stack[i].route.path
+                .replace(':hash', hash)
+                .replace(':number', 0)
+                .replace(':coin', wallet)
+                .replace(':limit', 10)
+                .replace(':txid', txid));
+        }
+    }
 }
 var string = "";
 
-var wallet = process.argv[2];
-
-string += '<h1>' + 'connected to ' + wallet + ' database' + '</h1>';
-for(var i in db.stack) {
-    if(db.stack[i] && db.stack[i].route) {
-        db_routes.push('/api/db' + db.stack[i].route.path
-            .replace(':wallet', wallet)
-            .replace(':hash', hash)
-            .replace(':number', 0)
-            .replace(':coin', wallet)
-            .replace(':limit', 10)
-            .replace(':txid', txid));
-        string += "<a href='" + db_routes[i] + "' target='_blank'>" + db_routes[i] + "</a>";
-        string += '<br>';
-    }
-}
-
-string += '<h1>' + 'available wallets' + '</h1>';
+// string += '<h1>' + 'connected to ' + wallet + ' database' + '</h1>';
+// for(var i in db.stack) {
+//     if(db.stack[i] && db.stack[i].route) {
+//         db_routes.push('/api/db' + db.stack[i].route.path
+//             .replace(':wallet', wallet)
+//             .replace(':hash', hash)
+//             .replace(':number', 0)
+//             .replace(':coin', wallet)
+//             .replace(':limit', 10)
+//             .replace(':txid', txid));
+//         string += "<a href='" + db_routes[i] + "' target='_blank'>" + db_routes[i] + "</a>";
+//         string += '<br>';
+//     }
+// }
+//
+// string += '<h1>' + 'available wallets' + '</h1>';
 for(var w in routes) {
     string += '<h2>' + w + '</h2>' + '<br>';
     for(var i in routes[w]) {

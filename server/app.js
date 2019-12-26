@@ -7,7 +7,6 @@ const spawn = require('child_process').spawn;
 const wallet_commands = require('./wallet_commands');
 // const exec = require('child_process').exec;
 var app = express();
-const routes = require('./routes');
 var http = require('http').createServer(app);
 // // var io = require('socket.io')(http);
 // var updateDbCron = require('./cronJobs/update_db');
@@ -16,6 +15,16 @@ var port = process.env.PORT || 3000;
 
 const db = require('./database/db');
 const settings = require('./wallets/all_settings');
+
+db.multipleConnect(settings);
+db.setCurrentConnection('fix');
+const routes = require('./routes');
+
+process.on('SIGINT', function() {
+    // console.log("Caught interrupt signal");
+    db.multipleDisconnect();
+    process.exit();
+});
 
 app.set('trust proxy', 1);
 app.use(session({
@@ -29,19 +38,19 @@ http.listen(port, function() {
     console.log('Server Works !!! At port ' + port);
 });
 
-var wallet = process.argv[2];
-
-if(settings[wallet]) {
-    db.connect(settings[wallet].dbSettings);
-} else {
-    console.log('no database found');
-}
-
-process.on('SIGINT', function() {
-    // console.log("Caught interrupt signal");
-    db.disconnect();
-    process.exit();
-});
+// var wallet = process.argv[2];
+//
+// if(settings[wallet]) {
+//     db.connect(settings[wallet].dbSettings);
+// } else {
+//     console.log('no database found');
+// }
+//
+// process.on('SIGINT', function() {
+//     // console.log("Caught interrupt signal");
+//     db.disconnect();
+//     process.exit();
+// });
 var addToHeader = function (req, res, next) {
     // res.header('Content-Type', 'application/json');
     // console.log("add to header called ... " + req.url + " origin - " + req.headers.origin);

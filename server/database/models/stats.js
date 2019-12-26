@@ -1,6 +1,7 @@
 var mongoose = require('mongoose')
   , Schema = mongoose.Schema;
- 
+var db = require('./../db');
+
 var StatsSchema = new Schema({
   coin: { type: String },
   count: { type: Number, default: 1 },
@@ -12,5 +13,9 @@ var StatsSchema = new Schema({
   connections: { type: Number, default: 0 },
   last_price: { type: Number, default: 0 },
 });
-
-module.exports = mongoose.model('coinstats', StatsSchema);
+var connections = db.getConnections();
+var obj = {};
+for(var i in connections) {
+  obj[i] = connections[i].model('coinstats', StatsSchema);
+}
+module.exports = obj;

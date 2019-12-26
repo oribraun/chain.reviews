@@ -1,9 +1,10 @@
 var Masternode = require('../models/masternode');
+var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Masternode.find({}).sort(sort).limit(limit).exec( function(err, tx) {
+    Masternode[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -13,7 +14,7 @@ function getAll(sortBy, order, limit, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Masternode.findOne({addr: obj.addr}, function(err, masternode) {
+    Masternode[db.getCurrentConnection()].findOne({addr: obj.addr}, function(err, masternode) {
         if(err) {
             return cb(err);
         }
@@ -40,7 +41,7 @@ function updateOne(obj, cb) { // update or create
             })
         } else { // create new
             // console.log('new')
-            var newMasternode = new Masternode({
+            var newMasternode = new Masternode[db.getCurrentConnection()]({
                 rank: obj.rank,
                 network: obj.network,
                 txhash: obj.txhash,
@@ -67,7 +68,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(addr, cb) {
-    Masternode.findOne({addr: addr}, function(err, tx) {
+    Masternode[db.getCurrentConnection()].findOne({addr: addr}, function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -77,7 +78,7 @@ function getOne(addr, cb) {
 }
 
 function deleteOne(addr, cb) {
-    Masternode.deleteOne({addr: addr}, function(err, tx) {
+    Masternode[db.getCurrentConnection()].deleteOne({addr: addr}, function(err, tx) {
         if(tx) {
             return cb();
         } else {
@@ -87,7 +88,7 @@ function deleteOne(addr, cb) {
 }
 
 function deleteAll(cb) {
-    Masternode.deleteMany({},function(err, numberRemoved){
+    Masternode[db.getCurrentConnection()].deleteMany({},function(err, numberRemoved){
         return cb(numberRemoved)
     })
 }

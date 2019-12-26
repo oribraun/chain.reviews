@@ -1,10 +1,11 @@
 var Richlist = require('../models/richlist');
 var Address = require('../models/address');
+var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Richlist.find({}).sort(sort).limit(limit).exec( function(err, tx) {
+    Richlist[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -14,7 +15,7 @@ function getAll(sortBy, order, limit, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Richlist.findOne({coin: obj.coin}, function(err, richlist) {
+    Richlist[db.getCurrentConnection()].findOne({coin: obj.coin}, function(err, richlist) {
         if(err) {
             return cb(err);
         }
@@ -30,7 +31,7 @@ function updateOne(obj, cb) { // update or create
                 }
             })
         } else {
-            var newRichlist = new Richlist({
+            var newRichlist = new Richlist[db.getCurrentConnection()]({
                 coin: obj.coin,
                 received: [],
                 balance: [],
@@ -49,7 +50,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(coin, cb) {
-    Richlist.findOne({coin: coin}, function(err, richlist) {
+    Richlist[db.getCurrentConnection()].findOne({coin: coin}, function(err, richlist) {
         if(richlist) {
             return cb(richlist);
         } else {
@@ -59,7 +60,7 @@ function getOne(coin, cb) {
 }
 
 function deleteOne(coin, cb) {
-    Richlist.deleteOne({coin: coin}, function(err, tx) {
+    Richlist[db.getCurrentConnection()].deleteOne({coin: coin}, function(err, tx) {
         if(tx) {
             return cb();
         } else {
@@ -69,13 +70,13 @@ function deleteOne(coin, cb) {
 }
 
 function deleteAll(cb) {
-    Richlist.remove({},function(err, numberRemoved){
+    Richlist[db.getCurrentConnection()].remove({},function(err, numberRemoved){
         return cb(numberRemoved)
     })
 }
 
 function getRichlist(coin, cb) {
-    Richlist.findOne({coin: coin}, function(err, richlist) {
+    Richlist[db.getCurrentConnection()].findOne({coin: coin}, function(err, richlist) {
         if(richlist) {
             return cb(richlist);
         } else {
@@ -85,7 +86,7 @@ function getRichlist(coin, cb) {
 }
 
 function updateRichlist(obj, cb) {
-    Richlist.findOne({coin: obj.coin}, function(err, richlist) {
+    Richlist[db.getCurrentConnection()].findOne({coin: obj.coin}, function(err, richlist) {
         if(richlist) {
             richlist.received = obj.received;
             richlist.balance = obj.balance;
@@ -98,7 +99,7 @@ function updateRichlist(obj, cb) {
                 }
             })
         } else {
-            var newRichlist = new Richlist({
+            var newRichlist = new Richlist[db.getCurrentConnection()]({
                 coin: coin,
             });
             newRichlist.save(function(err) {
@@ -116,7 +117,7 @@ function updateRichlist(obj, cb) {
 }
 
 function update(coin, options, cb) {
-    Richlist.updateOne({coin: coin}, options, function(err) {
+    Richlist[db.getCurrentConnection()].updateOne({coin: coin}, options, function(err) {
         if(err) {
             return cb(err);
         }
@@ -125,16 +126,16 @@ function update(coin, options, cb) {
 }
 function updateRichlistByList(list, cb){
     if(list == 'received') {
-        Address.find({}).sort({received: 'desc'}).limit(100).exec(function(err, addresses){
-            Richlist.updateOne({coin: settings.coin}, {
+        Address[db.getCurrentConnection()].find({}).sort({received: 'desc'}).limit(100).exec(function(err, addresses){
+            Richlist[db.getCurrentConnection()].updateOne({coin: settings.coin}, {
                 received: addresses,
             }, function() {
                 return cb();
             });
         });
     } else { //balance
-        Address.find({}).sort({balance: 'desc'}).limit(100).exec(function(err, addresses){
-            Richlist.updateOne({coin: settings.coin}, {
+        Address[db.getCurrentConnection()].find({}).sort({balance: 'desc'}).limit(100).exec(function(err, addresses){
+            Richlist[db.getCurrentConnection()].updateOne({coin: settings.coin}, {
                 balance: addresses,
             }, function() {
                 return cb();
@@ -144,7 +145,7 @@ function updateRichlistByList(list, cb){
 }
 
 function create_richlist(coin, cb) {
-    var newRichlist = new Richlist({
+    var newRichlist = new Richlist[db.getCurrentConnection()]({
         coin: coin,
     });
     newRichlist.save(function(err) {
@@ -160,7 +161,7 @@ function create_richlist(coin, cb) {
 }
 // checks richlist data exists for given coin
 function check_richlist(coin, cb) {
-    Richlist.findOne({coin: coin}, function(err, exists) {
+    Richlist[db.getCurrentConnection()].findOne({coin: coin}, function(err, exists) {
         if(exists) {
             return cb(true);
         } else {

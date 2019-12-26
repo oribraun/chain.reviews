@@ -1,9 +1,10 @@
 var Stats = require('../models/stats');
+var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Stats.find({}).sort(sort).limit(limit).exec( function(err, tx) {
+    Stats[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -13,7 +14,7 @@ function getAll(sortBy, order, limit, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Stats.findOne({coin: obj.coin}, function(err, stats) {
+    Stats[db.getCurrentConnection()].findOne({coin: obj.coin}, function(err, stats) {
         if(err) {
             return cb(err);
         }
@@ -35,7 +36,7 @@ function updateOne(obj, cb) { // update or create
             })
         } else { // create new
             // console.log('new')
-            var newStats = new Stats({
+            var newStats = new Stats[db.getCurrentConnection()]({
                 coin: obj.coin,
                 count: obj.count,
                 last: obj.last,
@@ -59,7 +60,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(coin, cb) {
-    Stats.findOne({coin: coin}, function(err, stats) {
+    Stats[db.getCurrentConnection()].findOne({coin: coin}, function(err, stats) {
         if(stats) {
             return cb(stats);
         } else {
@@ -69,7 +70,7 @@ function getOne(coin, cb) {
 }
 
 function deleteOne(coin, cb) {
-    Stats.deleteOne({coin: coin}, function(err, tx) {
+    Stats[db.getCurrentConnection()].deleteOne({coin: coin}, function(err, tx) {
         if(tx) {
             return cb();
         } else {
@@ -79,13 +80,13 @@ function deleteOne(coin, cb) {
 }
 
 function deleteAll(cb) {
-    Stats.remove({},function(err, numberRemoved){
+    Stats[db.getCurrentConnection()].remove({},function(err, numberRemoved){
         return cb(numberRemoved)
     })
 }
 
 function update(coin, options, cb) {
-    Stats.updateOne({coin: coin}, options, function(err) {
+    Stats[db.getCurrentConnection()].updateOne({coin: coin}, options, function(err) {
         if(err) {
             return cb(err);
         }
@@ -94,7 +95,7 @@ function update(coin, options, cb) {
 }
 
 function checkStats(coin, cb) {
-    Stats.findOne({coin: coin}, function(err, stats) {
+    Stats[db.getCurrentConnection()].findOne({coin: coin}, function(err, stats) {
         if(stats) {
             return cb(true);
         } else {
@@ -103,7 +104,7 @@ function checkStats(coin, cb) {
     });
 }
 function getStats(coin, cb) {
-    Stats.findOne({coin: coin}, function(err, stats) {
+    Stats[db.getCurrentConnection()].findOne({coin: coin}, function(err, stats) {
         if(stats) {
             return cb(stats);
         } else {
@@ -112,7 +113,7 @@ function getStats(coin, cb) {
     });
 }
 function createStats(coin, cb) {
-    var newStats = new Stats({
+    var newStats = new Stats[db.getCurrentConnection()]({
         coin: coin,
     });
 
@@ -128,7 +129,7 @@ function createStats(coin, cb) {
     });
 }
 function emptyStats(cb) {
-    Stats.remove({}, function(err) {
+    Stats[db.getCurrentConnection()].remove({}, function(err) {
         if(err) console.log(err);
     });
 }

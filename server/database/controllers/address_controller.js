@@ -1,10 +1,11 @@
 var Address = require('../models/address');
 const helpers = require('../../helpers');
+var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Address.find({}).sort(sort).limit(limit).exec( function(err, tx) {
+    Address[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -14,7 +15,7 @@ function getAll(sortBy, order, limit, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Address.findOne({a_id: obj.hash}, function(err, address) {
+    Address[db.getCurrentConnection()].findOne({a_id: obj.hash}, function(err, address) {
         if(err) {
             return cb(err);
         }
@@ -50,7 +51,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(hash, cb) {
-    Address.findOne({a_id: hash}, function(err, address) {
+    Address[db.getCurrentConnection()].findOne({a_id: hash}, function(err, address) {
         if(address) {
             return cb(address);
         } else {
@@ -60,7 +61,7 @@ function getOne(hash, cb) {
 }
 
 function deleteOne(a_id, cb) {
-    Address.deleteOne({a_id: a_id}, function(err, tx) {
+    Address[db.getCurrentConnection()].deleteOne({a_id: a_id}, function(err, tx) {
         if(tx) {
             return cb();
         } else {
@@ -70,7 +71,7 @@ function deleteOne(a_id, cb) {
 }
 
 function deleteAll(cb) {
-    Address.deleteMany({},function(err, numberRemoved){
+    Address[db.getCurrentConnection()].deleteMany({},function(err, numberRemoved){
         return cb(numberRemoved)
     })
 }
@@ -108,7 +109,7 @@ function updateAddress(hash, txid, amount, type, cb) {
                         // if ( tx_array.length > settings.txcount ) {
                         //   tx_array.shift();
                         // }
-                        Address.updateOne({a_id:hash}, {
+                        Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                             txs: tx_array,
                             received: received,
                             sent: sent,
@@ -120,7 +121,7 @@ function updateAddress(hash, txid, amount, type, cb) {
                         if (type == tx_array[index].type) {
                             return cb(); //duplicate
                         } else {
-                            Address.updateOne({a_id:hash}, {
+                            Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                                 txs: tx_array,
                                 received: received,
                                 sent: sent,
@@ -136,14 +137,14 @@ function updateAddress(hash, txid, amount, type, cb) {
             console.log('new')
             //new address
             if (type == 'vin') {
-                var newAddress = new Address({
+                var newAddress = new Address[db.getCurrentConnection()]({
                     a_id: hash,
                     txs: [ {addresses: txid, type: 'vin'} ],
                     sent: amount,
                     balance: amount,
                 });
             } else {
-                var newAddress = new Address({
+                var newAddress = new Address[db.getCurrentConnection()]({
                     a_id: hash,
                     txs: [ {addresses: txid, type: 'vout'} ],
                     received: amount,
@@ -167,7 +168,7 @@ function updateAddress(hash, txid, amount, type, cb) {
 function getRichlist(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Address.find({}).sort(sort).limit(limit).exec(function(err, addresses){
+    Address[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec(function(err, addresses){
         if(err) {
             return cb(err);
         }
@@ -176,7 +177,7 @@ function getRichlist(sortBy, order, limit, cb) {
 }
 
 function update(coin, options, cb) {
-    Address.updateOne({coin: coin}, options, function(err) {
+    Address[db.getCurrentConnection()].updateOne({coin: coin}, options, function(err) {
         if(err) {
             return cb(err);
         }
@@ -188,7 +189,7 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
     if (address) {
         // if coinbase (new coins PoW), update sent only and return cb.
         if ( hash == 'coinbase' ) {
-            Address.updateOne({a_id:hash}, {
+            Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                 sent: address.sent + amount,
                 balance: 0,
             }, function() {
@@ -210,7 +211,7 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
                     // if ( tx_array.length > settings.txcount ) {
                     //   tx_array.shift();
                     // }
-                    Address.updateOne({a_id:hash}, {
+                    Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                         txs: tx_array,
                         received: received,
                         sent: sent,
@@ -222,7 +223,7 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
                     if (type == tx_array[index].type) {
                         return cb(); //duplicate
                     } else {
-                        Address.updateOne({a_id:hash}, {
+                        Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                             txs: tx_array,
                             received: received,
                             sent: sent,
@@ -239,14 +240,14 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
 function createAddress1(hash, txid, amount, type, cb) {
     //new address
     if (type == 'vin') {
-        var newAddress = new Address({
+        var newAddress = new Address[db.getCurrentConnection()]({
             a_id: hash,
             txs: [ {addresses: txid, type: 'vin'} ],
             sent: amount,
             balance: amount,
         });
     } else {
-        var newAddress = new Address({
+        var newAddress = new Address[db.getCurrentConnection()]({
             a_id: hash,
             txs: [ {addresses: txid, type: 'vout'} ],
             received: amount,

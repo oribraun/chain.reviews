@@ -102,8 +102,11 @@ var db = {
             });
         }
     },
+    getConnections: function() {
+        return connections;
+    },
     setCurrentConnection: function(key) {
-        currentConnection = connections[key];
+        currentConnection = key;
     },
     getCurrentConnection: function() {
         return currentConnection;

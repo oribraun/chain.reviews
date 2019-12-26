@@ -17,10 +17,10 @@ router.get('/', (req, res) => {
 });
 
 router.get('/getAllTx/:limit', (req, res) => {
-    if(!db.isConnected()) {
-        res.send('no database connected');
-        return;
-    }
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
     if(isNaN(parseInt(req.params['limit']))) {
         res.send('limit value have to be number');
         return;
@@ -31,10 +31,10 @@ router.get('/getAllTx/:limit', (req, res) => {
 });
 
 router.get('/getAllStats/:limit', (req, res) => {
-    if(!db.isConnected()) {
-        res.send('no database connected');
-        return;
-    }
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
     if(isNaN(parseInt(req.params['limit']))) {
         res.send('limit value have to be number');
         return;
@@ -45,20 +45,20 @@ router.get('/getAllStats/:limit', (req, res) => {
 })
 
 router.get('/getStats/:coin', (req, res) => {
-    if(!db.isConnected()) {
-        res.send('no database connected');
-        return;
-    }
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
     StatsController.getOne(req.params['coin'], function(results) {
         res.send(results);
     })
 })
 
 router.get('/getAllRichlist/:limit', (req, res) => {
-    if(!db.isConnected()) {
-        res.send('no database connected');
-        return;
-    }
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
     if(isNaN(parseInt(req.params['limit']))) {
         res.send('limit value have to be number');
         return;
@@ -69,10 +69,10 @@ router.get('/getAllRichlist/:limit', (req, res) => {
 })
 
 router.get('/getAllAddresses/:limit', (req, res) => {
-    if(!db.isConnected()) {
-        res.send('no database connected');
-        return;
-    }
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
     if(isNaN(parseInt(req.params['limit']))) {
         res.send('limit value have to be number');
         return;
@@ -85,10 +85,10 @@ router.get('/getAllAddresses/:limit', (req, res) => {
 })
 
 router.get('/getAllMasternodes/:limit', (req, res) => {
-    if(!db.isConnected()) {
-        res.send('no database connected');
-        return;
-    }
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
     if(isNaN(parseInt(req.params['limit']))) {
         res.send('limit value have to be number');
         return;

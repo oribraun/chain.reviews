@@ -1,6 +1,6 @@
 var mongoose = require('mongoose')
   , Schema = mongoose.Schema;
-var db = require('./../db')
+var db = require('./../db');
  
 var MasternodeSchema = new Schema({
   rank: {type: Number, default: 0},
@@ -16,4 +16,10 @@ var MasternodeSchema = new Schema({
   activetime: {type: Number, default: 0},
   lastpaid: {type: Number, default: 0}
 }, {id: false});
-module.exports = mongoose.model('Masternode', MasternodeSchema);
+// console.log('db.getCurrentConnection()', db.getCurrentConnection())
+var connections = db.getConnections();
+var obj = {};
+for(var i in connections) {
+  obj[i] = connections[i].model('Masternode', MasternodeSchema);
+}
+module.exports = obj;
