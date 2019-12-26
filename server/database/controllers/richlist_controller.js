@@ -124,6 +124,18 @@ function update(coin, options, cb) {
         return cb();
     })
 }
+
+
+function count(cb) {
+    Richlist[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function updateRichlistByList(list, cb){
     if(list == 'received') {
         Address[db.getCurrentConnection()].find({}).sort({received: 'desc'}).limit(100).exec(function(err, addresses){
@@ -177,3 +189,4 @@ module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.updateRichlist = updateRichlist;
 module.exports.update = update;
+module.exports.count = count;

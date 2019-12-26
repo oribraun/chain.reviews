@@ -72,8 +72,8 @@ function updateOne(obj, cb) { // update or create
     });
 }
 
-function getOne(txid, cb) {
-    Tx[db.getCurrentConnection()].findOne({txid: txid}, function(err, tx) {
+function getOne(blockindex, cb) {
+    Tx[db.getCurrentConnection()].findOne({blockindex: blockindex}, function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -98,8 +98,18 @@ function deleteAll(cb) {
     })
 }
 
-function getTxBlockindex(blockindex, cb) {
-    Tx[db.getCurrentConnection()].findOne({blockindex: blockindex}, function(err, tx) {
+function getTxBlockByTxid(txid, cb) {
+    Tx[db.getCurrentConnection()].findOne({txid: txid}, function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
+function getTxBlockByHash(blockhash, cb) {
+    Tx[db.getCurrentConnection()].findOne({blockhash: blockhash}, function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -117,10 +127,22 @@ function update(coin, options, cb) {
     })
 }
 
+function count(cb) {
+    Tx[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+       if(err) {
+           cb()
+       } else {
+           cb(count);
+       }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
-module.exports.getTxBlockindex = getTxBlockindex;
+module.exports.getTxBlockByTxid = getTxBlockByTxid;
+module.exports.getTxBlockByHash = getTxBlockByHash;
 module.exports.update = update;
+module.exports.count = count;

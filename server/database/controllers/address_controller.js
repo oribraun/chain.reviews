@@ -184,6 +184,18 @@ function update(coin, options, cb) {
         return cb();
     })
 }
+
+
+function count(cb) {
+    Address[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function updateAddress1(address, hash, txid, amount, type, cb) {
     // Check if address exists
     if (address) {
@@ -274,6 +286,7 @@ module.exports.deleteAll = deleteAll;
 module.exports.updateAddress = updateAddress;
 module.exports.getRichlist = getRichlist;
 module.exports.update = update;
+module.exports.count = count;
 
 module.exports.updateAddress1 = updateAddress1;
 module.exports.createAddress1 = createAddress1;

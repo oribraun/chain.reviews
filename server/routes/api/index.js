@@ -1,20 +1,29 @@
 const express = require('express');
 var router = express.Router();
 const settings = require('./../../wallets/all_settings');
+const db = require('./../../database/db');
 
 const walletRoute = require('./wallet');
-router.use('/wallet', walletRoute);
-const db = require('./db');
-const database = require('./../../database/db');
+router.use('/wallet/:wallet',function(req, res, next){
+    if(!settings[req.params['wallet']]) {
+        res.send('wallet not found');
+        return;
+    }
+    res.locals.wallet = req.params['wallet'];
+    db.setCurrentConnection(req.params['wallet']);
+    next();
+}, walletRoute);
+
+const dbRoute = require('./db');
 router.use('/db/:wallet',function(req, res, next){
     if(!settings[req.params['wallet']]) {
         res.send('wallet not found');
         return;
     }
     res.locals.wallet = req.params['wallet'];
-    database.setCurrentConnection(req.params['wallet']);
+    db.setCurrentConnection(req.params['wallet']);
     next();
-}, db);
+}, dbRoute);
 
 var string = "";
 for (var wallet in settings) {
@@ -24,8 +33,7 @@ for (var wallet in settings) {
     string += '<h1>' + wallet + '</h1>' + '<br>';
     for(var i in walletRoute.stack) {
         if(walletRoute.stack[i] && walletRoute.stack[i].route) {
-            currentRoute = ('/api/wallet' + walletRoute.stack[i].route.path
-                .replace(':wallet', wallet)
+            currentRoute = ('/api/wallet/' + wallet + walletRoute.stack[i].route.path
                 .replace(':hash', hash)
                 .replace(':number', 0)
                 .replace(':txid', txid));
@@ -34,9 +42,9 @@ for (var wallet in settings) {
     }
     string += '<br>';
     string += '<h2>' + wallet + ' database</h2>' + '<br>';
-    for(var i in db.stack) {
-        if(db.stack[i] && db.stack[i].route) {
-            currentRoute = ('/api/db/' + wallet + db.stack[i].route.path
+    for(var i in dbRoute.stack) {
+        if(dbRoute.stack[i] && dbRoute.stack[i].route) {
+            currentRoute = ('/api/db/' + wallet + dbRoute.stack[i].route.path
                 .replace(':hash', hash)
                 .replace(':number', 0)
                 .replace(':coin', wallet)

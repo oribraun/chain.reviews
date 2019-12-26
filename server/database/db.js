@@ -58,7 +58,7 @@ var db = {
 
             }
             isConnected = true;
-            console.log('Successfully connected to MongoDB');
+            console.log('Successfully connected to ' + wallet);
             // return cb();
         });
         const conn = mongoose.connection;
@@ -142,6 +142,7 @@ var db = {
     multipleDisconnect: function() {
         for(var i in connections) {
             connections[i].close();
+            console.log('Successfully disconnected to ' + i);
         }
     },
     createDb: function(dbSettings) {

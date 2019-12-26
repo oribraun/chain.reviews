@@ -93,8 +93,19 @@ function deleteAll(cb) {
     })
 }
 
+function count(cb) {
+    Masternode[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
+module.exports.count = count;

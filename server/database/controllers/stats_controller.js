@@ -94,6 +94,16 @@ function update(coin, options, cb) {
     })
 }
 
+function count(cb) {
+    Stats[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function checkStats(coin, cb) {
     Stats[db.getCurrentConnection()].findOne({coin: coin}, function(err, stats) {
         if(stats) {
@@ -140,3 +150,4 @@ module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.update = update;
+module.exports.count = count;

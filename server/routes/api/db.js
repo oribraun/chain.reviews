@@ -26,7 +26,7 @@ router.get('/getAllTx/:limit', (req, res) => {
         return;
     }
     TxController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
-        res.send(results);
+        res.json(results);
     })
 });
 
@@ -50,7 +50,7 @@ router.get('/getStats/:coin', (req, res) => {
     //     return;
     // }
     StatsController.getOne(req.params['coin'], function(results) {
-        res.send(results);
+        res.json(results);
     })
 })
 
@@ -64,7 +64,7 @@ router.get('/getAllRichlist/:limit', (req, res) => {
         return;
     }
     RichlistController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
-        res.send(results);
+        res.json(results);
     })
 })
 
@@ -79,12 +79,40 @@ router.get('/getAllAddresses/:limit', (req, res) => {
     }
     // db.connect(settings[req.params['wallet']].dbSettings);
     AdressController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
-        res.send(results);
+        res.json(results);
         // db.disconnect();
     })
 })
 
-router.get('/getAllMasternodes/:limit', (req, res) => {
+router.get('/getBlockCount', (req, res) => {
+    TxController.count(function(count) {
+        res.json(count);
+    })
+});
+
+router.get('/getBlockByTxid/:txid', (req, res) => {
+    TxController.getTxBlockByTxid(req.params['txid'],function(result) {
+        res.json(result);
+    })
+});
+
+router.get('/getBlockByHash/:hash', (req, res) => {
+    TxController.getTxBlockByHash(req.params['hash'],function(result) {
+        res.json(result);
+    })
+});
+
+router.get('/getBlockHash/:number', (req, res) => {
+    if(isNaN(parseInt(req.params['number']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    TxController.getOne(req.params['number'],function(result) {
+        res.json(result);
+    })
+});
+
+router.get('/listMasternodes/:limit', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
     //     return;
@@ -95,9 +123,14 @@ router.get('/getAllMasternodes/:limit', (req, res) => {
     }
     // db.connect(settings[req.params['wallet']].dbSettings);
     MasternodeController.getAll('rank', 'asc', parseInt(req.params['limit']), function(results) {
-        res.send(results);
+        res.json(results);
         // db.disconnect();
     })
 })
+router.get('/getMasternodeCount', (req, res) => {
+    MasternodeController.count(function(count) {
+        res.json(count);
+    })
+});
 
 module.exports = router;
