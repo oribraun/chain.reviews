@@ -184,18 +184,6 @@ function update(coin, options, cb) {
         return cb();
     })
 }
-
-
-function count(cb) {
-    Address[db.getCurrentConnection()].countDocuments({}, function (err, count) {
-        if(err) {
-            cb()
-        } else {
-            cb(count);
-        }
-    });
-}
-
 function updateAddress1(address, hash, txid, amount, type, cb) {
     // Check if address exists
     if (address) {
@@ -274,6 +262,16 @@ function createAddress1(hash, txid, amount, type, cb) {
             //console.log('address saved: %s', hash);
             //console.log(newAddress);
             return cb();
+        }
+    });
+}
+
+function count(cb) {
+    Address[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
         }
     });
 }
