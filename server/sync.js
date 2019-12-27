@@ -461,13 +461,22 @@ if (wallet) {
             })
             break;
         case 'reindex': // 0:27:35.915
+            var startTime = new Date();
             if(fileExist()) {
-                console.log('update in progress')
+                console.log('update in progress');
+                forceProcess(function(){
+                    killPidFromFile();
+                    deleteFile();
+                    createFile();
+                    // db.connect(settings[wallet].dbSettings);
+                    deleteDb(startReIndex);
+                }, function(){
+                    db.multipleDisconnect();
+                })
                 return;
             }
             createFile();
             // db.connect(settings[wallet].dbSettings);
-            var startTime = new Date();
             deleteDb(startReIndex);
             function startReIndex() {
                 wallet_commands.getBlockCount(wallet).then(function (blockCount) {

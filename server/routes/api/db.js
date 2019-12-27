@@ -5,7 +5,7 @@ const db = require('./../../database/db');
 const settings = require('./../../wallets/all_settings');
 
 var TxController = require('./../../database/controllers/tx_controller');
-var AdressController = require('./../../database/controllers/address_controller');
+var AddressController = require('./../../database/controllers/address_controller');
 var StatsController = require('./../../database/controllers/stats_controller');
 var RichlistController = require('./../../database/controllers/richlist_controller');
 var MasternodeController = require('./../../database/controllers/masternode_controller');
@@ -26,7 +26,7 @@ router.get('/getAllTx/:limit', (req, res) => {
         return;
     }
     TxController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
-        res.json(results);
+        res.send(JSON.stringify(results, null, 2));
     })
 });
 
@@ -50,7 +50,7 @@ router.get('/getStats/:coin', (req, res) => {
     //     return;
     // }
     StatsController.getOne(req.params['coin'], function(results) {
-        res.json(results);
+        res.send(JSON.stringify(results, null, 2));
     })
 })
 
@@ -64,7 +64,19 @@ router.get('/getAllRichlist/:limit', (req, res) => {
         return;
     }
     RichlistController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
-        res.json(results);
+        res.send(JSON.stringify(results, null, 2));
+    })
+})
+
+router.get('/getAllAddressByBalance', (req, res) => {
+    AddressController.getRichlist('balance', 'desc', 0, function(results) {
+        res.send(JSON.stringify(results, null, 2));
+    })
+});
+
+router.get('/getAllAddressByReceived', (req, res) => {
+    AddressController.getRichlist('received', 'desc', 0, function(results) {
+        res.send(JSON.stringify(results, null, 2));
     })
 })
 
@@ -75,14 +87,14 @@ router.get('/getRichlistBalance', (req, res) => {
     // }
     RichlistController.getOne(res.locals.wallet, function(results) {
         results.balance.sort(function(a,b) {
-            return b - a;
+            return b.balance - a.balance;
         })
 
         var r = [];
         for(var i in results.balance) {
-            r.push({balance: (results.balance[i].balance / 100000000).toFixed(8), address: results.balance[i].a_id})
+            r.push({balance: (results.balance[i].balance).toFixed(8), address: results.balance[i].a_id})
         }
-        res.json(r);
+        res.send(JSON.stringify(r, null, 2));
     })
 })
 
@@ -96,8 +108,8 @@ router.get('/getAllAddresses/:limit', (req, res) => {
         return;
     }
     // db.connect(settings[req.params['wallet']].dbSettings);
-    AdressController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
-        res.json(results);
+    AddressController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
+        res.send(JSON.stringify(results, null, 2));
         // db.disconnect();
     })
 })
@@ -110,13 +122,13 @@ router.get('/getBlockCount', (req, res) => {
 
 router.get('/getBlockByTxid/:txid', (req, res) => {
     TxController.getTxBlockByTxid(req.params['txid'],function(result) {
-        res.json(result);
+        res.send(JSON.stringify(result, null, 2));
     })
 });
 
 router.get('/getBlockByHash/:hash', (req, res) => {
     TxController.getTxBlockByHash(req.params['hash'],function(result) {
-        res.json(result);
+        res.send(JSON.stringify(result, null, 2));
     })
 });
 
@@ -126,7 +138,7 @@ router.get('/getBlockHash/:number', (req, res) => {
         return;
     }
     TxController.getOne(req.params['number'],function(result) {
-        res.json(result);
+        res.send(JSON.stringify(result, null, 2));
     })
 });
 
@@ -141,7 +153,7 @@ router.get('/listMasternodes/:limit', (req, res) => {
     }
     // db.connect(settings[req.params['wallet']].dbSettings);
     MasternodeController.getAll('rank', 'asc', parseInt(req.params['limit']), function(results) {
-        res.json(results);
+        res.send(JSON.stringify(results, null, 2));
         // db.disconnect();
     })
 })

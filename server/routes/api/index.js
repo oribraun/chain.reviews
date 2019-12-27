@@ -9,6 +9,7 @@ router.use('/wallet/:wallet',function(req, res, next){
         res.send('wallet not found');
         return;
     }
+    res.header("Content-Type",'application/json');
     res.locals.wallet = req.params['wallet'];
     db.setCurrentConnection(req.params['wallet']);
     next();
@@ -20,6 +21,7 @@ router.use('/db/:wallet',function(req, res, next){
         res.send('wallet not found');
         return;
     }
+    res.header("Content-Type",'application/json');
     res.locals.wallet = req.params['wallet'];
     db.setCurrentConnection(req.params['wallet']);
     next();

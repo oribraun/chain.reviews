@@ -80,11 +80,11 @@ function updateAddress(hash, txid, amount, type, cb) {
     // Check if address exists
     getOne(hash, function(address) {
         if (address) {
-            console.log('exist')
             // if coinbase (new coins PoW), update sent only and return cb.
             if ( hash == 'coinbase' ) {
                 address.sent = address.sent + amount
                 address.balance = 0;
+                console.log('exist coinbase', address.sent)
                 address.save(function(err) {
                     if (err) {
                         return cb(err);
@@ -134,9 +134,9 @@ function updateAddress(hash, txid, amount, type, cb) {
                 })
             }
         } else {
-            console.log('new')
             //new address
             if (type == 'vin') {
+                console.log('new vin', amount);
                 var newAddress = new Address[db.getCurrentConnection()]({
                     a_id: hash,
                     txs: [ {addresses: txid, type: 'vin'} ],
@@ -144,6 +144,7 @@ function updateAddress(hash, txid, amount, type, cb) {
                     balance: amount,
                 });
             } else {
+                console.log('new vout', amount);
                 var newAddress = new Address[db.getCurrentConnection()]({
                     a_id: hash,
                     txs: [ {addresses: txid, type: 'vout'} ],
