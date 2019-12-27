@@ -137,6 +137,16 @@ function count(cb) {
     });
 }
 
+function countByBlockIndex(cb) {
+    Tx[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -146,3 +156,4 @@ module.exports.getTxBlockByTxid = getTxBlockByTxid;
 module.exports.getTxBlockByHash = getTxBlockByHash;
 module.exports.update = update;
 module.exports.count = count;
+module.exports.countByBlockIndex = countByBlockIndex;

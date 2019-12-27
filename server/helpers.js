@@ -71,25 +71,27 @@ var obj = {
             for (var i = 0; i < tx.vin.length; i++) {
                 (function(i) {
                     obj.get_input_addresses(wallet,tx.vin[i], tx.vout).then(function (addresses) {
-                        obj.is_unique(arr_vin, addresses[0].hash).then(function (unique, index) {
-                            if (unique == true) {
-                                obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
-                                    arr_vin.push({addresses: addresses[0].hash, amount: amount_sat});
-                                    if (i === tx.vin.length - 1) {
-                                        resolve(arr_vin)
-                                    }
-                                });
-                            } else {
-                                obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
-                                    arr_vin[index].amount = arr_vin[index].amount + amount_sat;
-                                    if (i === tx.vin.length - 1) {
-                                        resolve(arr_vin)
-                                    }
-                                });
-                            }
-                        }).catch(function(err) {
-                            console.log('is_unique', err);
-                        })
+                        if (addresses && addresses.length) {
+                            obj.is_unique(arr_vin, addresses[0].hash).then(function (unique, index) {
+                                if (unique == true) {
+                                    obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
+                                        arr_vin.push({addresses: addresses[0].hash, amount: amount_sat});
+                                        if (i === tx.vin.length - 1) {
+                                            resolve(arr_vin)
+                                        }
+                                    });
+                                } else {
+                                    obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
+                                        arr_vin[index].amount = arr_vin[index].amount + amount_sat;
+                                        if (i === tx.vin.length - 1) {
+                                            resolve(arr_vin)
+                                        }
+                                    });
+                                }
+                            }).catch(function (err) {
+                                console.log('is_unique', err);
+                            })
+                        }
                     }).catch(function(err) {
                         console.log('prepare_vin', err);
                     })

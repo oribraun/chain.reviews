@@ -15,7 +15,7 @@ function getAll(sortBy, order, limit, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Address[db.getCurrentConnection()].findOne({a_id: obj.hash}, function(err, address) {
+    Address[db.getCurrentConnection()].findOne({a_id: obj.a_id}, function(err, address) {
         if(err) {
             return cb(err);
         }
@@ -24,7 +24,7 @@ function updateOne(obj, cb) { // update or create
             address.received = obj.received;
             address.sent = obj.sent;
             address.balance = obj.balance;
-            address.updateOne(function (err, tx) {
+            address.save(function (err, tx) {
                 if (err) {
                     return cb(err);
                 } else {
@@ -32,7 +32,8 @@ function updateOne(obj, cb) { // update or create
                 }
             });
         } else { // create new
-            var newAddress = new Address({
+            var newAddress = new Address[db.getCurrentConnection()]({
+                a_id: obj.a_id,
                 txs: obj.txs,
                 received: obj.received,
                 sent: obj.sent,

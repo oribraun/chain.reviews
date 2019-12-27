@@ -11,6 +11,15 @@ var adminSettings = {
     // db.createUser({user:"admin", pwd:"KtG#v$pJf4DCEbk5GGZV", roles:[{role:"root", db:"admin"}]})
 }
 
+const options = {
+    socketTimeoutMS: 30000,
+    keepAlive: true,
+    reconnectTries: 30000,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true
+};
+
 var isConnected = false;
 var connections = {};
 var currentConnection;
@@ -82,7 +91,7 @@ var db = {
             dbString = dbString + ':' + obj[i].dbSettings.port;
             dbString = dbString + '/' + obj[i].dbSettings.database;
             // console.log(dbString)
-            var conn  = mongoose.createConnection(dbString, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true},function(err) {
+            var conn  = mongoose.createConnection(dbString, options,function(err) {
                 // console.log('err', err)
             });
             // connections[i] = mongoose.connection;
