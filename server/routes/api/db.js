@@ -98,6 +98,24 @@ router.get('/getRichlistBalance', (req, res) => {
     })
 })
 
+router.get('/getRichlistReceived', (req, res) => {
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
+    RichlistController.getOne(res.locals.wallet, function(results) {
+        results.received.sort(function(a,b) {
+            return b.received - a.received;
+        })
+
+        var r = [];
+        for(var i in results.received) {
+            r.push({received: (results.received[i].received).toFixed(8), address: results.received[i].a_id})
+        }
+        res.send(JSON.stringify(r, null, 2));
+    })
+})
+
 router.get('/getAllAddresses/:limit', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');

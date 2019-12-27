@@ -1522,7 +1522,7 @@ var getAllBlocksCluster = function(wallet, from, to, callback) {
                 reject(err);
             })
         }
-        if (from < to) {
+        if (from <= to) {
             getBlocksHash(from);
         } else {
             reject('no blocks to get');
@@ -1557,7 +1557,7 @@ var getAllBlocksClusterLiner = function(wallet, from, to, jump, callback) {
                 reject(err);
             })
         }
-        if (from < to) {
+        if (from <= to) {
             getBlocksHash(from);
         } else {
             reject('no blocks to get');

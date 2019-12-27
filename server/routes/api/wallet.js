@@ -19,7 +19,7 @@ router.get('/getBlockCount', (req, res) => {
 router.get('/getBlock/:hash', (req, res) => {
     wallet_commands.getBlock(res.locals.wallet, req.params['hash']).then(function(results) {
         // console.log('masternodes', masternodes);
-        res.json(results);
+        res.send(JSON.stringify(JSON.parse(results), null, 2));
     }).catch(function(err) {
         res.send(err);
     })
