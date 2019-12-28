@@ -7,6 +7,7 @@
     "commands": {
         "startwallet": "-daemon",
         "stopwallet": "stop",
+        "reindexWallet": "-daemon -txindex=1 -reindex=1",
         "getblock": "getblock",
         "getblockhash": "getblockhash",
         "getallmasternodes": "listmasternodes",

@@ -17,6 +17,7 @@ var commands_require_db = [
     'update',
     'reindexcluster',
     'reindexclusterlinear',
+    'reindexclusterlinear2',
     'updatecluster',
     'updateclusterlinear',
     'updatemasternodes',
@@ -42,6 +43,8 @@ var Address = require('./database/models/address')[db.getCurrentConnection()];
 var AddressController = require('./database/controllers/address_controller');
 var Masternode = require('./database/models/masternode')[db.getCurrentConnection()];
 var MasternodeController = require('./database/controllers/masternode_controller');
+var AddressToUpdateController = require('./database/controllers/address_to_update_controller');
+
 // console.log('wallet', wallet)
 // console.log('type', type)
 // console.log('hash_number', hash_number)
@@ -1172,6 +1175,231 @@ if (wallet) {
                         if (!updateInProgress) {
                             addresses = addresses.concat(addresses1);
                             updateInProgress = true;
+                            startUpdatingAddresses()
+                        } else {
+                            addresses = addresses.concat(addresses1);
+                        }
+
+                    }
+
+                    function startUpdatingAddresses(addresses1) {
+                        if (!updateInProgress) {
+                            addresses = addresses.concat(addresses1);
+                            updateInProgress = true;
+                            updateAddresses()
+                        } else {
+                            addresses = addresses.concat(addresses1);
+                        }
+
+                    }
+
+                    function updateAddresses() {
+                        AddressController.updateAddress(addresses[0].address, addresses[0].txid, addresses[0].amount, addresses[0].type, function (err) {
+                            console.log('address updated - ', addresses[0].address);
+                            if (err) {
+                                console.log('address err', err)
+                            } else {
+                                countAddressUpdate++;
+                                addresses.shift();
+                            }
+                            if (addresses.length) {
+                                updateAddresses()
+                            } else {
+                                updateInProgress = false;
+                                if (exit_count === numCPUs) {
+                                    endReindex();
+                                }
+                                console.log('countAddressUpdate', countAddressUpdate);
+                            }
+                        })
+                    }
+                }
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                function startReIndexClusterLiner() {
+                    // db.connect(settings[wallet].dbSettings);
+                    wallet_commands.getBlockCount(wallet).then(function (blockCount) {
+                        var current_cluster_id = cluster.worker.id;
+                        var allBlocksCount = 147244;
+                        var from = 147000 + cluster.worker.id - 1;
+                        var to = allBlocksCount;
+                        var txInsertCount = 0;
+                        var blockTxLength = 0;
+                        // console.log('from', from);
+                        // console.log('to', to);
+                        // console.log('expectedSteps', expectedSteps);
+                        // return;
+                        var hashes = [];
+                        function updateHash(hash) {
+                            wallet_commands.getBlock(wallet, hash).then(function (block) {
+                                var current_block = JSON.parse(block);
+
+                                function updateBlockTx(i, current_block) {
+                                    blockTxLength++;
+                                    wallet_commands.getRawTransactionFull(wallet, current_block.tx[i]).then(function (obj) {
+
+                                        var newTx = new Tx({
+                                            txid: obj.tx.txid,
+                                            vin: obj.nvin,
+                                            vout: obj.vout,
+                                            total: obj.total.toFixed(8),
+                                            timestamp: obj.tx.time,
+                                            blockhash: obj.tx.blockhash,
+                                            blockindex: current_block.height,
+                                        });
+                                        // var addreses_to_update = obj.addreses_to_update;
+                                        console.log(current_block.height, obj.tx.txid);
+                                        var addreses_to_update = obj.addreses_to_update;
+                                        // addr_count += addreses_to_update.length;
+                                        // if(addreses_to_update.length) {
+                                        //     startUpdatingAddresses(addreses_to_update);
+                                        // }
+                                        cluster.worker.send({addreses_to_update: addreses_to_update});
+                                        // addr_count += addreses_to_update.length;
+                                        TxController.updateOne(newTx, function (err) {
+                                            txInsertCount++;
+                                            if (err) {
+                                                console.log('err', err);
+                                            }
+                                            // console.log('txInsertCount', txInsertCount)
+                                            // console.log('blockTxLength', blockTxLength)
+                                            if (i < current_block.tx.length - 1) {
+                                                updateBlockTx(++i, current_block);
+                                            } else {
+                                                hashes.shift();
+                                                if (hashes.length) {
+                                                    updateHash(hashes[0]);
+                                                } else {
+                                                    updateHaseStarted = false;
+                                                    if(finishGettingBlocks) {
+                                                        endReIndexClusterLiner()
+                                                    }
+                                                }
+                                            }
+                                            // console.log('created')
+                                        });
+                                    }).catch(function (err) {
+                                        var newTx = new Tx({
+                                            txid: current_block.tx[i],
+                                            vin: [],
+                                            vout: [],
+                                            total: (0).toFixed(8),
+                                            timestamp: current_block.time,
+                                            blockhash: current_block.hash,
+                                            blockindex: current_block.height,
+                                        });
+                                        // console.log('error getting rawtransaction - ' + current_block.tx[0], err);
+                                        console.log(current_block.height, current_block.tx[i]);
+                                        // console.log('newTx', newTx)
+                                        TxController.updateOne(newTx, function (err) {
+                                            txInsertCount++;
+                                            if (err) {
+                                                console.log('err', err);
+                                            }
+                                            if (i < current_block.tx.length - 1) {
+                                                updateBlockTx(++i, current_block);
+                                            } else {
+                                                hashes.shift();
+                                                if (hashes.length) {
+                                                    updateHash(hashes[0]);
+                                                } else {
+                                                    updateHaseStarted = false;
+                                                    if(finishGettingBlocks) {
+                                                        endReIndexClusterLiner()
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    });
+                                }
+
+                                updateBlockTx(0, current_block);
+                            }).catch(function (err) {
+                                console.log('error getting block', err);
+                                hashes.shift();
+                                if (hashes.length) {
+                                    updateHash(hashes[0]);
+                                } else {
+                                    updateHaseStarted = false;
+                                    if(finishGettingBlocks) {
+                                        endReIndexClusterLiner()
+                                    }
+                                }
+                                txInsertCount++;
+                            });
+                        }
+                        var updateHaseStarted = false;
+                        var finishGettingBlocks = false;
+                        wallet_commands.getAllBlocksClusterLiner(wallet, from, to, numCPUs, function (index, hash) {
+                            hashes.push(hash);
+                            if(!updateHaseStarted) {
+                                updateHaseStarted = true;
+                                updateHash(hashes[0]);
+                            }
+                        }).then(function (time) {
+                            finishGettingBlocks = true;
+                            console.log('finish getting blocks', time);
+                        }).catch(function (err) {
+                            console.log('error getting blocks', err);
+                            endReIndexClusterLiner();
+                        })
+                    }).catch(function (err) {
+                        console.log('error getting blockCount', err);
+                    })
+                }
+                function endReIndexClusterLiner() {
+                    db.multipleDisconnect();
+                    process.exit();
+                }
+                startReIndexClusterLiner();
+            }
+            break;
+        case 'reindexclusterlinear2': // 0:33:23.548
+            if (cluster.isMaster) {
+                var startTime = new Date();
+                console.log(`Master ${process.pid} is running`);
+                var addreses_to_update = [];
+                startReindex(function(){
+                    deleteDb(function(){
+                        startReIndexClusterLinerAll()
+                    })
+                })
+
+                function startReIndexClusterLinerAll() {
+                    for (let i = 0; i < numCPUs; i++) {
+                        var worker = cluster.fork();
+                        worker.on('message', function (msg) {
+                            if (msg.addreses_to_update) {
+                                startUpdatingAddresses(msg.addreses_to_update)
+                            }
+                        })
+                    }
+
+                    var exit_count = 0;
+                    cluster.on('exit', (worker, code, signal) => {
+                        exit_count++;
+                        if (exit_count === numCPUs) {
+                            if (!updateInProgress) {
+                                console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                updateDbAddreess(local_addreses_before_save, function(){
+                                    endReindex();
+                                });
+                            }
+                            console.log('addreses_to_update', addreses_to_update.length)
+                        }
+                        console.log(`worker ${worker.process.pid} died`);
+                    });
+
+                    var updateInProgress = false;
+                    var countAddressUpdate = 0;
+                    var addresses = [];
+                    var local_addreses_before_save = [];
+
+                    function startUpdatingAddresses(addresses1) {
+                        if (!updateInProgress) {
+                            addresses = addresses.concat(addresses1);
+                            updateInProgress = true;
                             sumClusterAddresses()
                         } else {
                             addresses = addresses.concat(addresses1);
@@ -1377,6 +1605,225 @@ if (wallet) {
                     process.exit();
                 }
                 startReIndexClusterLiner();
+            }
+            break;
+        case 'reindexclusterlinearsaveaddresses': // 0:33:23.548
+            if (cluster.isMaster) {
+                var startTime = new Date();
+                console.log(`Master ${process.pid} is running`);
+                var addreses_to_update = [];
+                startReindex(function(){
+                    deleteDb(function(){
+                        startReIndexSaveAddressesClusterLinerAll()
+                    })
+                })
+
+                function startReIndexSaveAddressesClusterLinerAll() {
+                    for (let i = 0; i < numCPUs; i++) {
+                        var worker = cluster.fork();
+                        worker.on('message', function (msg) {
+                            if (msg.addreses_to_update) {
+                                startUpdatingAddresses(msg.addreses_to_update)
+                            }
+                        })
+                    }
+
+                    var exit_count = 0;
+                    cluster.on('exit', (worker, code, signal) => {
+                        exit_count++;
+                        if (exit_count === numCPUs) {
+                            if (!updateInProgress) {
+                                console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                updateDbAddreess(local_addreses_before_save, function(){
+                                    endReindex();
+                                });
+                            }
+                            console.log('addreses_to_update', addreses_to_update.length)
+                        }
+                        console.log(`worker ${worker.process.pid} died`);
+                    });
+
+                    var updateInProgress = false;
+                    var countAddressUpdate = 0;
+                    var addresses = [];
+                    var local_addreses_before_save = [];
+
+                    function startUpdatingAddresses(addresses1) {
+                        if (!updateInProgress) {
+                            addresses = addresses.concat(addresses1);
+                            updateInProgress = true;
+                            updateSaveAddress()
+                        } else {
+                            addresses = addresses.concat(addresses1);
+                        }
+
+                    }
+
+                    function updateSaveAddress() {
+                        if (addresses.length) {
+                            AddressToUpdateController.updateOne(addresses[0], function(err){
+                                if(err) {
+                                    console.log('err', err)
+                                }
+                                addresses.shift();
+                                if (addresses.length) {
+                                    updateSaveAddress();
+                                }
+                            })
+                        } else {
+                            updateInProgress = false;
+                            if (exit_count === numCPUs) {
+                                // TODO need to update address db
+
+                                // updateDbAddreess(local_addreses_before_save, function(){
+                                //     endReindex();
+                                // });
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                function startReIndexSaveAddressesClusterLiner() {
+                    // db.connect(settings[wallet].dbSettings);
+                    wallet_commands.getBlockCount(wallet).then(function (blockCount) {
+                        var current_cluster_id = cluster.worker.id;
+                        var allBlocksCount = blockCount;
+                        var from = cluster.worker.id - 1;
+                        var to = allBlocksCount;
+                        var txInsertCount = 0;
+                        var blockTxLength = 0;
+                        // console.log('from', from);
+                        // console.log('to', to);
+                        // console.log('expectedSteps', expectedSteps);
+                        // return;
+                        var hashes = [];
+                        function updateHashSaveAddress(hash) {
+                            wallet_commands.getBlock(wallet, hash).then(function (block) {
+                                var current_block = JSON.parse(block);
+
+                                function updateBlockTx(i, current_block) {
+                                    blockTxLength++;
+                                    wallet_commands.getRawTransactionFull(wallet, current_block.tx[i]).then(function (obj) {
+
+                                        var newTx = new Tx({
+                                            txid: obj.tx.txid,
+                                            vin: obj.nvin,
+                                            vout: obj.vout,
+                                            total: obj.total.toFixed(8),
+                                            timestamp: obj.tx.time,
+                                            blockhash: obj.tx.blockhash,
+                                            blockindex: current_block.height,
+                                        });
+                                        // var addreses_to_update = obj.addreses_to_update;
+                                        console.log(current_block.height, obj.tx.txid);
+                                        var addreses_to_update = obj.addreses_to_update;
+                                        for(var i in addreses_to_update) {
+                                            addreses_to_update[i].blockindex = current_block.height;
+                                        }
+                                        // addr_count += addreses_to_update.length;
+                                        // if(addreses_to_update.length) {
+                                        //     startUpdatingAddresses(addreses_to_update);
+                                        // }
+                                        cluster.worker.send({addreses_to_update: addreses_to_update});
+                                        // addr_count += addreses_to_update.length;
+                                        TxController.updateOne(newTx, function (err) {
+                                            txInsertCount++;
+                                            if (err) {
+                                                console.log('err', err);
+                                            }
+                                            // console.log('txInsertCount', txInsertCount)
+                                            // console.log('blockTxLength', blockTxLength)
+                                            if (i < current_block.tx.length - 1) {
+                                                updateBlockTx(++i, current_block);
+                                            } else {
+                                                hashes.shift();
+                                                if (hashes.length) {
+                                                    updateHashSaveAddress(hashes[0]);
+                                                } else {
+                                                    updateHaseStarted = false;
+                                                    if(finishGettingBlocks) {
+                                                        endReIndexSaveAddressesClusterLiner()
+                                                    }
+                                                }
+                                            }
+                                            // console.log('created')
+                                        });
+                                    }).catch(function (err) {
+                                        var newTx = new Tx({
+                                            txid: current_block.tx[i],
+                                            vin: [],
+                                            vout: [],
+                                            total: (0).toFixed(8),
+                                            timestamp: current_block.time,
+                                            blockhash: current_block.hash,
+                                            blockindex: current_block.height,
+                                        });
+                                        // console.log('error getting rawtransaction - ' + current_block.tx[0], err);
+                                        console.log(current_block.height, current_block.tx[i]);
+                                        // console.log('newTx', newTx)
+                                        TxController.updateOne(newTx, function (err) {
+                                            txInsertCount++;
+                                            if (err) {
+                                                console.log('err', err);
+                                            }
+                                            if (i < current_block.tx.length - 1) {
+                                                updateBlockTx(++i, current_block);
+                                            } else {
+                                                hashes.shift();
+                                                if (hashes.length) {
+                                                    updateHashSaveAddress(hashes[0]);
+                                                } else {
+                                                    updateHaseStarted = false;
+                                                    if(finishGettingBlocks) {
+                                                        endReIndexSaveAddressesClusterLiner()
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    });
+                                }
+
+                                updateBlockTx(0, current_block);
+                            }).catch(function (err) {
+                                console.log('error getting block', err);
+                                hashes.shift();
+                                if (hashes.length) {
+                                    updateHashSaveAddress(hashes[0]);
+                                } else {
+                                    updateHaseStarted = false;
+                                    if(finishGettingBlocks) {
+                                        endReIndexSaveAddressesClusterLiner()
+                                    }
+                                }
+                                txInsertCount++;
+                            });
+                        }
+                        var updateHaseStarted = false;
+                        var finishGettingBlocks = false;
+                        wallet_commands.getAllBlocksClusterLiner(wallet, from, to, numCPUs, function (index, hash) {
+                            hashes.push(hash);
+                            if(!updateHaseStarted) {
+                                updateHaseStarted = true;
+                                updateHashSaveAddress(hashes[0]);
+                            }
+                        }).then(function (time) {
+                            finishGettingBlocks = true;
+                            console.log('finish getting blocks', time);
+                        }).catch(function (err) {
+                            console.log('error getting blocks', err);
+                            endReIndexSaveAddressesClusterLiner();
+                        })
+                    }).catch(function (err) {
+                        console.log('error getting blockCount', err);
+                    })
+                }
+                function endReIndexSaveAddressesClusterLiner() {
+                    db.multipleDisconnect();
+                    process.exit();
+                }
+                startReIndexSaveAddressesClusterLiner();
             }
             break;
         case 'updatecluster_old': // 0:28:16.967
@@ -1941,19 +2388,29 @@ function deleteDb(onEnd) {
 }
 
 function updateDbAddreess(addresses, onEnd) {
-    AddressController.updateOne({a_id: addresses[0].a_id, txs: addresses[0].txs, received: addresses[0].received, balance: addresses[0].balance}, function (err) {
-        if (err) {
-            console.log('address err', err)
-        } else {
-            console.log('updated address', addresses[0].a_id);
-            addresses.shift();
-        }
-        if (addresses.length) {
-            updateDbAddreess(addresses, onEnd)
-        } else {
-            onEnd();
-        }
-    })
+    if(addresses.length) {
+        console.log('addresses[0]', addresses[0]);
+        AddressController.updateOne({
+            a_id: addresses[0].a_id,
+            txs: addresses[0].txs,
+            received: addresses[0].received,
+            balance: addresses[0].balance
+        }, function (err) {
+            if (err) {
+                console.log('address err', err)
+            } else {
+                console.log('updated address', addresses[0].a_id);
+                addresses.shift();
+            }
+            if (addresses.length) {
+                updateDbAddreess(addresses, onEnd)
+            } else {
+                onEnd();
+            }
+        })
+    } else {
+        onEnd();
+    }
 }
 
 function endCluster() {

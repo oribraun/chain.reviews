@@ -13,17 +13,24 @@ var obj = {
                 resolve(addresses);
             } else {
                 wallet_commands.getRawTransaction(wallet, vin.txid).then(function(tx){
-                    tx = JSON.parse(tx);
                     if (tx && tx.vout) {
                         var loop = true;
-                        for(var j = 0; j < tx.vout.length && loop; j++) {
-                            if (tx.vout[j].n == vin.vout) {
-                                if (tx.vout[j].scriptPubKey.addresses && tx.vout[j].scriptPubKey.addresses.length) {
-                                    addresses.push({hash: tx.vout[j].scriptPubKey.addresses[0], amount: tx.vout[j].value});
-                                }
-                                loop = false;
+                        var map = tx.vout.map(function(o) {return o.n});
+                        var index = map.indexOf(vin.vout);
+                        if(index > -1) {
+                            if (tx.vout[index].scriptPubKey.addresses && tx.vout[index].scriptPubKey.addresses.length) {
+                                addresses.push({hash: tx.vout[index].scriptPubKey.addresses[0], amount: tx.vout[index].value});
                             }
+                            // console.log('added address to update');
                         }
+                        // for(var j = 0; j < tx.vout.length && loop; j++) {
+                        //     if (tx.vout[j].n == vin.vout) {
+                        //         if (tx.vout[j].scriptPubKey.addresses && tx.vout[j].scriptPubKey.addresses.length) {
+                        //             addresses.push({hash: tx.vout[j].scriptPubKey.addresses[0], amount: tx.vout[j].value});
+                        //         }
+                        //         loop = false;
+                        //     }
+                        // }
                         resolve(addresses);
                     } else {
                         resolve();
@@ -68,34 +75,46 @@ var obj = {
     prepare_vin:  function(wallet,tx) {
         var promise = new Promise(function(resolve, reject) {
             var arr_vin = [];
-            for (var i = 0; i < tx.vin.length; i++) {
-                (function(i) {
-                    obj.get_input_addresses(wallet,tx.vin[i], tx.vout).then(function (addresses) {
-                        if (addresses && addresses.length) {
-                            obj.is_unique(arr_vin, addresses[0].hash).then(function (unique, index) {
-                                if (unique == true) {
-                                    obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
-                                        arr_vin.push({addresses: addresses[0].hash, amount: amount_sat});
-                                        if (i === tx.vin.length - 1) {
-                                            resolve(arr_vin)
-                                        }
-                                    });
-                                } else {
-                                    obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
-                                        arr_vin[index].amount = arr_vin[index].amount + amount_sat;
-                                        if (i === tx.vin.length - 1) {
-                                            resolve(arr_vin)
-                                        }
-                                    });
-                                }
-                            }).catch(function (err) {
-                                console.log('is_unique', err);
-                            })
+
+            function prepare(i) {
+                obj.get_input_addresses(wallet,tx.vin[i], tx.vout).then(function (addresses) {
+                    if (addresses && addresses.length) {
+                        obj.is_unique(arr_vin, addresses[0].hash).then(function (unique, index) {
+                            if (unique == true) {
+                                obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
+                                    arr_vin.push({addresses: addresses[0].hash, amount: amount_sat});
+                                    if (i === tx.vin.length - 1) {
+                                        resolve(arr_vin)
+                                    } else {
+                                        prepare(++i);
+                                    }
+                                });
+                            } else {
+                                obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
+                                    arr_vin[index].amount = arr_vin[index].amount + amount_sat;
+                                    if (i === tx.vin.length - 1) {
+                                        resolve(arr_vin)
+                                    } else {
+                                        prepare(++i);
+                                    }
+                                });
+                            }
+                        }).catch(function (err) {
+                            console.log('is_unique', err);
+                        })
+                    } else {
+                        if (i === tx.vin.length - 1) {
+                            resolve(arr_vin)
+                        } else {
+                            prepare(++i);
                         }
-                    }).catch(function(err) {
-                        console.log('prepare_vin', err);
-                    })
-                })(i)
+                    }
+                }).catch(function(err) {
+                    console.log('prepare_vin', err);
+                })
+            }
+            if(tx.vin.length) {
+                prepare(0);
             }
         });
         return promise;

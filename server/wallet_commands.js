@@ -66,6 +66,8 @@ var startWallet = function(wallet) {
         if(!settings[wallet]) {
             reject('this wallet do not exist in our system');
         }
+
+        // -txindex
         var wallet_daemon = settings[wallet]['daemon'];
         var start_wallet_command = settings[wallet]['commands']['startwallet'];
         var proc = spawn(wallet_daemon, [start_wallet_command], { execFileOpts, options }, function done(err, stdout, stderr) {
@@ -675,7 +677,8 @@ var getRawTransaction = function(wallet, txid) {
         });
         proc.on('close', function(code, signal) {
             if(results) {
-                resolve(results);
+                var tx = JSON.parse(results);
+                resolve(tx);
             } else {
                 reject('empty');
             }
@@ -1759,6 +1762,8 @@ module.exports.setForceStop = setForceStop;
 //  (echo y | nohup node /var/www/html/server/sync.js twins reindexclusterlinear)
 
 // ps -ef | grep 'sync.js' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+
+// node /var/www/html/server/sync.js fix reindexclusterlinear | tee temp.log
 
 
 

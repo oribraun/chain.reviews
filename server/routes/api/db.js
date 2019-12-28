@@ -3,6 +3,7 @@ var router = express.Router();
 
 const db = require('./../../database/db');
 const settings = require('./../../wallets/all_settings');
+const wallet_commands = require('../../wallet_commands');
 
 var TxController = require('./../../database/controllers/tx_controller');
 var AddressController = require('./../../database/controllers/address_controller');
@@ -141,7 +142,6 @@ router.get('/getBlockCount', (req, res) => {
 router.get('/getLatestBlockIndex', (req, res) => {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
         console.log('latestTx', latestTx);
-        console.log('settings[wallet].coin', settings[wallet].coin);
         if(latestTx.length) {
             res.json(latestTx[0].blockindex);
         } else {
@@ -160,6 +160,62 @@ router.get('/getBlockByHash/:hash', (req, res) => {
     TxController.getTxBlockByHash(req.params['hash'],function(result) {
         res.send(JSON.stringify(result, null, 2));
     })
+});
+
+router.get('/getBlockWithTxsByHash/:hash', (req, res) => {
+    wallet_commands.getBlock(res.locals.wallet, req.params['hash']).then(function(result) {
+        if(result) {
+            result = JSON.parse(result);
+            if(result.tx && result.tx.length) {
+                var txs = [];
+                function getTx(i) {
+                    TxController.getTxBlockByTxid(result.tx[i],function(tx) {
+                        txs.push(tx);
+                        if(i < result.tx.length) {
+                            getTx(++i);
+                        } else {
+                            res.send(JSON.stringify({
+                                block: result,
+                                txs: txs
+                            }, null, 2));
+                        }
+                    })
+                }
+                getTx(0);
+            } else {
+                res.send(JSON.stringify(result, null, 2));
+            }
+        } else {
+            res.send('block not found');
+        }
+    }).catch(function(err) {
+
+    })
+    // TxController.getTxBlockByHash(req.params['hash'],function(result) {
+    //     if(result) {
+    //         if(result.txs && result.txs.length) {
+    //             var txs = [];
+    //             function getTx(i) {
+    //                 TxController.getTxBlockByTxid(result.txs[i],function(tx) {
+    //                     txs.push(tx);
+    //                     if(i < result.txs.length) {
+    //                         getTx(++i);
+    //                     } else {
+    //                         res.send(JSON.stringify({
+    //                             block: result,
+    //                             txs: txs
+    //                         }, null, 2));
+    //                     }
+    //                 })
+    //             }
+    //             getTx(0);
+    //         } else {
+    //             res.send(JSON.stringify(result, null, 2));
+    //         }
+    //     } else {
+    //         res.send('block not found');
+    //     }
+    // })
 });
 
 router.get('/getBlockHash/:number', (req, res) => {

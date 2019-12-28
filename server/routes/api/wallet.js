@@ -51,7 +51,8 @@ router.get('/getMasternodeCount', (req, res) => {
 router.get('/getRawTransaction/:txid', (req, res) => {
     wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function(results) {
         // console.log('masternodes', masternodes);
-        res.send(JSON.stringify(JSON.parse(results), null, 2));
+        // res.send(results);
+        res.send(JSON.stringify(results, null, 2));
         // res.json(results);
     }).catch(function(err) {
         res.send(err);
@@ -60,8 +61,7 @@ router.get('/getRawTransaction/:txid', (req, res) => {
 router.get('/getRawTransactionFull/:txid', (req, res) => {
     wallet_commands.getRawTransactionFull(res.locals.wallet, req.params['txid']).then(function(results) {
         // console.log('masternodes', masternodes);
-        res.header("Content-Type",'application/json');
-        res.send(JSON.stringify(results.tx, null, 2));
+        res.send(JSON.stringify(results, null, 2));
         // res.json(results);
     }).catch(function(err) {
         res.send(err);
