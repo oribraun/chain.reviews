@@ -138,6 +138,18 @@ router.get('/getBlockCount', (req, res) => {
     })
 });
 
+router.get('/getLatestBlockIndex', (req, res) => {
+    TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
+        console.log('latestTx', latestTx);
+        console.log('settings[wallet].coin', settings[wallet].coin);
+        if(latestTx.length) {
+            res.json(latestTx[0].blockindex);
+        } else {
+            res.json("no transactions in database");
+        }
+    })
+});
+
 router.get('/getBlockByTxid/:txid', (req, res) => {
     TxController.getTxBlockByTxid(req.params['txid'],function(result) {
         res.send(JSON.stringify(result, null, 2));
