@@ -1449,7 +1449,7 @@ if (wallet) {
                     // db.connect(settings[wallet].dbSettings);
                     wallet_commands.getBlockCount(wallet).then(function (blockCount) {
                         var current_cluster_id = cluster.worker.id;
-                        var allBlocksCount = 100;
+                        var allBlocksCount = blockCount;
                         var from = cluster.worker.id - 1;
                         var to = allBlocksCount;
                         var txInsertCount = 0;
@@ -1471,7 +1471,7 @@ if (wallet) {
                                             vout: obj.vout,
                                             timestamp: obj.time,
                                             blockhash: obj.blockhash,
-                                            blockindex: obj.blockindex,
+                                            blockindex: current_block.height,
                                         });
                                         // var addreses_to_update = obj.addreses_to_update;
                                         console.log(current_block.height, obj.txid);
