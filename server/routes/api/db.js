@@ -147,6 +147,17 @@ router.get('/getAllAddresses/:limit', (req, res) => {
     })
 })
 
+router.get('/getAddress/:address', (req, res) => {
+    AddressController.getOne(req.params['address'], function(results) {
+        if(results) {
+            res.send(JSON.stringify(results, null, 2));
+        } else {
+            res.send('no address found');
+        }
+        // db.disconnect();
+    })
+})
+
 router.get('/getBlockCount', (req, res) => {
     TxController.count(function(count) {
         res.json(count);
