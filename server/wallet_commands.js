@@ -1542,13 +1542,13 @@ var getAllBlocksClusterLiner = function(wallet, from, to, jump, callback) {
         function getBlocksHash(index) {
             getBlockHash(wallet, index).then(function (hash) {
                 callback(index, hash);
-                if (index + jump > to) {
+                if (index > to) {
                     resolve(helpers.getFinishTime(startTime));
                 } else {
                     // console.log('getBlockHash - ' + index, hash);
                     // blocks.push(hash);
                     index += jump;
-                    if(!forceStop) {
+                    if(!forceStop && index <= to) {
                         getBlocksHash(index)
                     } else {
                         resolve(helpers.getFinishTime(startTime));

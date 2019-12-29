@@ -1,5 +1,5 @@
 const wallet_commands = require('./wallet_commands');
-const TxController = require('./database/controllers/tx_controller');
+var TxController;
 
 var obj = {
     get_input_addresses: function(wallet, vin, vout) {
@@ -44,6 +44,9 @@ var obj = {
         return promise;
     },
     get_input_addresses_db: function(wallet, vin, vout) {
+        if(!TxController) {
+            TxController = require('./database/controllers/tx_controller');
+        }
         var promise = new Promise(function(resolve, reject) {
             var addresses = [];
             if (vin.coinbase) {
