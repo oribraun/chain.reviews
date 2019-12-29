@@ -153,6 +153,12 @@ router.get('/getBlockCount', (req, res) => {
     })
 });
 
+router.get('/getTxVinVoutCount', (req, res) => {
+    TxVinVoutController.count(function(count) {
+        res.json(count);
+    })
+});
+
 router.get('/getLatestBlockIndex', (req, res) => {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
         console.log('latestTx', latestTx);

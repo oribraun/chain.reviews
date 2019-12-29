@@ -67,7 +67,7 @@ var db = {
 
             }
             isConnected = true;
-            console.log('Successfully connected to ' + wallet);
+            // console.log('Successfully connected to ' + wallet);
             // return cb();
         });
         const conn = mongoose.connection;
@@ -76,7 +76,7 @@ var db = {
             console.log("> error occurred from the database");
         });
         conn.once("open", () => {
-            console.log("> successfully opened the database");
+            console.log("> successfully opened the database " + wallet);
         });
     },
     disconnect: function() {

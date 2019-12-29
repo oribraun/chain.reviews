@@ -1765,6 +1765,8 @@ module.exports.setForceStop = setForceStop;
 
 // node /var/www/html/server/sync.js fix reindexclusterlinear | tee temp.log
 
+//  node --max_old_space_size=4096 /var/www/html/server/sync.js fix calcvinvoutclusterlinear2
+
 
 
 
