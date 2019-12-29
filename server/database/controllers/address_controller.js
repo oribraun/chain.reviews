@@ -167,6 +167,108 @@ function updateAddress(hash, txid, amount, type, cb) {
     });
 }
 
+function bulkUpdateAddress(hash, txid, amount, type, cb) {
+    // Check if address exists
+    getOne(hash, function(address) {
+        if (address) {
+            // if coinbase (new coins PoW), update sent only and return cb.
+            if ( hash == 'coinbase' ) {
+                address.sent = address.sent + amount
+                address.balance = 0;
+                console.log('exist coinbase', address.sent)
+                address.save(function(err) {
+                    if (err) {
+                        return cb(err);
+                    } else {
+                        //console.log('txid: ');
+                        return cb();
+                    }
+                })
+            } else {
+                // ensure tx doesnt already exist in address.txs
+                helpers.is_unique(address.txs, txid).then(function(unique, index){
+                    var tx_array = address.txs;
+                    var received = address.received;
+                    var sent = address.sent;
+                    if (type == 'vin') {
+                        sent = sent + amount;
+                    } else {
+                        received = received + amount;
+                    }
+                    if (unique == true) {
+                        tx_array.push({addresses: txid, type: type});
+                        // if ( tx_array.length > settings.txcount ) {
+                        //   tx_array.shift();
+                        // }
+                        Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
+                            txs: tx_array,
+                            received: received,
+                            sent: sent,
+                            balance: received - sent
+                        }, function() {
+                            return cb();
+                        });
+                    } else {
+                        if (type == tx_array[index].type) {
+                            return cb(); //duplicate
+                        } else {
+                            Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
+                                txs: tx_array,
+                                received: received,
+                                sent: sent,
+                                balance: received - sent
+                            }, function() {
+                                return cb();
+                            });
+                        }
+                    }
+                })
+            }
+        } else {
+            //new address
+            if (type == 'vin') {
+                console.log('new vin', amount);
+                try {
+                    var newAddress = new Address[db.getCurrentConnection()]({
+                        a_id: hash,
+                        txs: [{addresses: txid, type: 'vin'}],
+                        sent: amount,
+                        balance: amount,
+                    });
+                } catch(e) {
+                    // TODO bulk update
+                    console.log(e);
+                    // bulkUpdateAddress(hash, txid, amount, type, cb);
+                }
+            } else {
+                console.log('new vout', amount);
+                try {
+                    var newAddress = new Address[db.getCurrentConnection()]({
+                        a_id: hash,
+                        txs: [{addresses: txid, type: 'vout'}],
+                        received: amount,
+                        balance: amount,
+                    });
+                } catch(e) {
+                    // TODO bulk update
+                    console.log(e);
+                    // bulkUpdateAddress(hash, txid, amount, type, cb);
+                }
+            }
+
+            newAddress.save(function(err) {
+                if (err) {
+                    return cb(err);
+                } else {
+                    //console.log('address saved: %s', hash);
+                    //console.log(newAddress);
+                    return cb();
+                }
+            });
+        }
+    });
+}
+
 function getRichlist(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
