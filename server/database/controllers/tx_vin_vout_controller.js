@@ -1,10 +1,10 @@
-var Tx = require('../models/tx');
+var TxVinVout = require('../models/txVinVout');
 var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Tx[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -16,7 +16,7 @@ function getAll(sortBy, order, limit, cb) {
 function getAll1(sortBy, order, limit, offset, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Tx[db.getCurrentConnection()].find({}).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].find({}).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -26,7 +26,7 @@ function getAll1(sortBy, order, limit, offset, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Tx[db.getCurrentConnection()].findOne({txid: obj.txid}, function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].findOne({txid: obj.txid}, function(err, tx) {
         if(err) {
             return cb(err);
         }
@@ -35,9 +35,7 @@ function updateOne(obj, cb) { // update or create
             // tx.txid = obj.txid;
             tx.vin = obj.vin;
             tx.vout = obj.vout;
-            // tx.total = obj.total.toFixed(8);
-            tx.timestamp = obj.timestamp;
-            tx.blockhash = obj.blockhash;
+            tx.total = obj.total.toFixed(8);
             tx.blockindex = obj.blockindex;
             tx.save(function(err) {
                 if (err) {
@@ -47,32 +45,16 @@ function updateOne(obj, cb) { // update or create
                     return cb();
                 }
             })
-            // Tx.replaceOne({ _id: tx._id}, {
-            //     vin: obj.vin,
-            //     vout: obj.vout,
-            //     total: obj.total.toFixed(8),
-            //     timestamp: tx.time,
-            //     blockhash: tx.blockhash,
-            //     blockindex: tx.height,
-            // }, function (err, tx) {
-            //     if (err) {
-            //         return cb(err);
-            //     } else {
-            //         return cb();
-            //     }
-            // });
         } else { // create new
             // console.log('new')
-            var newTx = new Tx[db.getCurrentConnection()]({
+            var newTxVinVout = new TxVinVout[db.getCurrentConnection()]({
                 txid: obj.txid,
                 vin: obj.vin,
                 vout: obj.vout,
-                // total: obj.total.toFixed(8),
-                timestamp: obj.timestamp,
-                blockhash: obj.blockhash,
+                total: obj.total.toFixed(8),
                 blockindex: obj.blockindex,
             });
-            newTx.save(function(err) {
+            newTxVinVout.save(function(err) {
                 if (err) {
                     return cb(err);
                 } else {
@@ -85,7 +67,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(blockindex, cb) {
-    Tx[db.getCurrentConnection()].findOne({blockindex: blockindex}, function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].findOne({blockindex: blockindex}, function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -95,7 +77,7 @@ function getOne(blockindex, cb) {
 }
 
 function deleteOne(txid, cb) {
-    Tx[db.getCurrentConnection()].deleteOne({txid: txid}, function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].deleteOne({txid: txid}, function(err, tx) {
         if(tx) {
             return cb();
         } else {
@@ -105,23 +87,13 @@ function deleteOne(txid, cb) {
 }
 
 function deleteAll(cb) {
-    Tx[db.getCurrentConnection()].deleteMany({},function(err, numberRemoved){
+    TxVinVout[db.getCurrentConnection()].deleteMany({},function(err, numberRemoved){
         return cb(numberRemoved)
     })
 }
 
 function getTxBlockByTxid(txid, cb) {
-    Tx[db.getCurrentConnection()].findOne({txid: txid}, function(err, tx) {
-        if(tx) {
-            return cb(tx);
-        } else {
-            return cb(null);
-        }
-    });
-}
-
-function getTxBlockByHash(blockhash, cb) {
-    Tx[db.getCurrentConnection()].findOne({blockhash: blockhash}, function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].findOne({txid: txid}, function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -131,7 +103,7 @@ function getTxBlockByHash(blockhash, cb) {
 }
 
 function update(coin, options, cb) {
-    Tx[db.getCurrentConnection()].updateOne({coin: coin}, options, function(err) {
+    TxVinVout[db.getCurrentConnection()].updateOne({coin: coin}, options, function(err) {
         if(err) {
             return cb(err);
         }
@@ -140,7 +112,7 @@ function update(coin, options, cb) {
 }
 
 function count(cb) {
-    Tx[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+    TxVinVout[db.getCurrentConnection()].countDocuments({}, function (err, count) {
        if(err) {
            cb()
        } else {
@@ -150,7 +122,7 @@ function count(cb) {
 }
 
 function countByBlockIndex(cb) {
-    Tx[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+    TxVinVout[db.getCurrentConnection()].countDocuments({}, function (err, count) {
         if(err) {
             cb()
         } else {
@@ -166,7 +138,6 @@ module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.getTxBlockByTxid = getTxBlockByTxid;
-module.exports.getTxBlockByHash = getTxBlockByHash;
 module.exports.update = update;
 module.exports.count = count;
 module.exports.countByBlockIndex = countByBlockIndex;
