@@ -110,6 +110,12 @@ function deleteAll(cb) {
     })
 }
 
+function deleteAllWhereGte(blockindex, cb) {
+    Tx[db.getCurrentConnection()].deleteMany({blockindex: { $gte: blockindex }}, function(err, numberRemoved){
+        return cb(numberRemoved)
+    })
+}
+
 function getTxBlockByTxid(txid, cb) {
     Tx[db.getCurrentConnection()].findOne({txid: txid}, function(err, tx) {
         if(tx) {
@@ -165,6 +171,7 @@ module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
+module.exports.deleteAllWhereGte = deleteAllWhereGte;
 module.exports.getTxBlockByTxid = getTxBlockByTxid;
 module.exports.getTxBlockByHash = getTxBlockByHash;
 module.exports.update = update;
