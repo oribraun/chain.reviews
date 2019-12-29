@@ -1358,7 +1358,7 @@ if (wallet) {
                 startReIndexClusterLiner();
             }
             break;
-        case 'reindexclusterlinear2': // 0:33:23.548
+        case 'reindexclusterlinear2': // 0:45:35.393
             if (cluster.isMaster) {
                 var startTime = new Date();
                 console.log(`Master ${process.pid} is running`);
@@ -1449,7 +1449,7 @@ if (wallet) {
                     // db.connect(settings[wallet].dbSettings);
                     wallet_commands.getBlockCount(wallet).then(function (blockCount) {
                         var current_cluster_id = cluster.worker.id;
-                        var allBlocksCount = blockCount;
+                        var allBlocksCount = 100;
                         var from = cluster.worker.id - 1;
                         var to = allBlocksCount;
                         var txInsertCount = 0;
@@ -1471,7 +1471,7 @@ if (wallet) {
                                             vout: obj.vout,
                                             timestamp: obj.time,
                                             blockhash: obj.blockhash,
-                                            blockindex: current_block.height,
+                                            blockindex: obj.blockindex,
                                         });
                                         // var addreses_to_update = obj.addreses_to_update;
                                         console.log(current_block.height, obj.txid);
@@ -1616,7 +1616,7 @@ if (wallet) {
                                                 if(err) {
                                                     console.log('err', err);
                                                 }
-
+                                                console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
                                             })
                                             if(index < results.length - 1) {
                                                 checkVinVout(++index);

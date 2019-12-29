@@ -6,6 +6,7 @@ const settings = require('./../../wallets/all_settings');
 const wallet_commands = require('../../wallet_commands');
 
 var TxController = require('./../../database/controllers/tx_controller');
+var TxVinVoutController = require('./../../database/controllers/tx_vin_vout_controller');
 var AddressController = require('./../../database/controllers/address_controller');
 var StatsController = require('./../../database/controllers/stats_controller');
 var RichlistController = require('./../../database/controllers/richlist_controller');
@@ -27,6 +28,19 @@ router.get('/getAllTx/:limit', (req, res) => {
         return;
     }
     TxController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
+        res.send(JSON.stringify(results, null, 2));
+    })
+});
+router.get('/getAllTxVinVout/:limit', (req, res) => {
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
+    if(isNaN(parseInt(req.params['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    TxVinVoutController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
         res.send(JSON.stringify(results, null, 2));
     })
 });
