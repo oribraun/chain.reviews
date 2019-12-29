@@ -1395,7 +1395,7 @@ if (wallet) {
                                             blockhash: obj.blockhash,
                                             blockindex: current_block.height,
                                         });
-                                        helpers.prepare_vin_db(wallet, tx).then(function (vin) {
+                                        helpers.prepare_vin(wallet, tx).then(function (vin) {
                                             helpers.prepare_vout(tx.vout, tx.txid, vin).then(function (obj) {
                                                 helpers.calculate_total(obj.vout).then(function (total) {
                                                     // console.log('results.length', results.length);
