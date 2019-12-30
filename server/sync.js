@@ -1250,6 +1250,38 @@ if (wallet) {
             } else {
                 // Workers can share any TCP connection
                 // In this case it is an HTTP server
+                var addresses = [];
+                var updateInProgress = false;
+                var startedCluster = false;
+                var startUpdatingAddresses = function(addresses1) {
+                    if (!updateInProgress) {
+                        addresses = addresses.concat(addresses1);
+                        updateInProgress = true;
+                        updateAddress()
+                    } else {
+                        addresses = addresses.concat(addresses1);
+                    }
+
+                }
+                var updateAddress = function() {
+                    AddressController.updateAddress(addresses[0].address, addresses[0].txid, addresses[0].amount, addresses[0].type, function (err) {
+                        console.log('address updated - ', addresses[0].address);
+                        if (err) {
+                            // console.log('address err', err)
+                            // console.log('address repeat', addresses[0].address)
+                        } else {
+                            addresses.shift();
+                        }
+                        if (addresses.length) {
+                            updateAddress(addresses)
+                        } else {
+                            updateInProgress = false;
+                            if (!updateInProgress && !startedCluster) {
+                                endUpdateAddressesClusterLiner();
+                            }
+                        }
+                    })
+                }
                 var startUpdateAddressesClusterLiner = function() {
                     // db.connect(settings[wallet].dbSettings);
                     TxVinVoutController.count(function(allBlocksCount) {
@@ -1268,15 +1300,12 @@ if (wallet) {
                         console.log('offset', offset);
                         console.log('limit', limit);
                         // return;
-                        var addressCount = 0;
-                        var addressUpdated = 0;
-                        var count = 0;
+                        startedCluster = true;
                         TxVinVoutController.getAll1('blockindex', 'asc', limit, offset, function(results) {
                             console.log('results.length', results.length)
                             // var totalAddresses = 0;
                             // var updatedAddresses = 0;
                             var UpdateAddresses = function(index) {
-                                count++
                                 var txVinVout = results[index];
                                 // totalAddresses += txVinVout.vin.length;
                                 // totalAddresses += txVinVout.vout.length;
@@ -1294,29 +1323,8 @@ if (wallet) {
                                     // addreses_to_update.push({address: obj.vout[i].addresses, txid: txid, amount: obj.vout[i].amount, type: 'vout'})
                                     // update_address(vout[t].addresses, txid, vout[t].amount, 'vout')
                                 }
-                                addressCount += addreses_to_update.length;
-                                var updateAddress = function(addresses) {
-                                    AddressController.updateAddress(addresses[0].address, addresses[0].txid, addresses[0].amount, addresses[0].type, function (err) {
-                                        console.log('address updated - ', addresses[0].address);
-                                        if (err) {
-                                            // console.log('address err', err)
-                                            // console.log('address repeat', addresses[0].address)
-                                        } else {
-                                            addressUpdated++;
-                                            addresses.shift();
-                                        }
-                                        if (addresses.length) {
-                                            updateAddress(addresses)
-                                        } else {
-                                            if (addressCount === addressUpdated) {
-                                                console.log('addressUpdated', addressUpdated)
-                                                endUpdateAddressesClusterLiner();
-                                            }
-                                        }
-                                    })
-                                }
                                 if(addreses_to_update.length) {
-                                    updateAddress(addreses_to_update)
+                                    startUpdatingAddresses(addreses_to_update)
                                 }
                                 // if(addreses_to_update.length) {
                                 //     cluster.worker.send({addreses_to_update: addreses_to_update});
@@ -1328,9 +1336,8 @@ if (wallet) {
                                         UpdateAddresses(index);
                                     })
                                 } else {
-                                    console.log('count', count)
-                                    if (addressCount === addressUpdated) {
-                                        console.log('addressUpdated', addressUpdated)
+                                    startedCluster = false;
+                                    if (!updateInProgress && !startedCluster) {
                                         endUpdateAddressesClusterLiner();
                                     }
                                 }
@@ -1338,8 +1345,8 @@ if (wallet) {
                             if(results.length) {
                                 UpdateAddresses(0);
                             } else {
-                                if (addressCount === addressUpdated) {
-                                    console.log('addressUpdated', addressUpdated)
+                                startedCluster = false;
+                                if (!updateInProgress && !startedCluster) {
                                     endUpdateAddressesClusterLiner();
                                 }
                             }
