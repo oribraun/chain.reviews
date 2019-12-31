@@ -8,7 +8,7 @@ var AddressSchema = new Schema({
   received: { type: Number, default: 0 },
   sent: { type: Number, default: 0 },
   balance: {type: Number, default: 0},
-}, {id: false});
+}, {id: false, timestamps: true});
 
 var connections = db.getConnections();
 var obj = {};

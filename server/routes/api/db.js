@@ -11,13 +11,27 @@ var AddressController = require('./../../database/controllers/address_controller
 var StatsController = require('./../../database/controllers/stats_controller');
 var RichlistController = require('./../../database/controllers/richlist_controller');
 var MasternodeController = require('./../../database/controllers/masternode_controller');
+var PeersController = require('./../../database/controllers/peers_controller');
 
 var wallet = process.argv[2];
 
 // router.get('/', (req, res) => {
 //     res.json({item: res.locals.wallet + ' db api'});
 // });
-
+//
+// router.get('/getAllBlocks/:limit', (req, res) => {
+//     // if(!db.isConnected()) {
+//     //     res.send('no database connected');
+//     //     return;
+//     // }
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     TxController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
+//         res.send(JSON.stringify(results, null, 2));
+//     })
+// });
 router.get('/getAllTx/:limit', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
@@ -44,20 +58,25 @@ router.get('/getAllTxVinVout/:limit', (req, res) => {
         res.send(JSON.stringify(results, null, 2));
     })
 });
-
-// router.get('/getAllStats/:limit', (req, res) => {
-//     // if(!db.isConnected()) {
-//     //     res.send('no database connected');
-//     //     return;
-//     // }
-//     if(isNaN(parseInt(req.params['limit']))) {
-//         res.send('limit value have to be number');
-//         return;
-//     }
-//     StatsController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
-//         res.send(results);
-//     })
-// })
+router.get('/getAllTxVinVoutByCreated/:limit/:offset', (req, res) => {
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
+    if(isNaN(parseInt(req.params['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    TxVinVoutController.getAll1('_id', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
+        var new_results = [];
+        for (var i in results) {
+            var c_r = JSON.parse(JSON.stringify(results[i]));
+            c_r.time = results[i]._id.getTimestamp().toString().replace('T', ' ').replace('Z', ' ');
+            new_results.push(c_r);
+        }
+        res.send(JSON.stringify(new_results, null, 2));
+    })
+});
 
 router.get('/getStats/:coin', (req, res) => {
     // if(!db.isConnected()) {
@@ -69,7 +88,7 @@ router.get('/getStats/:coin', (req, res) => {
     })
 })
 
-router.get('/getAllRichlist/:limit', (req, res) => {
+router.get('/getAllAddresses/:limit', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
     //     return;
@@ -78,8 +97,10 @@ router.get('/getAllRichlist/:limit', (req, res) => {
         res.send('limit value have to be number');
         return;
     }
-    RichlistController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
+    // db.connect(settings[req.params['wallet']].dbSettings);
+    AddressController.getAll('updatedAt', 'desc', parseInt(req.params['limit']), function(results) {
         res.send(JSON.stringify(results, null, 2));
+        // db.disconnect();
     })
 })
 
@@ -92,6 +113,30 @@ router.get('/getAllAddressByBalance', (req, res) => {
 router.get('/getAllAddressByReceived', (req, res) => {
     AddressController.getRichlist('received', 'desc', 0, function(results) {
         res.send(JSON.stringify(results, null, 2));
+    })
+})
+
+router.get('/getAddress/:address/:limitTx?', (req, res) => {
+    AddressController.getOne(req.params['address'], function(address) {
+        if(address) {
+            var txs = [];
+            var hashes = address.txs.reverse();
+            var limitTx = req.params['limitTx'];
+            if (!limitTx || address.txs.length < limitTx) {
+                limitTx = address.txs.length;
+            }
+            for(var i = 0; i < limitTx; i++) {
+                TxController.getTxBlockByTxid(hashes[i].addresses, function(tx) {
+                    if (tx) {
+                        txs.push(tx);
+                    }
+                });
+            }
+            res.send(JSON.stringify({address: address, txs: txs}, null, 2));
+        } else {
+            res.send('no address found');
+        }
+        // db.disconnect();
     })
 })
 
@@ -131,32 +176,6 @@ router.get('/getRichlistReceived', (req, res) => {
     })
 })
 
-router.get('/getAllAddresses/:limit', (req, res) => {
-    // if(!db.isConnected()) {
-    //     res.send('no database connected');
-    //     return;
-    // }
-    if(isNaN(parseInt(req.params['limit']))) {
-        res.send('limit value have to be number');
-        return;
-    }
-    // db.connect(settings[req.params['wallet']].dbSettings);
-    AddressController.getAll('coin', 'desc', parseInt(req.params['limit']), function(results) {
-        res.send(JSON.stringify(results, null, 2));
-        // db.disconnect();
-    })
-})
-
-router.get('/getAddress/:address', (req, res) => {
-    AddressController.getOne(req.params['address'], function(results) {
-        if(results) {
-            res.send(JSON.stringify(results, null, 2));
-        } else {
-            res.send('no address found');
-        }
-        // db.disconnect();
-    })
-})
 
 router.get('/getBlockCount', (req, res) => {
     TxController.count(function(count) {
@@ -166,6 +185,12 @@ router.get('/getBlockCount', (req, res) => {
 
 router.get('/getTxVinVoutCount', (req, res) => {
     TxVinVoutController.count(function(count) {
+        res.json(count);
+    })
+});
+
+router.get('/getAddressesCount', (req, res) => {
+    AddressController.count(function(count) {
         res.json(count);
     })
 });
@@ -274,10 +299,22 @@ router.get('/listMasternodes/:limit', (req, res) => {
         // db.disconnect();
     })
 })
+
 router.get('/getMasternodeCount', (req, res) => {
     MasternodeController.count(function(count) {
         res.json(count);
     })
 });
+
+router.get('/getAllPeers/:limit', (req, res) => {
+    if(isNaN(parseInt(req.params['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    PeersController.getAll('lastactivity', 'desc', parseInt(req.params['limit']), function(results) {
+        res.send(JSON.stringify(results, null, 2));
+        // db.disconnect();
+    })
+})
 
 module.exports = router;

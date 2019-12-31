@@ -8,7 +8,8 @@ var TxVinVoutSchema = new Schema({
   vout: { type: Array, default: [] },
   total: { type: Number, default: 0 },
   blockindex: {type: Number, default: 0, index: true},
-}, {id: false});
+// }, {id: false, timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }});
+}, {id: false, timestamps: true });
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {

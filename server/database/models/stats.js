@@ -12,7 +12,7 @@ var StatsSchema = new Schema({
   //last_txs: { type: Array, default: [] },
   connections: { type: Number, default: 0 },
   last_price: { type: Number, default: 0 },
-});
+}, {timestamps: true});
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {

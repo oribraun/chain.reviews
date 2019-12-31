@@ -13,6 +13,7 @@ var obj = {
                 addresses.push({hash: 'coinbase', amount: amount});
                 resolve(addresses);
             } else {
+                console.log('getting vin tx');
                 wallet_commands.getRawTransaction(wallet, vin.txid).then(function(tx){
                     if (tx && tx.vout) {
                         var loop = true;
@@ -68,8 +69,9 @@ var obj = {
             var i = map.indexOf(object);
             if(i > -1) {
                 index = i;
+                unique = false;
             }
-            resolve(unique, index);
+            resolve({unique: unique, index: index});
         });
         return promise;
     },
@@ -80,8 +82,8 @@ var obj = {
             function prepare(i) {
                 obj.get_input_addresses(wallet,tx.vin[i], tx.vout).then(function (addresses) {
                     if (addresses && addresses.length) {
-                        obj.is_unique(arr_vin, addresses[0].hash).then(function (unique, index) {
-                            if (unique == true) {
+                        obj.is_unique(arr_vin, addresses[0].hash).then(function (obj1) {
+                            if (obj1.unique == true) {
                                 obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
                                     arr_vin.push({addresses: addresses[0].hash, amount: amount_sat});
                                     if (i === tx.vin.length - 1) {
@@ -92,7 +94,7 @@ var obj = {
                                 });
                             } else {
                                 obj.convert_to_satoshi(parseFloat(addresses[0].amount)).then(function (amount_sat) {
-                                    arr_vin[index].amount = arr_vin[index].amount + amount_sat;
+                                    arr_vin[obj1.index].amount = arr_vin[obj1.index].amount + amount_sat;
                                     if (i === tx.vin.length - 1) {
                                         resolve(arr_vin)
                                     } else {
@@ -116,6 +118,8 @@ var obj = {
             }
             if(tx.vin.length) {
                 prepare(0);
+            } else {
+                resolve(arr_vin)
             }
         });
         return promise;
@@ -131,8 +135,8 @@ var obj = {
             var i = 0;
             function prepare(i) {
                 if (vout[i].scriptPubKey.type != 'nonstandard' && vout[i].scriptPubKey.type != 'nulldata' && vout[i].scriptPubKey.addresses && vout[i].scriptPubKey.addresses.length) {
-                    obj.is_unique(arr_vout, vout[i].scriptPubKey.addresses[0]).then(function (unique, index) {
-                        if (unique == true) {
+                    obj.is_unique(arr_vout, vout[i].scriptPubKey.addresses[0]).then(function (obj1) {
+                        if (obj1.unique == true) {
                             // unique vout
                             obj.convert_to_satoshi(parseFloat(vout[i].value)).then(function (amount_sat) {
                                 arr_vout.push({addresses: vout[i].scriptPubKey.addresses[0], amount: amount_sat});
@@ -145,7 +149,7 @@ var obj = {
                         } else {
                             // already exists
                             obj.convert_to_satoshi(parseFloat(vout[i].value)).then(function (amount_sat) {
-                                arr_vout[index].amount = arr_vout[index].amount + amount_sat;
+                                arr_vout[obj1.index].amount = arr_vout[obj1.index].amount + amount_sat;
                                 if(i === vout.length - 1) {
                                     cont();
                                 } else {
@@ -166,8 +170,8 @@ var obj = {
             // for (var i = 0; i < vout.length; i++) {
             //     (function(i) {
             //         if (vout[i].scriptPubKey.type != 'nonstandard' && vout[i].scriptPubKey.type != 'nulldata' && vout[i].scriptPubKey.addresses && vout[i].scriptPubKey.addresses.length) {
-            //                 obj.is_unique(arr_vout, vout[i].scriptPubKey.addresses[0]).then(function (unique, index) {
-            //                     if (unique == true) {
+            //                 obj.is_unique(arr_vout, vout[i].scriptPubKey.addresses[0]).then(function (obj1) {
+            //                     if (obj1.unique == true) {
             //                         // unique vout
             //                         obj.convert_to_satoshi(parseFloat(vout[i].value)).then(function (amount_sat) {
             //                             arr_vout.push({addresses: vout[i].scriptPubKey.addresses[0], amount: amount_sat});
@@ -178,7 +182,7 @@ var obj = {
             //                     } else {
             //                         // already exists
             //                         obj.convert_to_satoshi(parseFloat(vout[i].value)).then(function (amount_sat) {
-            //                             arr_vout[index].amount = arr_vout[index].amount + amount_sat;
+            //                             arr_vout[obj1.index].amount = arr_vout[obj1.index].amount + amount_sat;
             //                             if(i === vout.length - 1) {
             //                                 cont();
             //                             }

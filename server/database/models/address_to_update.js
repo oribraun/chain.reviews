@@ -9,7 +9,7 @@ var AddressToUpdateSchema = new Schema({
   amount: { type: Number, default: 0 },
   type: { type: String, default: '' },
   blockindex: {type: Number, default: 0},
-}, {id: false});
+}, {id: false, timestamps: true});
 
 var connections = db.getConnections();
 var obj = {};

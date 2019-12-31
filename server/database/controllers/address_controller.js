@@ -85,7 +85,7 @@ function updateAddress(hash, txid, amount, type, cb) {
             if ( hash == 'coinbase' ) {
                 address.sent = address.sent + amount
                 address.balance = 0;
-                console.log('exist coinbase', address.sent)
+                // console.log('exist coinbase', address.sent)
                 address.save(function(err) {
                     if (err) {
                         return cb(err);
@@ -96,7 +96,7 @@ function updateAddress(hash, txid, amount, type, cb) {
                 })
             } else {
                 // ensure tx doesnt already exist in address.txs
-                helpers.is_unique(address.txs, txid).then(function(unique, index){
+                helpers.is_unique(address.txs, txid).then(function(obj){
                     var tx_array = address.txs;
                     var received = address.received;
                     var sent = address.sent;
@@ -105,7 +105,7 @@ function updateAddress(hash, txid, amount, type, cb) {
                     } else {
                         received = received + amount;
                     }
-                    if (unique == true) {
+                    if (obj.unique == true) {
                         tx_array.push({addresses: txid, type: type});
                         // if ( tx_array.length > settings.txcount ) {
                         //   tx_array.shift();
@@ -119,7 +119,7 @@ function updateAddress(hash, txid, amount, type, cb) {
                             return cb();
                         });
                     } else {
-                        if (type == tx_array[index].type) {
+                        if (type == tx_array[obj.index].type) {
                             return cb(); //duplicate
                         } else {
                             Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
@@ -137,7 +137,7 @@ function updateAddress(hash, txid, amount, type, cb) {
         } else {
             //new address
             if (type == 'vin') {
-                console.log('new vin', amount);
+                // console.log('new vin', amount);
                 var newAddress = new Address[db.getCurrentConnection()]({
                     a_id: hash,
                     txs: [ {addresses: txid, type: 'vin'} ],
@@ -145,7 +145,7 @@ function updateAddress(hash, txid, amount, type, cb) {
                     balance: amount,
                 });
             } else {
-                console.log('new vout', amount);
+                // console.log('new vout', amount);
                 var newAddress = new Address[db.getCurrentConnection()]({
                     a_id: hash,
                     txs: [ {addresses: txid, type: 'vout'} ],
@@ -186,7 +186,7 @@ function bulkUpdateAddress(hash, txid, amount, type, cb) {
                 })
             } else {
                 // ensure tx doesnt already exist in address.txs
-                helpers.is_unique(address.txs, txid).then(function(unique, index){
+                helpers.is_unique(address.txs, txid).then(function(obj){
                     var tx_array = address.txs;
                     var received = address.received;
                     var sent = address.sent;
@@ -195,7 +195,7 @@ function bulkUpdateAddress(hash, txid, amount, type, cb) {
                     } else {
                         received = received + amount;
                     }
-                    if (unique == true) {
+                    if (obj.unique == true) {
                         tx_array.push({addresses: txid, type: type});
                         // if ( tx_array.length > settings.txcount ) {
                         //   tx_array.shift();
@@ -209,7 +209,7 @@ function bulkUpdateAddress(hash, txid, amount, type, cb) {
                             return cb();
                         });
                     } else {
-                        if (type == tx_array[index].type) {
+                        if (type == tx_array[obj.index].type) {
                             return cb(); //duplicate
                         } else {
                             Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
@@ -301,7 +301,7 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
             });
         } else {
             // ensure tx doesnt already exist in address.txs
-            helpers.is_unique(address.txs, txid).then(function(unique, index){
+            helpers.is_unique(address.txs, txid).then(function(obj){
                 var tx_array = address.txs;
                 var received = address.received;
                 var sent = address.sent;
@@ -310,7 +310,7 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
                 } else {
                     received = received + amount;
                 }
-                if (unique == true) {
+                if (obj.unique == true) {
                     tx_array.push({addresses: txid, type: type});
                     // if ( tx_array.length > settings.txcount ) {
                     //   tx_array.shift();
@@ -324,7 +324,7 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
                         return cb();
                     });
                 } else {
-                    if (type == tx_array[index].type) {
+                    if (type == tx_array[obj.index].type) {
                         return cb(); //duplicate
                     } else {
                         Address[db.getCurrentConnection()].updateOne({a_id:hash}, {

@@ -6,7 +6,7 @@ var RichlistSchema = new Schema({
   coin: { type: String },	
   received: { type: Array, default: []},
   balance: { type: Array, default: [] },
-});
+}, {timestamps: true});
 
 var connections = db.getConnections();
 var obj = {};

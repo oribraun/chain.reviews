@@ -7,9 +7,9 @@ var TxSchema = new Schema({
   vin: { type: Array, default: [] },
   vout: { type: Array, default: [] },
   timestamp: { type: Number, default: 0 },
-  blockhash: { type: String },
+  blockhash: { type: String, index: true },
   blockindex: {type: Number, default: 0, index: true},
-}, {id: false});
+}, {id: false, timestamps: true});
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {

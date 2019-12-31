@@ -25,6 +25,18 @@ function getAll1(sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAll2(fields, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    sort[sortBy] = order;
+    Tx[db.getCurrentConnection()].find({}, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb();
+        }
+    });
+}
+
 function updateOne(obj, cb) { // update or create
     Tx[db.getCurrentConnection()].findOne({txid: obj.txid}, function(err, tx) {
         if(err) {
@@ -165,8 +177,39 @@ function countByBlockIndex(cb) {
     });
 }
 
+function getAllBlocks(sortBy, order, limit, cb) {
+    var sort = {};
+    sort[sortBy] = order;
+    Tx[db.getCurrentConnection()].aggregate([
+        // { $limit : limit},
+        // {$limit: limit },
+        {
+            $group:{
+                _id:"$blockhash",
+                blockindex: {"$first": "$blockindex"},
+                timestamp: {"$first": "$timestamp"},
+                vout: {"$first": {$size: "$vout"}},
+                countTxs:{$sum:1}
+            }
+        },
+        {$sort:{blockindex:-1}},
+        {$limit: limit }
+        // {$group:{_id : "$blockindex", "blockhash": { "$first": "$blockhash" }, doc: { "$first": "$$ROOT" }}},
+        // {$group:{_id:"$blockhash",items:{$push:{blockhash:"$blockhash"}}}},
+        // {$project:{items:{$slice:["$items", 2]}}}
+    ]).exec( function(err, tx) {
+        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb();
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
+module.exports.getAll2 = getAll2;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
@@ -177,3 +220,4 @@ module.exports.getTxBlockByHash = getTxBlockByHash;
 module.exports.update = update;
 module.exports.count = count;
 module.exports.countByBlockIndex = countByBlockIndex;
+// module.exports.getAllBlocks = getAllBlocks;

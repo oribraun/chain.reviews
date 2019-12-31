@@ -15,7 +15,7 @@ var MasternodeSchema = new Schema({
   lastseen: {type: Number, default: 0},
   activetime: {type: Number, default: 0},
   lastpaid: {type: Number, default: 0}
-}, {id: false});
+}, {id: false, timestamps: true});
 // console.log('db.getCurrentConnection()', db.getCurrentConnection())
 var connections = db.getConnections();
 var obj = {};
