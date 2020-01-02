@@ -25,6 +25,18 @@ function getAll1(sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAll2(fields, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    sort[sortBy] = order;
+    TxVinVout[db.getCurrentConnection()].find({}, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb();
+        }
+    });
+}
+
 function updateOne(obj, cb) { // update or create
     TxVinVout[db.getCurrentConnection()].findOne({txid: obj.txid}, function(err, tx) {
         if(err) {
@@ -148,3 +160,4 @@ module.exports.getTxBlockByTxid = getTxBlockByTxid;
 module.exports.update = update;
 module.exports.count = count;
 module.exports.countByBlockIndex = countByBlockIndex;
+module.exports.getAll2 = getAll2;

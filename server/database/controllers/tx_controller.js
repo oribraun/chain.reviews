@@ -37,6 +37,18 @@ function getAll2(fields, sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAllJoin(fields, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    sort[sortBy] = order;
+    Tx[db.getCurrentConnection()].find({}, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb();
+        }
+    });
+}
+
 function updateOne(obj, cb) { // update or create
     Tx[db.getCurrentConnection()].findOne({txid: obj.txid}, function(err, tx) {
         if(err) {
@@ -207,6 +219,159 @@ function getAllBlocks(sortBy, order, limit, cb) {
     });
 }
 
+function getBlockHashJoin(txid, cb) {
+    Tx[db.getCurrentConnection()].aggregate([
+        { $match : { txid : txid } },
+        {
+            "$project": {
+                "vout": { "$ifNull" : [ "$vout", [ ] ] },
+                "vin": { "$ifNull" : [ "$vin", [ ] ] },
+                "timestamp": 1,
+                "blockindex": 1,
+                "txid": 1,
+                "blockhash": 1,
+                "createdAt": 1,
+                "updatedAt": 1
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$vin",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$lookup": {
+                "from": Tx[db.getCurrentConnection()].collection.name,
+                "localField": "vin.txid",
+                "foreignField": "txid",
+                // "pipeline":[
+                    // {"$unwind":"$vout"},
+                    // {"$match":{"$expr":{"$eq":["$$vin.vout","$vout.n"]}}}
+                // ],
+                "as": "vin.tx"
+                // where vin.vout = vout[0].n
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$vin.tx",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id",
+                "vout" : { "$first": "$vout" },
+                "vin" : { "$push": { txs: {txid: "$vin.tx.txid", vout: "$vin.tx.vout"}, vout: "$vin.vout", txid: "$vin.txid", blockindex: "$blockindex", coinbase: "coinbase", sequence: "sequence"} },
+                "timestamp" : { "$first": "$timestamp" },
+                "blockindex" : { "$first": "$blockindex" },
+                "txid" : { "$first": "$txid" },
+                "blockhash" : { "$first": "$blockhash" },
+                "createdAt": { "$first": "$createdAt" },
+                "updatedAt": { "$first": "$updatedAt" }
+            }
+        }
+    ]).allowDiskUse(true).exec(function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
+function getAll2Join(fields, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    sort[sortBy] = order == 'asc' ? 1 : -1;
+    Tx[db.getCurrentConnection()].aggregate([
+        {$sort:sort},
+        {$skip:offset},
+        { $limit : limit },
+        {
+            "$project": {
+                "vout": { "$ifNull" : [ "$vout", [ ] ] },
+                "vin": { "$ifNull" : [ "$vin", [ ] ] },
+                "timestamp": 1,
+                "blockindex": 1,
+                "txid": 1,
+                "blockhash": 1,
+                "createdAt": 1,
+                "updatedAt": 1
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$vin",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$lookup": {
+                "from": Tx[db.getCurrentConnection()].collection.name,
+                "localField": "vin.txid",
+                "foreignField": "txid",
+                // "pipeline":[
+                // {"$unwind":"$vout"},
+                // {"$match":{"$expr":{"$eq":["$$vin.vout","$vout.n"]}}}
+                // ],
+                "as": "vin.tx"
+                // where vin.vout = vout[0].n
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$vin.tx",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$vout",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id",
+                "vout" : { "$push":{
+                        value: "$vout.value",
+                        n: "$vout.n",
+                        scriptPubKey: {
+                            addresses: "$vout.scriptPubKey.addresses",
+                            type: "$vout.scriptPubKey.type"
+                        }
+                    }
+                },
+                "vin" : { "$push": {
+                        txs: {txid: "$vin.tx.txid", vout: "$vin.tx.vout"},
+                        vout: "$vin.vout",
+                        txid: "$vin.txid",
+                        blockindex: "$blockindex",
+                        coinbase: "coinbase",
+                        sequence: "sequence"
+                    }
+                },
+                // "vin" : { "$push": { txs: {txid: "$vin.tx.txid", vout: { "$push":{ value: "$vin.tx.vout.value", n: "$vin.tx.vout.n", scriptPubKey: {addresses: "$vin.vout.tx.scriptPubKey.addresses", type: "$vin.vout.tx.scriptPubKey.type"} }}}, vout: "$vin.vout", txid: "$vin.txid", blockindex: "$blockindex", coinbase: "coinbase", sequence: "sequence"} },
+                "timestamp" : { "$first": "$timestamp" },
+                "blockindex" : { "$first": "$blockindex" },
+                "txid" : { "$first": "$txid" },
+                "blockhash" : { "$first": "$blockhash" },
+                "createdAt": { "$first": "$createdAt" },
+                "updatedAt": { "$first": "$updatedAt" }
+            }
+        },
+        {$sort:sort},
+    ]).allowDiskUse(true).exec(function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            console.log(err)
+            return cb(null);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.getAll2 = getAll2;
@@ -220,4 +385,6 @@ module.exports.getTxBlockByHash = getTxBlockByHash;
 module.exports.update = update;
 module.exports.count = count;
 module.exports.countByBlockIndex = countByBlockIndex;
+module.exports.getBlockHashJoin = getBlockHashJoin;
+module.exports.getAll2Join = getAll2Join;
 // module.exports.getAllBlocks = getAllBlocks;

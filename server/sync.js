@@ -23,6 +23,10 @@ var commands_require_db = [
     'reindexclusterlineartest',
     'calcvinvoutclusterlineartest',
     'reindexAddressesclusterlineartest',
+
+    'reindexclusterlinearchunks',
+    'calcvinvoutclusterlinearchunks',
+    'reindexaddressesclusterlinearchunks',
     'updatecluster',
     'updateclusterlinear',
     'updatemasternodes',
@@ -1085,7 +1089,11 @@ if (wallet) {
                     TxVinVoutController.deleteAll(function(err) {
                         for (let i = 0; i < numCPUs; i++) {
                             var worker = cluster.fork();
-                            worker.on('message', function (msg) {})
+                            worker.on('message', function (msg) {
+                                if (msg.addreses_to_update) {
+                                    startUpdatingAddresses(msg.addreses_to_update)
+                                }
+                            })
                             // if(latestTx.length) {
                             //     worker.send({blockindex: latestTx[0].blockindex});
                             // }
@@ -1104,6 +1112,112 @@ if (wallet) {
                         }
                         console.log(`worker ${worker.process.pid} died`);
                     });
+                }
+
+                var addresses = [];
+                var local_addreses_before_save = [];
+                var updateInProgress = false;
+                var startUpdatingAddresses = function(addresses1) {
+                    if(!updateInProgress) {
+                        addresses = addresses.concat(addresses1);
+                        updateInProgress = true;
+                        sumAddresses()
+                    } else {
+                        addresses = addresses.concat(addresses1);
+                    }
+
+                }
+
+                var sumAddresses = function() {
+                    if (addresses.length) {
+                        var hashMap = local_addreses_before_save.map(function (o) {return o.a_id});
+                        // console.log('hashMap', hashMap)
+                        var i = hashMap.indexOf(addresses[0].address);
+                        if (i > -1) {
+                            var address = local_addreses_before_save[i];
+                            if (addresses[0].address === 'coinbase') {
+                                address.sent = address.sent + addresses[0].amount;
+                                address.balance = 0;
+                                local_addreses_before_save[i] = address;
+                                addresses.shift();
+                                sumAddresses();
+                            } else {
+                                helpers.is_unique(address.txs, addresses[0].txid).then(function (obj) {
+                                    var tx_array = address.txs;
+                                    var received = address.received;
+                                    var sent = address.sent;
+                                    if (addresses[0].type == 'vin') {
+                                        sent = sent + addresses[0].amount;
+                                    } else {
+                                        received = received + addresses[0].amount;
+                                    }
+                                    if (obj.unique == true) {
+                                        tx_array.push({addresses: addresses[0].txid, type: addresses[0].type});
+                                        address.txs = tx_array
+                                        address.received = received;
+                                        address.sent = sent;
+                                        address.balance = received - sent;
+                                        local_addreses_before_save[i] = address;
+                                        addresses.shift();
+                                        sumAddresses();
+
+                                    } else {
+                                        if (addresses[0].type !== tx_array[obj.index].type) {
+                                            address.txs = tx_array
+                                            address.received = received;
+                                            address.sent = sent;
+                                            address.balance = received - sent;
+                                            local_addreses_before_save[i] = address;
+                                        }
+                                        addresses.shift();
+                                        sumAddresses();
+                                    }
+                                })
+                            }
+                        } else {
+                            var newAddress = {
+                                a_id: addresses[0].address,
+                                txs: [{addresses: addresses[0].txid, type: addresses[0].type}],
+                                balance: addresses[0].amount,
+                                sent:  0,
+                                received:  0,
+                            };
+                            if (addresses[0].type === 'vin') {
+                                newAddress.sent =  addresses[0].amount;
+                            } else {
+                                newAddress.received =  addresses[0].amount;
+                            }
+                            local_addreses_before_save.push(newAddress);
+                            addresses.shift();
+                            sumAddresses();
+                        }
+                    } else {
+                        updateInProgress = false;
+                        if (exit_count === numCPUs) {
+                            console.log('local_addreses_before_save', local_addreses_before_save.length);
+                            updateDbAddreess(local_addreses_before_save, function() {
+                                endReindex();
+                            });
+                        }
+                    }
+                    // addresses[0].address, addresses[0].txid, addresses[0].amount, addresses[0].type
+                    // AddressController.updateAddress(addresses[0].address, addresses[0].txid, addresses[0].amount, addresses[0].type, function (err) {
+                    //     if (err) {
+                    //         console.log('address err', err)
+                    //     } else {
+                    //         countAddressUpdate++;
+                    //         addresses.shift();
+                    //     }
+                    //     if (addresses.length) {
+                    //         updateAddresses()
+                    //     } else {
+                    //         updateInProgress = false;
+                    //         if (exit_count === numCPUs) {
+                    //             endReIndexClusterLinerAll();
+                    //         }
+                    //         console.log('countAddressUpdate', countAddressUpdate);
+                    //     }
+                    // })
                 }
                 startVinVoutClusterLinerAll()
             } else {
@@ -1148,6 +1262,22 @@ if (wallet) {
                                             // console.log('results.length', results.length);
                                             // return;
                                             // console.log(tx, nvin, vout, total, addreses_to_update)
+                                            var addreses_to_update = [];
+                                            for (var i = 0; i < obj.nvin.length; i++) {
+                                                // TODO update mongodb adress sceme
+                                                addreses_to_update.push({address: obj.nvin[i].addresses, txid: tx.txid, amount: obj.nvin[i].amount, type: 'vin'})
+                                                // addreses_to_update.push({address: txVinVout.vin[i].addresses, txid: txid, amount: obj.nvin[i].amount, type: 'vin'})
+                                                // update_address(nvin[i].addresses, txid, nvin[i].amount, 'vin')
+                                            }
+                                            for (var i = 0; i < obj.vout.length; i++) {
+                                                // TODO update mongodb adress sceme
+                                                addreses_to_update.push({address: obj.vout[i].addresses, txid: tx.txid, amount: obj.vout[i].amount, type: 'vout'})
+                                                // addreses_to_update.push({address: obj.vout[i].addresses, txid: txid, amount: obj.vout[i].amount, type: 'vout'})
+                                                // update_address(vout[t].addresses, txid, vout[t].amount, 'vout')
+                                            }
+                                            if(addreses_to_update.length) {
+                                                cluster.worker.send({addreses_to_update: addreses_to_update});
+                                            }
                                             var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex};
                                             TxVinVoutController.updateOne(vinvout, function(err) {
                                                 if(err) {
@@ -1826,6 +1956,653 @@ if (wallet) {
                             cluster.worker.send({finished: true});
                         }
                     });
+                }
+            }
+            break;
+
+        case 'reindexclusterlinearchunks': // 0:52:3.69 - block count 268159
+            if (cluster.isMaster) {
+                var startTime = new Date();
+                console.log(`Master ${process.pid} is running`);
+                startReindex(function(){
+                    deleteDb(function(){
+                        startReIndexClusterLinerAll()
+                    })
+                })
+                var currentBlock = 0;
+                var startReIndexClusterLinerAll = function() {
+                    wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
+                        for (let i = 0; i < numCPUs; i++) {
+                            var worker = cluster.fork();
+                            worker.on('message', function (msg) {
+                                if (msg.finished) {
+                                    (function(id, block){
+                                        if(block <= allBlocksCount ) {
+                                            cluster.workers[id].send({blockNum: block});
+                                        } else {
+                                            cluster.workers[id].send({kill: true});
+                                        }
+                                    })(this.id, currentBlock++)
+                                }
+                            })
+                            worker.send({blockNum: currentBlock});
+                            currentBlock++;
+                        }
+                    });
+
+                    var exit_count = 0;
+                    cluster.on('exit', (worker, code, signal) => {
+                        exit_count++;
+                        if (exit_count === numCPUs) {
+                            console.log('took - ', helpers.getFinishTime(startTime));
+                            deleteFile();
+                            db.multipleDisconnect();
+                            process.exit();
+                        }
+                        console.log(`worker ${worker.process.pid} died`);
+                    });
+                }
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                process.on('message', function(msg) {
+                    if(msg.blockNum !== undefined) {
+                        startReIndexClusterLiner(msg.blockNum);
+                    }
+                    if(msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+                var startReIndexClusterLiner = function(blockNum) {
+                    // db.connect(settings[wallet].dbSettings);
+                    var txInsertCount = 0;
+                    wallet_commands.getBlockHash(wallet, blockNum).then(function (hash) {
+                        wallet_commands.getBlock(wallet, hash).then(function (block) {
+                            var current_block = JSON.parse(block);
+                            var updateBlockTx = function(i, current_block) {
+                                wallet_commands.getRawTransaction(wallet, current_block.tx[i]).then(function (obj) {
+
+                                    var newTx = new Tx({
+                                        txid: obj.txid,
+                                        vin: obj.vin,
+                                        vout: obj.vout,
+                                        timestamp: obj.time,
+                                        blockhash: obj.blockhash,
+                                        blockindex: current_block.height,
+                                    });
+
+                                    console.log(current_block.height, obj.txid);
+
+                                    TxController.updateOne(newTx, function (err) {
+                                        txInsertCount++;
+                                        if (err) {
+                                            console.log('err', err);
+                                        }
+                                        if (txInsertCount >= current_block.tx.length) {
+                                            cluster.worker.send({finished: true});
+                                        }
+                                    });
+                                    if(i < current_block.tx.length - 1) {
+                                        updateBlockTx(++i, current_block);
+                                    }
+                                }).catch(function (err) {
+                                    var newTx = new Tx({
+                                        txid: current_block.tx[i],
+                                        vin: [],
+                                        vout: [],
+                                        timestamp: current_block.time,
+                                        blockhash: current_block.hash,
+                                        blockindex: current_block.height,
+                                    });
+
+                                    console.log(current_block.height, current_block.tx[i]);
+
+                                    TxController.updateOne(newTx, function (err) {
+                                        txInsertCount++;
+                                        if (err) {
+                                            console.log('err', err);
+                                        }
+                                        if (txInsertCount >= current_block.tx.length) {
+                                            cluster.worker.send({finished: true});
+                                        }
+                                    });
+                                    txInsertCount++;
+                                    if (txInsertCount >= current_block.tx.length) {
+                                        cluster.worker.send({finished: true});
+                                    }
+                                    if(i < current_block.tx.length - 1) {
+                                        updateBlockTx(++i, current_block);
+                                    }
+                                });
+                            }
+                            updateBlockTx(0, current_block);
+                        }).catch(function (err) {
+                            console.log('error getting block', err);
+                            cluster.worker.send({finished: true});
+                        });
+                    }).catch(function (err) {
+                        console.log('error getting block hash', err);
+                    })
+                }
+            }
+            break;
+        case 'calcvinvoutclusterlinearchunks': // 12:47:25.775 - block count 268159
+            if (cluster.isMaster) {
+                var startTime = new Date();
+                console.log(`Master ${process.pid} is running`);
+                if(fileExist()) {
+                    console.log('reindex is in progress');
+                    db.multipleDisconnect();
+                    process.exit()
+                    return;
+                }
+                createFile();
+                var currentBlocks = [];
+                var limit = 20000;
+                var countBlocks = 0;
+                var offset = 0;
+                var cpuCount = numCPUs;
+                var clusterQ = [];
+                var gettingNextBlocksInProgress = false;
+                var startVinVoutClusterLinerAll = function() {
+                    TxVinVoutController.deleteAll(function(err) {
+                        gettingNextBlocksInProgress = true;
+                        gettingNextBlocks(limit, offset).then(function(res){
+                        gettingNextBlocksInProgress = false;
+                        if(res && res.length) {
+                            currentBlocks = currentBlocks.concat(res);
+                        }
+                        if(currentBlocks.length) {
+                            for (let i = 0; i < cpuCount; i++) {
+                                var worker = cluster.fork();
+                                worker.on('message', function (msg) {
+                                    if (msg.addreses_to_update) {
+                                        startUpdatingAddresses(msg.addreses_to_update)
+                                    }
+                                    if (msg.finished) {
+                                        (function (id) {
+                                            clusterQ.push(id);
+                                            if (currentBlocks.length) {
+                                                if(currentBlocks.length === limit - limit / 10) {
+                                                    if(!gettingNextBlocksInProgress) {
+                                                        gettingNextBlocksInProgress = true;
+                                                        offset++;
+                                                        gettingNextBlocks(limit, offset).then(function (res) {
+                                                            if(res && res.length) {
+                                                                currentBlocks = currentBlocks.concat(res);
+                                                            }
+                                                            gettingNextBlocksInProgress = false;
+                                                            if (currentBlocks.length) {
+                                                                console.log('clusterQ', clusterQ)
+                                                                while (clusterQ.length) {
+                                                                    cluster.workers[clusterQ[0]].send({currentBlock: currentBlocks[0]});
+                                                                    clusterQ.shift();
+                                                                    countBlocks++;
+                                                                    currentBlocks.shift();
+                                                                }
+                                                            } else {
+                                                                while (clusterQ.length) {
+                                                                    cluster.workers[clusterQ[0]].send({kill: true});
+                                                                    clusterQ.shift();
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                                cluster.workers[clusterQ[0]].send({currentBlock: currentBlocks[0]});
+                                                clusterQ.shift();
+                                                countBlocks++;
+                                                currentBlocks.shift();
+
+                                            } else {
+                                                if(!gettingNextBlocksInProgress) {
+                                                    cluster.workers[clusterQ[0]].send({kill: true});
+                                                    clusterQ.shift();
+                                                }
+                                            }
+                                        })(this.id)
+                                    }
+                                })
+                                worker.send({currentBlock: currentBlocks[0]});
+                                countBlocks++;
+                                currentBlocks.shift();
+                            }
+                        } else {
+                            console.log('finish getting blocks')
+                        }
+                        });
+                    });
+
+                    var exit_count = 0;
+                    cluster.on('exit', (worker, code, signal) => {
+                        exit_count++;
+                        if (exit_count === cpuCount) {
+                            if (!updateInProgress) {
+                                console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                updateDbAddreess(local_addreses_before_save, function() {
+                                    endReindex();
+                                });
+                                // endReindex();
+                                // console.log('countBlocks', countBlocks)
+                                // console.log('took ', helpers.getFinishTime(startTime));
+                                // endReindex();
+                            }
+                            // console.log('addreses_to_update', addreses_to_update.length)
+                        }
+                        console.log(`worker ${worker.process.pid} died`);
+                    });
+                }
+
+                var addresses = [];
+                var local_addreses_before_save = [];
+                var updateInProgress = false;
+                var startUpdatingAddresses = function(addresses1) {
+                    if(!updateInProgress) {
+                        addresses = addresses.concat(addresses1);
+                        updateInProgress = true;
+                        sumAddresses()
+                    } else {
+                        addresses = addresses.concat(addresses1);
+                    }
+
+                }
+
+                var sumAddresses = function() {
+                    if (addresses.length) {
+                        var hashMap = local_addreses_before_save.map(function (o) {return o.a_id});
+                        // console.log('hashMap', hashMap)
+                        var i = hashMap.indexOf(addresses[0].address);
+                        if (i > -1) {
+                            var address = local_addreses_before_save[i];
+                            if (addresses[0].address === 'coinbase') {
+                                address.sent = address.sent + addresses[0].amount;
+                                address.balance = 0;
+                                local_addreses_before_save[i] = address;
+                                addresses.shift();
+                                sumAddresses();
+                            } else {
+                                helpers.is_unique(address.txs, addresses[0].txid).then(function (obj) {
+                                    var tx_array = address.txs;
+                                    var received = address.received;
+                                    var sent = address.sent;
+                                    if (addresses[0].type == 'vin') {
+                                        sent = sent + addresses[0].amount;
+                                    } else {
+                                        received = received + addresses[0].amount;
+                                    }
+                                    if (obj.unique == true) {
+                                        tx_array.push({addresses: addresses[0].txid, type: addresses[0].type});
+                                        address.txs = tx_array
+                                        address.received = received;
+                                        address.sent = sent;
+                                        address.balance = received - sent;
+                                        local_addreses_before_save[i] = address;
+                                        addresses.shift();
+                                        sumAddresses();
+
+                                    } else {
+                                        if (addresses[0].type !== tx_array[obj.index].type) {
+                                            address.txs = tx_array
+                                            address.received = received;
+                                            address.sent = sent;
+                                            address.balance = received - sent;
+                                            local_addreses_before_save[i] = address;
+                                        }
+                                        addresses.shift();
+                                        sumAddresses();
+                                    }
+                                })
+                            }
+                        } else {
+                            var newAddress = {
+                                a_id: addresses[0].address,
+                                txs: [{addresses: addresses[0].txid, type: addresses[0].type}],
+                                balance: addresses[0].amount,
+                                sent:  0,
+                                received:  0,
+                            };
+                            if (addresses[0].type === 'vin') {
+                                newAddress.sent =  addresses[0].amount;
+                            } else {
+                                newAddress.received =  addresses[0].amount;
+                            }
+                            local_addreses_before_save.push(newAddress);
+                            addresses.shift();
+                            sumAddresses();
+                        }
+                    } else {
+                        updateInProgress = false;
+                        if (exit_count === numCPUs) {
+                            console.log('local_addreses_before_save', local_addreses_before_save.length);
+                            updateDbAddreess(local_addreses_before_save, function() {
+                                endReindex();
+                            });
+                        }
+                    }
+                    // addresses[0].address, addresses[0].txid, addresses[0].amount, addresses[0].type
+                    // AddressController.updateAddress(addresses[0].address, addresses[0].txid, addresses[0].amount, addresses[0].type, function (err) {
+                    //     if (err) {
+                    //         console.log('address err', err)
+                    //     } else {
+                    //         countAddressUpdate++;
+                    //         addresses.shift();
+                    //     }
+                    //     if (addresses.length) {
+                    //         updateAddresses()
+                    //     } else {
+                    //         updateInProgress = false;
+                    //         if (exit_count === numCPUs) {
+                    //             endReIndexClusterLinerAll();
+                    //         }
+                    //         console.log('countAddressUpdate', countAddressUpdate);
+                    //     }
+                    // })
+                }
+
+                setTimeout(startVinVoutClusterLinerAll)
+                // startVinVoutClusterLinerAll()
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                process.on('message', function(msg) {
+                    if(msg.currentBlock !== undefined) {
+                        startVinVoutClusterLiner(msg.currentBlock);
+                    }
+                    if(msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+                var startVinVoutClusterLiner = function(currentBlock) {
+                    var tx = currentBlock;
+                    var checkVinVout = function() {
+                        helpers.prepare_vin_db(wallet, tx).then(function (vin) {
+                            helpers.prepare_vout(tx.vout, tx.txid, vin).then(function (obj) {
+                                helpers.calculate_total(obj.vout).then(function (total) {
+                                    // console.log('results.length', results.length);
+                                    // return;
+                                    // console.log(tx, nvin, vout, total, addreses_to_update)
+                                    var addreses_to_update = [];
+                                    for (var i = 0; i < obj.nvin.length; i++) {
+                                        // TODO update mongodb adress sceme
+                                        addreses_to_update.push({address: obj.nvin[i].addresses, txid: tx.txid, amount: obj.nvin[i].amount, type: 'vin'})
+                                        // addreses_to_update.push({address: txVinVout.vin[i].addresses, txid: txid, amount: obj.nvin[i].amount, type: 'vin'})
+                                        // update_address(nvin[i].addresses, txid, nvin[i].amount, 'vin')
+                                    }
+                                    for (var i = 0; i < obj.vout.length; i++) {
+                                        // TODO update mongodb adress sceme
+                                        addreses_to_update.push({address: obj.vout[i].addresses, txid: tx.txid, amount: obj.vout[i].amount, type: 'vout'})
+                                        // addreses_to_update.push({address: obj.vout[i].addresses, txid: txid, amount: obj.vout[i].amount, type: 'vout'})
+                                        // update_address(vout[t].addresses, txid, vout[t].amount, 'vout')
+                                    }
+                                    if(addreses_to_update.length) {
+                                        cluster.worker.send({addreses_to_update: addreses_to_update});
+                                    }
+                                    var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex};
+                                    TxVinVoutController.updateOne(vinvout, function(err) {
+                                        if(err) {
+                                            console.log('err', err);
+                                        }
+                                        console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
+                                        cluster.worker.send({finished: true});
+                                    })
+                                    // console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
+                                    // cluster.worker.send({finished: true});
+                                    // resolve({tx: tx, nvin: obj.nvin, vout: obj.vout, total: total, addreses_to_update: addreses_to_update});
+                                })
+                            }).catch(function(err) {
+                                console.log('error getting prepare_vout', err)
+                            })
+                        })
+                    }
+                    if(tx) {
+                        checkVinVout();
+                    } else {
+                        cluster.worker.send({finished: true});
+                    }
+                }
+            }
+            break;
+        case 'reindexaddressesclusterlinearchunks': // 12:47:25.775 - block count 268159
+            if (cluster.isMaster) {
+                var startTime = new Date();
+                console.log(`Master ${process.pid} is running`);
+                if(fileExist()) {
+                    console.log('reindex is in progress');
+                    db.multipleDisconnect();
+                    process.exit()
+                    return;
+                }
+                createFile();
+                var currentBlocks = [];
+                var limit = 20000;
+                var countBlocks = 0;
+                var offset = 0;
+                var cpuCount = numCPUs;
+                var clusterQ = [];
+                var gettingNextBlocksInProgress = false;
+                var startVinVoutClusterLinerAll = function() {
+                    // TxVinVoutController.deleteAll(function(err) {
+                    gettingNextBlocksInProgress = true;
+                    gettingNextBlocksVinVout(limit, offset).then(function(res){
+                        gettingNextBlocksInProgress = false;
+                        if(res && res.length) {
+                            currentBlocks = currentBlocks.concat(res);
+                        }
+                        if(currentBlocks.length) {
+                            for (let i = 0; i < cpuCount; i++) {
+                                var worker = cluster.fork();
+                                worker.on('message', function (msg) {
+                                    if (msg.addreses_to_update) {
+                                        startUpdatingAddresses(msg.addreses_to_update)
+                                    }
+                                    if (msg.finished) {
+                                        (function (id) {
+                                            clusterQ.push(id);
+                                            if (currentBlocks.length) {
+                                                if(currentBlocks.length === limit - limit / 10) {
+                                                    if(!gettingNextBlocksInProgress) {
+                                                        gettingNextBlocksInProgress = true;
+                                                        offset++;
+                                                        gettingNextBlocksVinVout(limit, offset).then(function (res) {
+                                                            if(res && res.length) {
+                                                                currentBlocks = currentBlocks.concat(res);
+                                                            }
+                                                            gettingNextBlocksInProgress = false;
+                                                            if (currentBlocks.length) {
+                                                                console.log('clusterQ', clusterQ)
+                                                                while (clusterQ.length) {
+                                                                    cluster.workers[clusterQ[0]].send({currentBlock: currentBlocks[0]});
+                                                                    clusterQ.shift();
+                                                                    countBlocks++;
+                                                                    currentBlocks.shift();
+                                                                }
+                                                            } else {
+                                                                while (clusterQ.length) {
+                                                                    cluster.workers[clusterQ[0]].send({kill: true});
+                                                                    clusterQ.shift();
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                                cluster.workers[clusterQ[0]].send({currentBlock: currentBlocks[0]});
+                                                clusterQ.shift();
+                                                countBlocks++;
+                                                currentBlocks.shift();
+
+                                            } else {
+                                                if(!gettingNextBlocksInProgress) {
+                                                    cluster.workers[clusterQ[0]].send({kill: true});
+                                                    clusterQ.shift();
+                                                }
+                                            }
+                                        })(this.id)
+                                    }
+                                })
+                                worker.send({currentBlock: currentBlocks[0]});
+                                countBlocks++;
+                                currentBlocks.shift();
+                            }
+                        } else {
+                            console.log('finish getting blocks')
+                        }
+                        });
+                    // });
+
+                    var exit_count = 0;
+                    cluster.on('exit', (worker, code, signal) => {
+                        exit_count++;
+                        if (exit_count === cpuCount) {
+                            if (!updateInProgress) {
+                                console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                // updateDbAddreess(local_addreses_before_save, function() {
+                                //     endReindex();
+                                // });
+                                // endReindex();
+                                console.log('countBlocks', countBlocks)
+                                console.log('took ', helpers.getFinishTime(startTime));
+                                endReindex();
+                            }
+                            // console.log('addreses_to_update', addreses_to_update.length)
+                        }
+                        console.log(`worker ${worker.process.pid} died`);
+                    });
+                }
+
+                var addresses = [];
+                var local_addreses_before_save = [];
+                var updateInProgress = false;
+                var startUpdatingAddresses = function(addresses1) {
+                    if(!updateInProgress) {
+                        addresses = addresses.concat(addresses1);
+                        updateInProgress = true;
+                        sumAddresses()
+                    } else {
+                        addresses = addresses.concat(addresses1);
+                    }
+
+                }
+
+                var sumAddresses = function() {
+                    if (addresses.length) {
+                        // console.log('updating address', addresses[0].address);
+                        var hashMap = local_addreses_before_save.map(function (o) {return o.a_id});
+                        // console.log('hashMap', hashMap)
+                        var i = hashMap.indexOf(addresses[0].address);
+                        if (i > -1) {
+                            var address = local_addreses_before_save[i];
+                            if (addresses[0].address === 'coinbase') {
+                                address.sent = address.sent + addresses[0].amount;
+                                address.balance = 0;
+                                local_addreses_before_save[i] = address;
+                                addresses.shift();
+                                sumAddresses();
+                            } else {
+                                helpers.is_unique(address.txs, addresses[0].txid).then(function (obj) {
+                                    var tx_array = address.txs;
+                                    var received = address.received;
+                                    var sent = address.sent;
+                                    if (addresses[0].type == 'vin') {
+                                        sent = sent + addresses[0].amount;
+                                    } else {
+                                        received = received + addresses[0].amount;
+                                    }
+                                    if (obj.unique == true) {
+                                        tx_array.push({addresses: addresses[0].txid, type: addresses[0].type});
+                                        address.txs = tx_array
+                                        address.received = received;
+                                        address.sent = sent;
+                                        address.balance = received - sent;
+                                        local_addreses_before_save[i] = address;
+                                        addresses.shift();
+                                        sumAddresses();
+
+                                    } else {
+                                        if (addresses[0].type !== tx_array[obj.index].type) {
+                                            address.txs = tx_array
+                                            address.received = received;
+                                            address.sent = sent;
+                                            address.balance = received - sent;
+                                            local_addreses_before_save[i] = address;
+                                        }
+                                        addresses.shift();
+                                        sumAddresses();
+                                    }
+                                })
+                            }
+                        } else {
+                            var newAddress = {
+                                a_id: addresses[0].address,
+                                txs: [{addresses: addresses[0].txid, type: addresses[0].type}],
+                                balance: addresses[0].amount,
+                                sent:  0,
+                                received:  0,
+                            };
+                            if (addresses[0].type === 'vin') {
+                                newAddress.sent =  addresses[0].amount;
+                            } else {
+                                newAddress.received =  addresses[0].amount;
+                            }
+                            local_addreses_before_save.push(newAddress);
+                            addresses.shift();
+                            sumAddresses();
+                        }
+                    } else {
+                        updateInProgress = false;
+                        if (exit_count === numCPUs) {
+                            console.log('local_addreses_before_save', local_addreses_before_save.length);
+                            updateDbAddreess(local_addreses_before_save, function() {
+                                endReindex();
+                            });
+                        }
+                    }
+                }
+
+                setTimeout(startVinVoutClusterLinerAll)
+                // startVinVoutClusterLinerAll()
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                process.on('message', function(msg) {
+                    if(msg.currentBlock !== undefined) {
+                        startUpdateAddressesClusterLiner(msg.currentBlock);
+                    }
+                    if(msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+                var startUpdateAddressesClusterLiner = function(currentBlock) {
+                    var txVinVout = currentBlock;
+                    // console.log(txVinVout.blockindex, txVinVout.txid);
+                    // var totalAddresses = 0;
+                    // var updatedAddresses = 0;
+                    var UpdateAddresses = function() {
+                        var addreses_to_update = [];
+                        for (var i = 0; i < txVinVout.vin.length; i++) {
+                            // TODO update mongodb adress sceme
+                            addreses_to_update.push({address: txVinVout.vin[i].addresses, txid: txVinVout.txid, amount: txVinVout.vin[i].amount, type: 'vin'})
+                            // addreses_to_update.push({address: txVinVout.vin[i].addresses, txid: txid, amount: obj.nvin[i].amount, type: 'vin'})
+                            // update_address(nvin[i].addresses, txid, nvin[i].amount, 'vin')
+                        }
+                        for (var i = 0; i < txVinVout.vout.length; i++) {
+                            // TODO update mongodb adress sceme
+                            addreses_to_update.push({address: txVinVout.vout[i].addresses, txid: txVinVout.txid, amount: txVinVout.vout[i].amount, type: 'vout'})
+                            // addreses_to_update.push({address: obj.vout[i].addresses, txid: txid, amount: obj.vout[i].amount, type: 'vout'})
+                            // update_address(vout[t].addresses, txid, vout[t].amount, 'vout')
+                        }
+                        if(addreses_to_update.length) {
+                            cluster.worker.send({addreses_to_update: addreses_to_update});
+                        }
+                        cluster.worker.send({finished: true});
+                    }
+                    if(txVinVout) {
+                        UpdateAddresses(0);
+                    } else {
+                        cluster.worker.send({finished: true});
+                    }
                 }
             }
             break;
@@ -2940,9 +3717,10 @@ function endReindex() {
     RichlistController.getOne(settings[wallet].coin, function(richlist) {
         AddressController.getRichlist('received', 'desc', 100, function(received){
             AddressController.getRichlist('balance', 'desc', 100, function(balance){
-                richlist.received = received;
-                richlist.balance = balance;
+                richlist.received = received.map(function(o){ return {received: o.received, a_id: o.a_id}});
+                richlist.balance = balance.map(function(o){ return {balance: o.balance, a_id: o.a_id}});
                 RichlistController.updateOne(richlist, function(err) {
+                    console.log(err)
                     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
                         // console.log('latestTx', latestTx);
                         console.log('settings[wallet].coin', settings[wallet].coin);
@@ -2971,6 +3749,79 @@ function endReindex() {
     })
 }
 
+
+var gettingNextBlocks = function(limit, offset) {
+    var promise = new Promise(function(resolve, reject) {
+        getNextBlocks(limit, offset).then(function (res) {
+            if (res.length) {
+                console.log('got chunks', (offset * limit) + ' - ' + (offset * limit + limit));
+                // currentBlocks = currentBlocks.concat(res);
+                resolve(res);
+                // gettingNextBlocks();
+            } else {
+                console.log('finish getting chunks', offset);
+            }
+            resolve();
+        });
+    });
+    return promise;
+}
+
+var startCount = 0;
+
+// countBlocks 388143
+// took  0:5:54.26
+
+var getNextBlocks = function(limit, offset) {
+    var promise = new Promise(function(resolve, reject) {
+        TxController.getAll2({},'blockindex', 'asc', limit, offset * limit, function(results) {
+            // if(startCount < 1) {
+            //     startCount++;
+            //     resolve(results);
+            // } else {
+            //     resolve([]);
+            // }
+            resolve(results);
+        });
+    });
+    return promise;
+}
+var gettingNextBlocksVinVout = function(limit, offset) {
+    var promise = new Promise(function(resolve, reject) {
+        getNextBlocksVinVout(limit, offset).then(function (res) {
+            if (res.length) {
+                console.log('got chunks', (offset * limit) + ' - ' + (offset * limit + limit));
+                // currentBlocks = currentBlocks.concat(res);
+                resolve(res);
+                // gettingNextBlocks();
+            } else {
+                console.log('finish getting chunks', offset);
+            }
+            resolve();
+        });
+    });
+    return promise;
+}
+
+var startCount = 0;
+
+// countBlocks 388143
+// took  0:5:54.26
+
+var getNextBlocksVinVout = function(limit, offset) {
+    var promise = new Promise(function(resolve, reject) {
+        TxVinVoutController.getAll2({},'blockindex', 'asc', limit, offset * limit, function(results) {
+            // if(startCount < 1) {
+            //     startCount++;
+            //     resolve(results);
+            // } else {
+            //     resolve([]);
+            // }
+            resolve(results);
+        });
+    });
+    return promise;
+}
 function forceProcess(onYes, onNo) {
     console.log('would you like to force reindex');
     console.log('Y/N');

@@ -45,6 +45,19 @@ router.get('/getAllTx/:limit', (req, res) => {
         res.send(JSON.stringify(results, null, 2));
     })
 });
+router.get('/getAllTxJoin/:limit', (req, res) => {
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
+    if(isNaN(parseInt(req.params['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    TxController.getAll2Join({}, 'blockindex', 'desc', parseInt(req.params['limit']), 0, function(results) {
+        res.send(JSON.stringify(results, null, 2));
+    })
+});
 router.get('/getAllTxVinVout/:limit', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
@@ -145,7 +158,7 @@ router.get('/getRichlistBalance', (req, res) => {
     //     res.send('no database connected');
     //     return;
     // }
-    RichlistController.getOne(res.locals.wallet, function(results) {
+    RichlistController.getOne(settings[res.locals.wallet].coin, function(results) {
         results.balance.sort(function(a,b) {
             return b.balance - a.balance;
         })
@@ -163,7 +176,7 @@ router.get('/getRichlistReceived', (req, res) => {
     //     res.send('no database connected');
     //     return;
     // }
-    RichlistController.getOne(res.locals.wallet, function(results) {
+    RichlistController.getOne(settings[res.locals.wallet].coin, function(results) {
         results.received.sort(function(a,b) {
             return b.received - a.received;
         })
@@ -177,7 +190,7 @@ router.get('/getRichlistReceived', (req, res) => {
 })
 
 
-router.get('/getBlockCount', (req, res) => {
+router.get('/getTxCount', (req, res) => {
     TxController.count(function(count) {
         res.json(count);
     })
@@ -280,6 +293,17 @@ router.get('/getBlockHash/:number', (req, res) => {
         return;
     }
     TxController.getOne(req.params['number'],function(result) {
+        res.send(JSON.stringify(result.blockhash, null, 2));
+    })
+});
+
+router.get('/getBlockHashJoin/:txid', (req, res) => {
+    TxController.getBlockHashJoin(req.params['txid'],function(result) {
+        res.send(JSON.stringify(result, null, 2));
+    })
+});
+router.get('/getAllJoin', (req, res) => {
+    TxController.getAll2Join({}, 'blockindex', 'desc', 10, 0,function(result) {
         res.send(JSON.stringify(result, null, 2));
     })
 });

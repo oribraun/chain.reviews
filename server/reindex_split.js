@@ -151,3 +151,5 @@ function startUpdateAddresses() {
 }
 startReindex();
 
+// took 27:9:29.976
+
