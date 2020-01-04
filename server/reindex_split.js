@@ -13,7 +13,7 @@ if(!wallet) {
 }
 var startTime = new Date();
 function startReindex() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'reindexclusterlineartest'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'reindexclusterlinearchunks'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
@@ -56,7 +56,7 @@ function startReindex() {
     });
 }
 function startUpdateVinVout() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'calcvinvoutclusterlineartest'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'calcvinvoutclusterlinearchunks'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);

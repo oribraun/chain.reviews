@@ -2339,7 +2339,7 @@ if (wallet) {
                                     if(addreses_to_update.length) {
                                         cluster.worker.send({addreses_to_update: addreses_to_update});
                                     }
-                                    var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex};
+                                    var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp};
                                     TxVinVoutController.updateOne(vinvout, function(err) {
                                         if(err) {
                                             console.log('err', err);
@@ -3688,6 +3688,7 @@ function updateDbAddreess(addresses, onEnd) {
         AddressController.updateOne({
             a_id: addresses[0].a_id,
             txs: addresses[0].txs,
+            sent: addresses[0].sent,
             received: addresses[0].received,
             balance: addresses[0].balance
         }, function (err) {

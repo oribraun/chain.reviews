@@ -117,35 +117,35 @@ router.get('/getAllAddresses/:limit', (req, res) => {
     })
 })
 
-router.get('/getAllAddressByBalance', (req, res) => {
-    AddressController.getRichlist('balance', 'desc', 0, function(results) {
-        res.send(JSON.stringify(results, null, 2));
-    })
-});
+// router.get('/getAllAddressByBalance', (req, res) => {
+//     AddressController.getRichlist('balance', 'desc', 0, function(results) {
+//         res.send(JSON.stringify(results, null, 2));
+//     })
+// });
+//
+// router.get('/getAllAddressByReceived', (req, res) => {
+//     AddressController.getRichlist('received', 'desc', 0, function(results) {
+//         res.send(JSON.stringify(results, null, 2));
+//     })
+// })
 
-router.get('/getAllAddressByReceived', (req, res) => {
-    AddressController.getRichlist('received', 'desc', 0, function(results) {
-        res.send(JSON.stringify(results, null, 2));
-    })
-})
-
-router.get('/getAddress/:address/:limitTx?', (req, res) => {
-    AddressController.getOne(req.params['address'], function(address) {
+router.get('/getAddress/:address/:limit?', (req, res) => {
+    AddressController.getOneWithTx(req.params['address'], function(address) {
         if(address) {
-            var txs = [];
-            var hashes = address.txs.reverse();
-            var limitTx = req.params['limitTx'];
-            if (!limitTx || address.txs.length < limitTx) {
-                limitTx = address.txs.length;
-            }
-            for(var i = 0; i < limitTx; i++) {
-                TxController.getTxBlockByTxid(hashes[i].addresses, function(tx) {
-                    if (tx) {
-                        txs.push(tx);
-                    }
-                });
-            }
-            res.send(JSON.stringify({address: address, txs: txs}, null, 2));
+            // var txs = [];
+            // var hashes = address.txs.reverse();
+            // var limitTx = req.params['limit'];
+            // if (!limitTx || address.txs.length < limitTx) {
+            //     limitTx = address.txs.length;
+            // }
+            // for(var i = 0; i < limitTx; i++) {
+            //     TxController.getTxBlockByTxid(hashes[i].addresses, function(tx) {
+            //         if (tx) {
+            //             txs.push(tx);
+            //         }
+            //     });
+            // }
+            res.send(JSON.stringify({address: address}, null, 2));
         } else {
             res.send('no address found');
         }

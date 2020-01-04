@@ -47,6 +47,7 @@ function updateOne(obj, cb) { // update or create
             // tx.txid = obj.txid;
             tx.vin = obj.vin;
             tx.vout = obj.vout;
+            tx.timestamp = obj.timestamp;
             tx.total = obj.total.toFixed(8);
             tx.blockindex = obj.blockindex;
             tx.save(function(err) {
@@ -63,6 +64,7 @@ function updateOne(obj, cb) { // update or create
                 txid: obj.txid,
                 vin: obj.vin,
                 vout: obj.vout,
+                timestamp : obj.timestamp,
                 total: obj.total.toFixed(8),
                 blockindex: obj.blockindex,
             });

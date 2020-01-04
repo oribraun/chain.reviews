@@ -1,4 +1,5 @@
 var Address = require('../models/address');
+var TxVinVout = require('../models/txVinVout');
 const helpers = require('../../helpers');
 var db = require('./../db');
 
@@ -380,6 +381,53 @@ function count(cb) {
     });
 }
 
+function getOneWithTx(hash, cb) {
+    Address[db.getCurrentConnection()].aggregate([
+        { $match : { a_id : hash } },
+        {
+            "$unwind": {
+                "path": "$txs",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$lookup": {
+                "from": TxVinVout[db.getCurrentConnection()].collection.name,
+                "localField": "txs.addresses",
+                "foreignField": "txid",
+                // "pipeline":[
+                // {"$unwind":"$vout"},
+                // {"$match":{"$expr":{"$eq":["$$vin.vout","$vout.n"]}}}
+                // ],
+                "as": "txs.tx"
+                // where vin.vout = vout[0].n
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$txs",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id",
+                "txs" : { "$push": {txid: "$txs.addresses", type: "$txs.type", vin: "$txs.tx.vin", vout: "$txs.tx.vout", timestamp: "$txs.tx.timestamp"} },
+                "received" : { "$first": "$received" },
+                "a_id" : { "$first": "$a_id" },
+                "sent" : { "$first": "$sent" },
+                "balance" : { "$first": "$balance" },
+            }
+        }
+    ]).allowDiskUse(true).exec(function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -392,3 +440,4 @@ module.exports.count = count;
 
 module.exports.updateAddress1 = updateAddress1;
 module.exports.createAddress1 = createAddress1;
+module.exports.getOneWithTx = getOneWithTx;
