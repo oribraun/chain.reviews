@@ -81,7 +81,7 @@ var obj = {
                         }
                         resolve(addresses);
                     } else {
-                        console.log(' vin tx not found from wallet ' + tx.blockindex, vin.txid);
+                        console.log(' vin tx not found from wallet ', vin.txid);
                         resolve();
                     }
                 })
