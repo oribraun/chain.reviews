@@ -2004,18 +2004,30 @@ if (wallet) {
                                 worker.send({kill: true});
                             }
                         }
-                    });
 
-                    var exit_count = 0;
-                    cluster.on('exit', (worker, code, signal) => {
-                        exit_count++;
-                        if (exit_count === numCPUs) {
-                            console.log('took - ', helpers.getFinishTime(startTime));
-                            deleteFile();
-                            db.multipleDisconnect();
-                            process.exit();
-                        }
-                        console.log(`worker ${worker.process.pid} died`);
+                        var exit_count = 0;
+                        cluster.on('disconnect', function(worker) {
+                            console.log('' + worker.id + ' disconnect, restart now');
+                            // worker.isSuicide = true;
+                            var worker = cluster.fork();
+                            if(currentBlock <= allBlocksCount ) {
+                                worker.send({blockNum: currentBlock});
+                                currentBlock++;
+                            } else {
+                                worker.send({kill: true});
+                            }
+                        });
+                        cluster.on('exit', (worker, code, signal) => {
+                            exit_count++;
+                            if (exit_count === numCPUs) {
+                                console.log('took - ', helpers.getFinishTime(startTime));
+                                deleteFile();
+                                db.multipleDisconnect();
+                                process.exit();
+                            }
+                            // console.log(`workers.length`, cluster.workers.length);
+                            console.log(`worker ${worker.process.pid} died`);
+                        });
                     });
                 }
             } else {
@@ -2030,6 +2042,10 @@ if (wallet) {
                         process.exit();
                     }
                 });
+                // process.on('SIGTERM', function() {
+                //     console.log('handler');
+                //     process.exit();
+                // })
                 var startReIndexClusterLiner = function(blockNum) {
                     // db.connect(settings[wallet].dbSettings);
                     wallet_commands.getBlockHash(wallet, blockNum).then(function (hash) {
