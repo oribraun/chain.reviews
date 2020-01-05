@@ -2079,10 +2079,6 @@ if (wallet) {
                                             cluster.worker.send({finished: true});
                                         }
                                     });
-                                    txInsertCount++;
-                                    if (txInsertCount >= current_block.tx.length) {
-                                        cluster.worker.send({finished: true});
-                                    }
                                     if(i < current_block.tx.length - 1) {
                                         updateBlockTx(++i, current_block);
                                     }
