@@ -25,10 +25,10 @@ function getAll1(sortBy, order, limit, offset, cb) {
     });
 }
 
-function getAll2(fields, sortBy, order, limit, offset, cb) {
+function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Tx[db.getCurrentConnection()].find({}, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+    Tx[db.getCurrentConnection()].find(where, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -273,8 +273,8 @@ function getBlockHashJoin(txid, cb) {
             }
         }
     ]).allowDiskUse(true).exec(function(err, tx) {
-        if(tx) {
-            return cb(tx);
+        if(tx && tx.length) {
+            return cb(tx[0]);
         } else {
             return cb(null);
         }

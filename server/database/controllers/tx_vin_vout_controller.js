@@ -25,10 +25,10 @@ function getAll1(sortBy, order, limit, offset, cb) {
     });
 }
 
-function getAll2(fields, sortBy, order, limit, offset, cb) {
+function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     var sort = {};
     sort[sortBy] = order;
-    TxVinVout[db.getCurrentConnection()].find({}, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].find(where, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {

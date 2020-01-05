@@ -8,6 +8,7 @@ const wallet_commands = require('../../wallet_commands');
 var TxController = require('./../../database/controllers/tx_controller');
 var TxVinVoutController = require('./../../database/controllers/tx_vin_vout_controller');
 var AddressController = require('./../../database/controllers/address_controller');
+var AddressToUpdateController = require('./../../database/controllers/address_to_update_controller');
 var StatsController = require('./../../database/controllers/stats_controller');
 var RichlistController = require('./../../database/controllers/richlist_controller');
 var MasternodeController = require('./../../database/controllers/masternode_controller');
@@ -45,19 +46,19 @@ router.get('/getAllTx/:limit', (req, res) => {
         res.send(JSON.stringify(results, null, 2));
     })
 });
-router.get('/getAllTxJoin/:limit', (req, res) => {
-    // if(!db.isConnected()) {
-    //     res.send('no database connected');
-    //     return;
-    // }
-    if(isNaN(parseInt(req.params['limit']))) {
-        res.send('limit value have to be number');
-        return;
-    }
-    TxController.getAll2Join({}, 'blockindex', 'desc', parseInt(req.params['limit']), 0, function(results) {
-        res.send(JSON.stringify(results, null, 2));
-    })
-});
+// router.get('/getAllTxJoin/:limit', (req, res) => {
+//     // if(!db.isConnected()) {
+//     //     res.send('no database connected');
+//     //     return;
+//     // }
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     TxController.getAll2Join({}, 'blockindex', 'desc', parseInt(req.params['limit']), 0, function(results) {
+//         res.send(JSON.stringify(results, null, 2));
+//     })
+// });
 router.get('/getAllTxVinVout/:limit', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
@@ -71,25 +72,25 @@ router.get('/getAllTxVinVout/:limit', (req, res) => {
         res.send(JSON.stringify(results, null, 2));
     })
 });
-router.get('/getAllTxVinVoutByCreated/:limit/:offset', (req, res) => {
-    // if(!db.isConnected()) {
-    //     res.send('no database connected');
-    //     return;
-    // }
-    if(isNaN(parseInt(req.params['limit']))) {
-        res.send('limit value have to be number');
-        return;
-    }
-    TxVinVoutController.getAll1('_id', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
-        var new_results = [];
-        for (var i in results) {
-            var c_r = JSON.parse(JSON.stringify(results[i]));
-            c_r.time = results[i]._id.getTimestamp().toString().replace('T', ' ').replace('Z', ' ');
-            new_results.push(c_r);
-        }
-        res.send(JSON.stringify(new_results, null, 2));
-    })
-});
+// router.get('/getAllTxVinVoutByCreated/:limit/:offset', (req, res) => {
+//     // if(!db.isConnected()) {
+//     //     res.send('no database connected');
+//     //     return;
+//     // }
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     TxVinVoutController.getAll1('_id', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
+//         var new_results = [];
+//         for (var i in results) {
+//             var c_r = JSON.parse(JSON.stringify(results[i]));
+//             c_r.time = results[i]._id.getTimestamp().toString().replace('T', ' ').replace('Z', ' ');
+//             new_results.push(c_r);
+//         }
+//         res.send(JSON.stringify(new_results, null, 2));
+//     })
+// });
 
 router.get('/getStats/:coin', (req, res) => {
     // if(!db.isConnected()) {
@@ -111,7 +112,7 @@ router.get('/getAllAddresses/:limit', (req, res) => {
         return;
     }
     // db.connect(settings[req.params['wallet']].dbSettings);
-    AddressController.getAll('updatedAt', 'desc', parseInt(req.params['limit']), function(results) {
+    AddressToUpdateController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
         res.send(JSON.stringify(results, null, 2));
         // db.disconnect();
     })
@@ -129,8 +130,16 @@ router.get('/getAllAddresses/:limit', (req, res) => {
 //     })
 // })
 
-router.get('/getAddress/:address/:limit?', (req, res) => {
-    AddressController.getOneWithTx(req.params['address'], function(address) {
+router.get('/getAddress/:address/:limit/:offset', (req, res) => {
+    if(isNaN(parseInt(req.params['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    if(isNaN(parseInt(req.params['offset']))) {
+        res.send('offset value have to be number');
+        return;
+    }
+    AddressToUpdateController.getOneJoin(req.params['address'], req.params['limit'], req.params['offset'], function(address) {
         if(address) {
             // var txs = [];
             // var hashes = address.txs.reverse();
@@ -203,7 +212,12 @@ router.get('/getTxVinVoutCount', (req, res) => {
 });
 
 router.get('/getAddressesCount', (req, res) => {
-    AddressController.count(function(count) {
+    AddressToUpdateController.count(function(count) {
+        res.json(count);
+    })
+});
+router.get('/getAddressesCountTest', (req, res) => {
+    AddressToUpdateController.countUnique(function(count) {
         res.json(count);
     })
 });
@@ -240,7 +254,7 @@ router.get('/getBlockWithTxsByHash/:hash', (req, res) => {
                 function getTx(i) {
                     TxController.getTxBlockByTxid(result.tx[i],function(tx) {
                         txs.push(tx);
-                        if(i < result.tx.length) {
+                        if(i < result.tx.length - 1) {
                             getTx(++i);
                         } else {
                             res.send(JSON.stringify({
@@ -297,16 +311,16 @@ router.get('/getBlockHash/:number', (req, res) => {
     })
 });
 
-router.get('/getBlockHashJoin/:txid', (req, res) => {
-    TxController.getBlockHashJoin(req.params['txid'],function(result) {
-        res.send(JSON.stringify(result, null, 2));
-    })
-});
-router.get('/getAllJoin', (req, res) => {
-    TxController.getAll2Join({}, 'blockindex', 'desc', 10, 0,function(result) {
-        res.send(JSON.stringify(result, null, 2));
-    })
-});
+// router.get('/getBlockHashJoin/:txid', (req, res) => {
+//     TxController.getBlockHashJoin(req.params['txid'],function(result) {
+//         res.send(JSON.stringify(result, null, 2));
+//     })
+// });
+// router.get('/getAllJoin', (req, res) => {
+//     TxController.getAll2Join({}, 'blockindex', 'desc', 10, 0,function(result) {
+//         res.send(JSON.stringify(result, null, 2));
+//     })
+// });
 
 router.get('/listMasternodes/:limit', (req, res) => {
     // if(!db.isConnected()) {

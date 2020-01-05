@@ -6,9 +6,10 @@ var db = require('./../db');
 var AddressToUpdateSchema = new Schema({
   address: { type: String, index: true},
   txid: { type: String, default: '' },
-  amount: { type: Number, default: 0 },
+  txid_timestamp: { type: String, default: '' },
+  amount: { type: Number, default: 0 , index: true},
   type: { type: String, default: '' },
-  blockindex: {type: Number, default: 0},
+  blockindex: {type: Number, default: 0, index: true},
 }, {id: false, timestamps: true});
 
 var connections = db.getConnections();

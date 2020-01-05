@@ -31,6 +31,7 @@ var string = "";
 for (var wallet in settings) {
     var txid = settings[wallet].example_txid;
     var hash = settings[wallet].example_hash;
+    var dev_address = settings[wallet].dev_address;
     var currentRoute;
     string += '<h1>' + wallet + '</h1>' + '<br>';
     for(var i in walletRoute.stack) {
@@ -49,8 +50,10 @@ for (var wallet in settings) {
             currentRoute = ('/api/db/' + wallet + dbRoute.stack[i].route.path
                 .replace(':hash', hash)
                 .replace(':number', 0)
+                .replace(':address', dev_address)
                 .replace(':coin', wallet)
                 .replace(':limit', 10)
+                .replace(':offset', 0)
                 .replace(':txid', txid));
             addLinkToString(currentRoute);
         }
