@@ -1997,8 +1997,12 @@ if (wallet) {
                                     })(this.id, currentBlock++)
                                 }
                             })
-                            worker.send({blockNum: currentBlock});
-                            currentBlock++;
+                            if(currentBlock <= allBlocksCount ) {
+                                worker.send({blockNum: currentBlock});
+                                currentBlock++;
+                            } else {
+                                worker.send({kill: true});
+                            }
                         }
                     });
 
@@ -2028,10 +2032,10 @@ if (wallet) {
                 });
                 var startReIndexClusterLiner = function(blockNum) {
                     // db.connect(settings[wallet].dbSettings);
-                    var txInsertCount = 0;
                     wallet_commands.getBlockHash(wallet, blockNum).then(function (hash) {
                         wallet_commands.getBlock(wallet, hash).then(function (block) {
                             var current_block = JSON.parse(block);
+                            var txInsertCount = 0;
                             var updateBlockTx = function(i, current_block) {
                                 wallet_commands.getRawTransaction(wallet, current_block.tx[i]).then(function (obj) {
 
