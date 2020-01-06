@@ -33,6 +33,20 @@ var wallet = process.argv[2];
 //         res.send(JSON.stringify(results, null, 2));
 //     })
 // });
+router.get('/getAllBlocks/:limit', (req, res) => {
+    // if(!db.isConnected()) {
+    //     res.send('no database connected');
+    //     return;
+    // }
+    if(isNaN(parseInt(req.params['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    TxController.getAllBlocks('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
+        res.send(JSON.stringify(results, null, 2));
+    })
+});
+
 router.get('/getAllTx/:limit', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
@@ -216,7 +230,7 @@ router.get('/getAddressesCount', (req, res) => {
         res.json(count);
     })
 });
-router.get('/getAddressesCountTest', (req, res) => {
+router.get('/getUniqueAddressesCount', (req, res) => {
     AddressToUpdateController.countUnique(function(count) {
         res.json(count);
     })
@@ -224,7 +238,7 @@ router.get('/getAddressesCountTest', (req, res) => {
 
 router.get('/getLatestBlockIndex', (req, res) => {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
-        console.log('latestTx', latestTx);
+        // console.log('latestTx', latestTx);
         if(latestTx.length) {
             res.json(latestTx[0].blockindex);
         } else {

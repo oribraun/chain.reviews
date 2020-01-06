@@ -151,5 +151,5 @@ function startUpdateAddresses() {
 }
 startReindex();
 
-// took 27:9:29.976
+// took 2:44:56.650 - fix - 152939 blocks  - 398855 tx
 

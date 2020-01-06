@@ -191,7 +191,7 @@ function countByBlockIndex(cb) {
 
 function getAllBlocks(sortBy, order, limit, cb) {
     var sort = {};
-    sort[sortBy] = order;
+    sort[sortBy] = order == 'asc' ? 1 : -1;
     Tx[db.getCurrentConnection()].aggregate([
         // { $limit : limit},
         // {$limit: limit },
@@ -200,11 +200,11 @@ function getAllBlocks(sortBy, order, limit, cb) {
                 _id:"$blockhash",
                 blockindex: {"$first": "$blockindex"},
                 timestamp: {"$first": "$timestamp"},
-                vout: {"$first": {$size: "$vout"}},
-                countTxs:{$sum:1}
+                // vout: {"$first": {$size: "$vout"}},
+                // countTxs:{$sum:1}
             }
         },
-        {$sort:{blockindex:-1}},
+        {$sort:sort},
         {$limit: limit }
         // {$group:{_id : "$blockindex", "blockhash": { "$first": "$blockhash" }, doc: { "$first": "$$ROOT" }}},
         // {$group:{_id:"$blockhash",items:{$push:{blockhash:"$blockhash"}}}},
@@ -387,4 +387,4 @@ module.exports.count = count;
 module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getBlockHashJoin = getBlockHashJoin;
 module.exports.getAll2Join = getAll2Join;
-// module.exports.getAllBlocks = getAllBlocks;
+module.exports.getAllBlocks = getAllBlocks;
