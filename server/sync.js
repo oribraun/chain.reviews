@@ -1982,6 +1982,7 @@ if (wallet) {
                     })
                 })
                 var currentBlock = 0;
+                var workersBlocksMap = {};
                 var startReIndexClusterLinerAll = function() {
                     wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
                         for (let i = 0; i < numCPUs; i++) {
@@ -1990,6 +1991,7 @@ if (wallet) {
                                 if (msg.finished) {
                                     (function(id, block){
                                         if(block <= allBlocksCount ) {
+                                            workersBlocksMap[id] = block;
                                             cluster.workers[id].send({blockNum: block});
                                         } else {
                                             cluster.workers[id].send({kill: true});
@@ -1997,6 +1999,22 @@ if (wallet) {
                                     })(this.id, currentBlock++)
                                 }
                             })
+                            var exit_count = 0;
+                            worker.on('exit', (code, signal) => {
+                                exit_count++;
+                                if (exit_count === numCPUs) {
+                                    console.log('took - ', helpers.getFinishTime(startTime));
+                                    deleteFile();
+                                    db.multipleDisconnect();
+                                    process.exit();
+                                }
+                                // console.log(`workers.length`, cluster.workers.length);
+                                console.log(`worker ${worker.process.pid} died`);
+                            });
+                            // worker.on('disconnect', () => {
+                            //     // Worker has disconnected
+                            //     console.log('' + worker.id + ' disconnect, restart now');
+                            // });
                             if(currentBlock <= allBlocksCount ) {
                                 worker.send({blockNum: currentBlock});
                                 currentBlock++;
@@ -2005,29 +2023,30 @@ if (wallet) {
                             }
                         }
 
-                        var exit_count = 0;
-                        cluster.on('disconnect', function(worker) {
-                            console.log('' + worker.id + ' disconnect, restart now');
-                            // worker.isSuicide = true;
-                            var worker = cluster.fork();
-                            if(currentBlock <= allBlocksCount ) {
-                                worker.send({blockNum: currentBlock});
-                                currentBlock++;
-                            } else {
-                                worker.send({kill: true});
-                            }
-                        });
-                        cluster.on('exit', (worker, code, signal) => {
-                            exit_count++;
-                            if (exit_count === numCPUs) {
-                                console.log('took - ', helpers.getFinishTime(startTime));
-                                deleteFile();
-                                db.multipleDisconnect();
-                                process.exit();
-                            }
-                            // console.log(`workers.length`, cluster.workers.length);
-                            console.log(`worker ${worker.process.pid} died`);
-                        });
+                        // cluster.on('disconnect', function(worker) {
+                        //     console.log('' + worker.id + ' disconnect, restart now');
+                        //     var blockNum = workersBlocksMap[worker.id];
+                        //     console.log('blockNum', blockNum)
+                        //     // worker.isSuicide = true;
+                        //     // var worker = cluster.fork();
+                        //     // if(currentBlock <= allBlocksCount ) {
+                        //     //     worker.send({blockNum: currentBlock});
+                        //     //     currentBlock++;
+                        //     // } else {
+                        //     //     worker.send({kill: true});
+                        //     // }
+                        // });
+                        // cluster.on('exit', (worker, code, signal) => {
+                        //     exit_count++;
+                        //     if (exit_count === numCPUs) {
+                        //         console.log('took - ', helpers.getFinishTime(startTime));
+                        //         deleteFile();
+                        //         db.multipleDisconnect();
+                        //         process.exit();
+                        //     }
+                        //     // console.log(`workers.length`, cluster.workers.length);
+                        //     console.log(`worker ${worker.process.pid} died`);
+                        // });
                     });
                 }
             } else {
@@ -2106,11 +2125,12 @@ if (wallet) {
                             }
                             updateBlockTx(0, current_block);
                         }).catch(function (err) {
-                            console.log('error getting block', err);
-                            cluster.worker.send({finished: true});
+                            console.log('error getting block - ' + blockNum, err);
+                            startReIndexClusterLiner(blockNum);
                         });
                     }).catch(function (err) {
-                        console.log('error getting block hash', err);
+                        console.log('error getting block hash - ' + blockNum, err);
+                        startReIndexClusterLiner(blockNum);
                     })
                 }
             }
@@ -2133,6 +2153,7 @@ if (wallet) {
                 var cpuCount = numCPUs;
                 var clusterQ = [];
                 var gettingNextBlocksInProgress = false;
+                var exit_count = 0;
                 var startVinVoutClusterLinerAll = function() {
                     TxVinVoutController.deleteAll(function(err) {
                         AddressToUpdateController.deleteAll(function(err) {
@@ -2193,6 +2214,23 @@ if (wallet) {
                                                 })(this.id)
                                             }
                                         })
+                                        worker.on('exit', (code, signal) => {
+                                            exit_count++;
+                                            if (exit_count === cpuCount) {
+                                                if (!updateInProgress) {
+                                                    console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                                    // updateDbAddreess(local_addreses_before_save, function() {
+                                                    //     endReindex();
+                                                    // });
+                                                    endReindexNew();
+                                                    // console.log('countBlocks', countBlocks)
+                                                    // console.log('took ', helpers.getFinishTime(startTime));
+                                                    // endReindex();
+                                                }
+                                                // console.log('addreses_to_update', addreses_to_update.length)
+                                            }
+                                            console.log(`worker ${worker.process.pid} died`);
+                                        });
                                         worker.send({currentBlock: currentBlocks[0]});
                                         countBlocks++;
                                         currentBlocks.shift();
@@ -2204,24 +2242,24 @@ if (wallet) {
                         });
                     });
 
-                    var exit_count = 0;
-                    cluster.on('exit', (worker, code, signal) => {
-                        exit_count++;
-                        if (exit_count === cpuCount) {
-                            if (!updateInProgress) {
-                                console.log('local_addreses_before_save', local_addreses_before_save.length);
-                                // updateDbAddreess(local_addreses_before_save, function() {
-                                //     endReindex();
-                                // });
-                                endReindexNew();
-                                // console.log('countBlocks', countBlocks)
-                                // console.log('took ', helpers.getFinishTime(startTime));
-                                // endReindex();
-                            }
-                            // console.log('addreses_to_update', addreses_to_update.length)
-                        }
-                        console.log(`worker ${worker.process.pid} died`);
-                    });
+
+                    // cluster.on('exit', (worker, code, signal) => {
+                    //     exit_count++;
+                    //     if (exit_count === cpuCount) {
+                    //         if (!updateInProgress) {
+                    //             console.log('local_addreses_before_save', local_addreses_before_save.length);
+                    //             // updateDbAddreess(local_addreses_before_save, function() {
+                    //             //     endReindex();
+                    //             // });
+                    //             endReindexNew();
+                    //             // console.log('countBlocks', countBlocks)
+                    //             // console.log('took ', helpers.getFinishTime(startTime));
+                    //             // endReindex();
+                    //         }
+                    //         // console.log('addreses_to_update', addreses_to_update.length)
+                    //     }
+                    //     console.log(`worker ${worker.process.pid} died`);
+                    // });
                 }
 
                 var addresses = [];
@@ -2404,8 +2442,6 @@ if (wallet) {
                                     // cluster.worker.send({finished: true});
                                     // resolve({tx: tx, nvin: obj.nvin, vout: obj.vout, total: total, addreses_to_update: addreses_to_update});
                                 })
-                            }).catch(function(err) {
-                                console.log('error getting prepare_vout', err)
                             })
                         })
                     }
@@ -2435,6 +2471,7 @@ if (wallet) {
                 var cpuCount = numCPUs;
                 var clusterQ = [];
                 var gettingNextBlocksInProgress = false;
+                var exit_count = 0;
                 var startVinVoutClusterLinerAll = function() {
                     AddressToUpdateController.deleteAll(function(err) {
                         gettingNextBlocksInProgress = true;
@@ -2494,6 +2531,23 @@ if (wallet) {
                                         })(this.id)
                                     }
                                 })
+                                worker.on('exit', (code, signal) => {
+                                    exit_count++;
+                                    if (exit_count === cpuCount) {
+                                        if (!updateInProgress) {
+                                            console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                            // updateDbAddreess(local_addreses_before_save, function() {
+                                            //     endReindex();
+                                            // });
+                                            // endReindex();
+                                            console.log('countBlocks', countBlocks)
+                                            console.log('took ', helpers.getFinishTime(startTime));
+                                            endReindexNew();
+                                        }
+                                        // console.log('addreses_to_update', addreses_to_update.length)
+                                    }
+                                    console.log(`worker ${worker.process.pid} died`);
+                                })
                                 worker.send({currentBlock: currentBlocks[0]});
                                 countBlocks++;
                                 currentBlocks.shift();
@@ -2504,24 +2558,24 @@ if (wallet) {
                         });
                     });
 
-                    var exit_count = 0;
-                    cluster.on('exit', (worker, code, signal) => {
-                        exit_count++;
-                        if (exit_count === cpuCount) {
-                            if (!updateInProgress) {
-                                console.log('local_addreses_before_save', local_addreses_before_save.length);
-                                // updateDbAddreess(local_addreses_before_save, function() {
-                                //     endReindex();
-                                // });
-                                // endReindex();
-                                console.log('countBlocks', countBlocks)
-                                console.log('took ', helpers.getFinishTime(startTime));
-                                endReindexNew();
-                            }
-                            // console.log('addreses_to_update', addreses_to_update.length)
-                        }
-                        console.log(`worker ${worker.process.pid} died`);
-                    });
+                    // var exit_count = 0;
+                    // cluster.on('exit', (worker, code, signal) => {
+                    //     exit_count++;
+                    //     if (exit_count === cpuCount) {
+                    //         if (!updateInProgress) {
+                    //             console.log('local_addreses_before_save', local_addreses_before_save.length);
+                    //             // updateDbAddreess(local_addreses_before_save, function() {
+                    //             //     endReindex();
+                    //             // });
+                    //             // endReindex();
+                    //             console.log('countBlocks', countBlocks)
+                    //             console.log('took ', helpers.getFinishTime(startTime));
+                    //             endReindexNew();
+                    //         }
+                    //         // console.log('addreses_to_update', addreses_to_update.length)
+                    //     }
+                    //     console.log(`worker ${worker.process.pid} died`);
+                    // });
                 }
 
                 var addresses = [];
@@ -2687,6 +2741,7 @@ if (wallet) {
                 }
                 createFile();
                 var currentBlock = 0;
+                var exit_count = 0;
                 var startReIndexClusterLinerAll = function() {
                     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
                         if(latestTx.length) {
@@ -2719,6 +2774,16 @@ if (wallet) {
                                         })(this.id, currentBlock++)
                                     }
                                 })
+                                worker.on('exit', (code, signal) => {
+                                    exit_count++;
+                                    if (exit_count === numCPUs) {
+                                        console.log('took - ', helpers.getFinishTime(startTime));
+                                        deleteFile();
+                                        db.multipleDisconnect();
+                                        process.exit();
+                                    }
+                                    console.log(`worker ${worker.process.pid} died`);
+                                });
                                 if(currentBlock <= allBlocksCount) {
                                     worker.send({blockNum: currentBlock});
                                     currentBlock++;
@@ -2729,17 +2794,17 @@ if (wallet) {
                         });
                     });
 
-                    var exit_count = 0;
-                    cluster.on('exit', (worker, code, signal) => {
-                        exit_count++;
-                        if (exit_count === numCPUs) {
-                            console.log('took - ', helpers.getFinishTime(startTime));
-                            deleteFile();
-                            db.multipleDisconnect();
-                            process.exit();
-                        }
-                        console.log(`worker ${worker.process.pid} died`);
-                    });
+                    // var exit_count = 0;
+                    // cluster.on('exit', (worker, code, signal) => {
+                    //     exit_count++;
+                    //     if (exit_count === numCPUs) {
+                    //         console.log('took - ', helpers.getFinishTime(startTime));
+                    //         deleteFile();
+                    //         db.multipleDisconnect();
+                    //         process.exit();
+                    //     }
+                    //     console.log(`worker ${worker.process.pid} died`);
+                    // });
                 }
                 setTimeout(startReIndexClusterLinerAll);
             } else {
@@ -2843,6 +2908,7 @@ if (wallet) {
                 var cpuCount = numCPUs;
                 var clusterQ = [];
                 var gettingNextBlocksInProgress = false;
+                var exit_count = 0;
                 var startVinVoutClusterLinerAll = function() {
                     TxVinVoutController.getAll('blockindex', 'desc', 1, function(latestTx) {
                         var currentBlockIndex = 0;
@@ -2916,6 +2982,23 @@ if (wallet) {
                                                     })(this.id)
                                                 }
                                             })
+                                            worker.on('exit', (code, signal) => {
+                                                exit_count++;
+                                                if (exit_count === cpuCount) {
+                                                    if (!updateInProgress) {
+                                                        // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                                        // updateDbAddreess(local_addreses_before_save, function() {
+                                                        //     endReindex();
+                                                        // });
+                                                        endReindexNew();
+                                                        // console.log('countBlocks', countBlocks)
+                                                        // console.log('took ', helpers.getFinishTime(startTime));
+                                                        // endReindex();
+                                                    }
+                                                    // console.log('addreses_to_update', addreses_to_update.length)
+                                                }
+                                                console.log(`worker ${worker.process.pid} died`);
+                                            })
                                             if (currentBlocks.length) {
                                                 worker.send({currentBlock: currentBlocks[0]});
                                                 countBlocks++;
@@ -2936,24 +3019,24 @@ if (wallet) {
                         })
                     });
 
-                    var exit_count = 0;
-                    cluster.on('exit', (worker, code, signal) => {
-                        exit_count++;
-                        if (exit_count === cpuCount) {
-                            if (!updateInProgress) {
-                                // console.log('local_addreses_before_save', local_addreses_before_save.length);
-                                // updateDbAddreess(local_addreses_before_save, function() {
-                                //     endReindex();
-                                // });
-                                endReindexNew();
-                                // console.log('countBlocks', countBlocks)
-                                // console.log('took ', helpers.getFinishTime(startTime));
-                                // endReindex();
-                            }
-                            // console.log('addreses_to_update', addreses_to_update.length)
-                        }
-                        console.log(`worker ${worker.process.pid} died`);
-                    });
+                    // var exit_count = 0;
+                    // cluster.on('exit', (worker, code, signal) => {
+                    //     exit_count++;
+                    //     if (exit_count === cpuCount) {
+                    //         if (!updateInProgress) {
+                    //             // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                    //             // updateDbAddreess(local_addreses_before_save, function() {
+                    //             //     endReindex();
+                    //             // });
+                    //             endReindexNew();
+                    //             // console.log('countBlocks', countBlocks)
+                    //             // console.log('took ', helpers.getFinishTime(startTime));
+                    //             // endReindex();
+                    //         }
+                    //         // console.log('addreses_to_update', addreses_to_update.length)
+                    //     }
+                    //     console.log(`worker ${worker.process.pid} died`);
+                    // });
                 }
 
                 // var addresses = [];
@@ -3075,6 +3158,7 @@ if (wallet) {
                     })
                 };
                 var currentBlock = hash_number;
+                var exit_count = 0;
                 var startReIndexClusterLinerAll = function() {
                     TxController.deleteAllWhereGte(currentBlock, function(numberRemoved) {
                         console.log('tx deleted', numberRemoved);
@@ -3092,6 +3176,16 @@ if (wallet) {
                                         })(this.id, currentBlock++)
                                     }
                                 })
+                                worker.on('exit', (code, signal) => {
+                                    exit_count++;
+                                    if (exit_count === numCPUs) {
+                                        console.log('took - ', helpers.getFinishTime(startTime));
+                                        deleteFile();
+                                        db.multipleDisconnect();
+                                        process.exit();
+                                    }
+                                    console.log(`worker ${worker.process.pid} died`);
+                                })
                                 if(currentBlock <= allBlocksCount) {
                                     worker.send({blockNum: currentBlock});
                                     currentBlock++;
@@ -3102,17 +3196,17 @@ if (wallet) {
                         });
                     });
 
-                    var exit_count = 0;
-                    cluster.on('exit', (worker, code, signal) => {
-                        exit_count++;
-                        if (exit_count === numCPUs) {
-                            console.log('took - ', helpers.getFinishTime(startTime));
-                            deleteFile();
-                            db.multipleDisconnect();
-                            process.exit();
-                        }
-                        console.log(`worker ${worker.process.pid} died`);
-                    });
+                    // var exit_count = 0;
+                    // cluster.on('exit', (worker, code, signal) => {
+                    //     exit_count++;
+                    //     if (exit_count === numCPUs) {
+                    //         console.log('took - ', helpers.getFinishTime(startTime));
+                    //         deleteFile();
+                    //         db.multipleDisconnect();
+                    //         process.exit();
+                    //     }
+                    //     console.log(`worker ${worker.process.pid} died`);
+                    // });
                 }
                 setTimeout(startReIndexClusterLinerAll);
             } else {
@@ -3222,6 +3316,7 @@ if (wallet) {
                 var cpuCount = numCPUs;
                 var clusterQ = [];
                 var gettingNextBlocksInProgress = false;
+                var exit_count = 0;
                 var startVinVoutClusterLinerAll = function() {
                     var currentBlockIndex = currentBlock;
                     TxVinVoutController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted) {
@@ -3285,6 +3380,23 @@ if (wallet) {
                                                     })(this.id)
                                                 }
                                             })
+                                            worker.on('exit', (code, signal) => {
+                                                exit_count++;
+                                                if (exit_count === cpuCount) {
+                                                    if (!updateInProgress) {
+                                                        // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                                        // updateDbAddreess(local_addreses_before_save, function() {
+                                                        //     endReindex();
+                                                        // });
+                                                        endReindexNew();
+                                                        // console.log('countBlocks', countBlocks)
+                                                        // console.log('took ', helpers.getFinishTime(startTime));
+                                                        // endReindex();
+                                                    }
+                                                    // console.log('addreses_to_update', addreses_to_update.length)
+                                                }
+                                                console.log(`worker ${worker.process.pid} died`);
+                                            });
                                             if (currentBlocks.length) {
                                                 worker.send({currentBlock: currentBlocks[0]});
                                                 countBlocks++;
@@ -3304,24 +3416,24 @@ if (wallet) {
                             })
                         })
 
-                    var exit_count = 0;
-                    cluster.on('exit', (worker, code, signal) => {
-                        exit_count++;
-                        if (exit_count === cpuCount) {
-                            if (!updateInProgress) {
-                                // console.log('local_addreses_before_save', local_addreses_before_save.length);
-                                // updateDbAddreess(local_addreses_before_save, function() {
-                                //     endReindex();
-                                // });
-                                endReindexNew();
-                                // console.log('countBlocks', countBlocks)
-                                // console.log('took ', helpers.getFinishTime(startTime));
-                                // endReindex();
-                            }
-                            // console.log('addreses_to_update', addreses_to_update.length)
-                        }
-                        console.log(`worker ${worker.process.pid} died`);
-                    });
+                    // var exit_count = 0;
+                    // cluster.on('exit', (worker, code, signal) => {
+                    //     exit_count++;
+                    //     if (exit_count === cpuCount) {
+                    //         if (!updateInProgress) {
+                    //             // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                    //             // updateDbAddreess(local_addreses_before_save, function() {
+                    //             //     endReindex();
+                    //             // });
+                    //             endReindexNew();
+                    //             // console.log('countBlocks', countBlocks)
+                    //             // console.log('took ', helpers.getFinishTime(startTime));
+                    //             // endReindex();
+                    //         }
+                    //         // console.log('addreses_to_update', addreses_to_update.length)
+                    //     }
+                    //     console.log(`worker ${worker.process.pid} died`);
+                    // });
                 }
 
                 // var addresses = [];
