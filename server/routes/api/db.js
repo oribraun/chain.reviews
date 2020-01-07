@@ -33,6 +33,17 @@ var wallet = process.argv[2];
 //         res.send(JSON.stringify(results, null, 2));
 //     })
 // });
+router.get('/getStats', (req, res) => {
+    var wallet = res.locals.wallet;
+    StatsController.getOne(wallet, function(stats) {
+        if(stats) {
+            res.send(JSON.stringify(stats, null, 2));
+        } else {
+            res.send(' no stats found yet');
+        }
+    });
+});
+
 router.get('/getAllBlocks/:limit', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
@@ -106,15 +117,15 @@ router.get('/getAllTxVinVout/:limit', (req, res) => {
 //     })
 // });
 
-router.get('/getStats/:coin', (req, res) => {
-    // if(!db.isConnected()) {
-    //     res.send('no database connected');
-    //     return;
-    // }
-    StatsController.getOne(req.params['coin'], function(results) {
-        res.send(JSON.stringify(results, null, 2));
-    })
-})
+// router.get('/getStats/:coin', (req, res) => {
+//     // if(!db.isConnected()) {
+//     //     res.send('no database connected');
+//     //     return;
+//     // }
+//     StatsController.getOne(req.params['coin'], function(results) {
+//         res.send(JSON.stringify(results, null, 2));
+//     })
+// })
 
 router.get('/getAllAddresses/:limit', (req, res) => {
     // if(!db.isConnected()) {

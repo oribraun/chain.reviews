@@ -219,9 +219,9 @@ var db = {
             // })
             // db.createUser(
             //     {
-            //         user: "masternodetwinsuser",
-            //         pwd: "b9wh42mB$jLfi(#nYVMc",
-            //         roles: [ { role: "dbOwner", db: "twinsdb" } ]
+            //         user: "masternodestreamuser",
+            //         pwd: "EyY2anT!Fud*Pb4JvBB9",
+            //         roles: [ { role: "dbOwner", db: "streamdb" } ]
             //     }
             // )
         });

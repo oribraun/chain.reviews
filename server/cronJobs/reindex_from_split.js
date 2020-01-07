@@ -1,5 +1,5 @@
 const fs = require('fs');
-const helpers = require('./helpers');
+const helpers = require('../helpers');
 const spawn = require('child_process').spawn;
 
 const TEN_MEGABYTES = 1000 * 1000 * 10;

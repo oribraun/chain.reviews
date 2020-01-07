@@ -4,13 +4,14 @@ var db = require('./../db');
 
 var StatsSchema = new Schema({
   coin: { type: String },
-  count: { type: Number, default: 1 },
-  last: { type: Number, default: 1 },
-  //difficulty: { type: Object, default: {} },
-  //hashrate: { type: String, default: 'N/A' },
+  last_block: { type: Number, default: 0 },
+  difficulty: { type: String, default: "" },
+  moneysupply: { type: String, default: "" },
+  hashrate: { type: String, default: "" },
   supply: { type: Number, default: 0 },
-  //last_txs: { type: Array, default: [] },
+  blockcount: { type: Number, default: 0 },
   connections: { type: Number, default: 0 },
+  masternodesCount: { type: Object, default: {} },
   last_price: { type: Number, default: 0 },
 }, {timestamps: true});
 var connections = db.getConnections();
