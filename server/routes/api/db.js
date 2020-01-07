@@ -144,6 +144,13 @@ router.get('/getAllAddresses/:limit', (req, res) => {
 //     })
 // })
 
+// router.get('/getAllAddressRichlist', (req, res) => {
+//     var startDate = new Date();
+//     AddressToUpdateController.getRichlistFaster('received', 'desc', 100, function(received){
+//         var endDate = new Date();
+//         res.send(JSON.stringify({received: received, startDate: startDate, endDate: endDate}, null, 2));
+//     })
+// })
 router.get('/getAddress/:address/:limit/:offset', (req, res) => {
     if(isNaN(parseInt(req.params['limit']))) {
         res.send('limit value have to be number');

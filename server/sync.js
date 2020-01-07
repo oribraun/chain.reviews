@@ -4730,8 +4730,8 @@ function endReindex() {
 function endReindexNew() {
     RichlistController.getOne(settings[wallet].coin, function(richlist) {
         console.log('updating richlist');
-        AddressToUpdateController.getRichlist('received', 'desc', 100, function(received){
-            AddressToUpdateController.getRichlist('balance', 'desc', 100, function(balance){
+        AddressToUpdateController.getRichlistFaster('received', 'desc', 100, function(received){
+            AddressToUpdateController.getRichlistFaster('balance', 'desc', 100, function(balance){
                 if(received && received.length) {
                     richlist.received = received.map(function (o) {return {received: o.received, a_id: o._id}});
                 }
