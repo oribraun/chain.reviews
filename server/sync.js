@@ -1988,7 +1988,7 @@ if (wallet) {
                 var workersBlocksMap = {};
                 var startReIndexClusterLinerAll = function() {
                     wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
-                        allBlocksCount = 152939;
+                        // allBlocksCount = 152939;
                         for (let i = 0; i < numCPUs; i++) {
                             var worker = cluster.fork();
                             worker.on('message', function (msg) {
@@ -2785,6 +2785,7 @@ if (wallet) {
                             return;
                         }
                         wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
+                            // allBlocksCount = 152939;
                             if(currentBlock > allBlocksCount) {
                                 console.log('no new blocks found');
                                 deleteFile();
@@ -3197,7 +3198,7 @@ if (wallet) {
                         startReIndexClusterLinerAll();
                     }, function () {
                         db.multipleDisconnect();
-                    })
+                    }, hash_number)
                 };
                 var currentBlock = hash_number;
                 var exit_count = 0;
@@ -3205,7 +3206,7 @@ if (wallet) {
                     TxController.deleteAllWhereGte(currentBlock, function(numberRemoved) {
                         console.log('tx deleted', numberRemoved);
                         wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
-                            allBlocksCount = 152939;
+                            // allBlocksCount = 152939;
                             for (let i = 0; i < numCPUs; i++) {
                                 var worker = cluster.fork();
                                 worker.on('message', function (msg) {

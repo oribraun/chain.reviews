@@ -54,6 +54,12 @@ function startReindex() {
         console.log('spawn closed');
         startUpdateVinVout()
     });
+    proc.on('exit', function (code) {
+        // console.log('spawn exited with code ' + code);
+        proc.stdin.end();
+        proc.stdout.destroy();
+        proc.stderr.destroy();
+    });
 }
 function startUpdateVinVout() {
     var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'updatecalcvinvoutclusterlinearchunks'], {execFileOpts, options}, function done(err, stdout, stderr) {
@@ -97,6 +103,12 @@ function startUpdateVinVout() {
         console.log('spawn closed');
         console.log(helpers.getFinishTime(startTime));
         process.exit();
+    });
+    proc.on('exit', function (code) {
+        // console.log('spawn exited with code ' + code);
+        proc.stdin.end();
+        proc.stdout.destroy();
+        proc.stderr.destroy();
     });
 }
 function startUpdateAddresses() {
