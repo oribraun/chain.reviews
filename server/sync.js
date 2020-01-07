@@ -2199,64 +2199,7 @@ function endReindexNew() {
                 }
                 RichlistController.updateOne(richlist, function(err) {
                     console.log('finish updating richlist');
-                    TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
-                        // console.log('latestTx', latestTx);
-                        // console.log('settings[wallet].coin', settings[wallet].coin);
-                        if(latestTx.length) {
-                            wallet_commands.getInfo(wallet).then(function(info) {
-                                info = JSON.parse(info);
-                                console.log('updating masternode count');
-                                wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
-                                    console.log('finish updating masternode count');
-                                    wallet_commands.getNetworkHashps(wallet).then(function(networkhashps) {
-                                        var hashrate = (networkhashps / 1000000000).toFixed(4);
-                                        wallet_commands.getConnectionCount(wallet).then(function(connections) {
-                                            wallet_commands.getBlockCount(wallet).then(function(blockcount) {
-                                                var options = {
-                                                    difficulty: info.difficulty,
-                                                    moneysupply: info.moneysupply,
-                                                    hashrate: hashrate,
-                                                    masternodesCount: JSON.parse(masterNodesCount),
-                                                    connections: parseInt(connections),
-                                                    blockcount: parseInt(blockcount),
-                                                    last_block: latestTx[0].blockindex
-                                                    // supply: stats.supply,
-                                                    // last_price: stats.last_price,
-                                                };
-                                                console.log(options)
-                                                StatsController.update(settings[wallet].coin, options, function (err) {
-                                                    if (err) {
-                                                        console.log(err)
-                                                    }
-                                                    console.log('reindex cluster complete - ', latestTx[0].blockindex);
-                                                    console.log('took - ', helpers.getFinishTime(startTime));
-                                                    deleteFile();
-                                                    db.multipleDisconnect();
-                                                    process.exit();
-                                                });
-                                            }).catch(function(err) {
-                                                console.log(err)
-                                            })
-                                        }).catch(function(err) {
-                                            console.log(err)
-                                        })
-                                    }).catch(function(err) {
-                                        console.log(err)
-                                    })
-                                }).catch(function(err) {
-                                    console.log(err)
-                                })
-                            }).catch(function(err) {
-                                console.log(err)
-                            })
-                        } else {
-                            console.log('reindex no blocks found');
-                            deleteFile();
-                            db.multipleDisconnect();
-                            process.exit();
-                        }
-
-                    })
+                    updateStats();
                 })
             })
         })
@@ -2277,7 +2220,8 @@ function updateStats() {
                         var hashrate = (networkhashps / 1000000000).toFixed(4);
                         wallet_commands.getConnectionCount(wallet).then(function(connections) {
                             wallet_commands.getBlockCount(wallet).then(function(blockcount) {
-                                var options = {
+                                var stats = {
+                                    coin: settings[wallet].coin,
                                     difficulty: info.difficulty,
                                     moneysupply: info.moneysupply,
                                     hashrate: hashrate,
@@ -2288,8 +2232,8 @@ function updateStats() {
                                     // supply: stats.supply,
                                     // last_price: stats.last_price,
                                 };
-                                console.log(options)
-                                StatsController.update(settings[wallet].coin, options, function (err) {
+                                console.log(stats)
+                                StatsController.updateWalletStats(stats, function (err) {
                                     if (err) {
                                         console.log(err)
                                     }

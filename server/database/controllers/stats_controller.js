@@ -21,10 +21,14 @@ function updateOne(obj, cb) { // update or create
         if(stats) { // exist
             // console.log('exist', tx._id)
             // tx.txid = obj.txid;
-            stats.count = obj.count;
-            stats.last = obj.last;
+            stats.last_block = obj.last_block;
+            stats.difficulty = obj.difficulty;
+            stats.moneysupply = obj.moneysupply;
+            stats.hashrate = obj.hashrate;
             stats.supply = obj.supply;
+            stats.blockcount = obj.blockcount;
             stats.connections = obj.connections;
+            stats.masternodesCount = obj.masternodesCount;
             stats.last_price = obj.last_price;
             stats.save(function(err) {
                 if (err) {
@@ -38,10 +42,14 @@ function updateOne(obj, cb) { // update or create
             // console.log('new')
             var newStats = new Stats[db.getCurrentConnection()]({
                 coin: obj.coin,
-                count: obj.count,
-                last: obj.last,
+                last_block: obj.last_block,
+                difficulty: obj.difficulty,
+                moneysupply: obj.moneysupply,
+                hashrate: obj.hashrate,
                 supply: obj.supply,
+                blockcount: obj.blockcount,
                 connections: obj.connections,
+                masternodesCount: obj.masternodesCount,
                 last_price: obj.last_price,
             });
 
@@ -144,6 +152,54 @@ function emptyStats(cb) {
     });
 }
 
+function updateWalletStats(obj, cb) { // update or create
+    Stats[db.getCurrentConnection()].findOne({coin: obj.coin}, function(err, stats) {
+        if(err) {
+            return cb(err);
+        }
+        if(stats) { // exist
+            stats.last_block = obj.last_block;
+            stats.difficulty = obj.difficulty;
+            stats.moneysupply = obj.moneysupply;
+            stats.hashrate = obj.hashrate;
+            stats.blockcount = obj.blockcount;
+            stats.connections = obj.connections;
+            stats.masternodesCount = obj.masternodesCount;
+            stats.save(function(err) {
+                if (err) {
+                    return cb(err);
+                } else {
+                    //console.log('txid: ');
+                    return cb();
+                }
+            })
+        } else { // create new
+            // console.log('new')
+            var newStats = new Stats[db.getCurrentConnection()]({
+                coin: obj.coin,
+                last_block: obj.last_block,
+                difficulty: obj.difficulty,
+                moneysupply: obj.moneysupply,
+                hashrate: obj.hashrate,
+                blockcount: obj.blockcount,
+                connections: obj.connections,
+                masternodesCount: obj.masternodesCount,
+            });
+
+            newStats.save(function(err) {
+                if (err) {
+                    console.log(err);
+                    return cb();
+                } else {
+                    console.log("initial stats entry created for %s", obj.coin);
+                    //console.log(newStats);
+                    return cb();
+                }
+            });
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -151,3 +207,4 @@ module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.update = update;
 module.exports.count = count;
+module.exports.updateWalletStats = updateWalletStats;
