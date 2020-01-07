@@ -1997,7 +1997,7 @@ if (wallet) {
         case 'updatepeers': {
             wallet_commands.getPeerInfo(wallet).then(function(results){
                 PeerController.deleteAll(function(numberRemoved) {
-                    var results = JSON.parse(results);
+                    results = JSON.parse(results);
                     var updatePeer = function(i) {
                         var address = results[i].addr.split(':')[0];
                         request({uri: 'http://freegeoip.app/json/' + address, json: true}, function (error, response, geo) {
