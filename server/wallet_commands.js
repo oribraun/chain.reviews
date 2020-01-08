@@ -119,6 +119,124 @@ var startWallet = function(wallet) {
     return promise;
 }
 
+var reindexWallet = function(wallet) {
+    var results = "";
+    var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+
+        // -txindex
+        var wallet_daemon = settings[wallet]['daemon'];
+        var start_wallet_command = settings[wallet]['commands']['reindexWallet'];
+        var proc = spawn(wallet_daemon, start_wallet_command.split(' '), { execFileOpts, options }, function done(err, stdout, stderr) {
+            if (err) {
+                // console.error('Error:', err.stack);
+                reject(err.stack);
+                try {
+                    proc.kill('SIGINT');
+                    // fs.removeSync(__dirname + sess.dir);
+                    // delete sess.proc;
+                    // delete sess.dir;
+                } catch(e) {
+                    // console.log('e', e);
+                }
+                // throw err;
+            }
+            // console.log('Success', stdout);
+            // console.log('Err', stderr);
+        });
+        proc.stdout.setEncoding('utf8');
+        // sess.proc = proc;
+        // sess.dir = dir;
+        // console.log("sess.proc.pid before", sess.proc.pid)
+
+        proc.stderr.on('data', function(data) {
+            // console.log('err', data.toString('utf8'));
+            reject(data.toString('utf8'));
+            // process.stderr.write(data);
+        });
+        proc.stdout.on('data', function(data) {
+            // var data = JSON.parse(data);
+            // console.log('data', data);
+            results += data;
+            resolve(results);
+            // process.stdout.write(data);
+        });
+        proc.on('close', function(code, signal) {
+            // console.log('code', code);
+            // console.log('signal', signal);
+            // console.log('spawn closed');
+        });
+        proc.on('exit', function (code) {
+            // console.log('spawn exited with code ' + code);
+            proc.stdin.end();
+            proc.stdout.destroy();
+            proc.stderr.destroy();
+        });
+    });
+    return promise;
+}
+
+var rescanWallet = function(wallet) {
+    var results = "";
+    var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+
+        // -txindex
+        var wallet_daemon = settings[wallet]['daemon'];
+        var start_wallet_command = settings[wallet]['commands']['rescanWallet'];
+        var proc = spawn(wallet_daemon, start_wallet_command.split(' '), { execFileOpts, options }, function done(err, stdout, stderr) {
+            if (err) {
+                // console.error('Error:', err.stack);
+                reject(err.stack);
+                try {
+                    proc.kill('SIGINT');
+                    // fs.removeSync(__dirname + sess.dir);
+                    // delete sess.proc;
+                    // delete sess.dir;
+                } catch(e) {
+                    // console.log('e', e);
+                }
+                // throw err;
+            }
+            // console.log('Success', stdout);
+            // console.log('Err', stderr);
+        });
+        proc.stdout.setEncoding('utf8');
+        // sess.proc = proc;
+        // sess.dir = dir;
+        // console.log("sess.proc.pid before", sess.proc.pid)
+
+        proc.stderr.on('data', function(data) {
+            // console.log('err', data.toString('utf8'));
+            reject(data.toString('utf8'));
+            // process.stderr.write(data);
+        });
+        proc.stdout.on('data', function(data) {
+            // var data = JSON.parse(data);
+            // console.log('data', data);
+            results += data;
+            resolve(results);
+            // process.stdout.write(data);
+        });
+        proc.on('close', function(code, signal) {
+            // console.log('code', code);
+            // console.log('signal', signal);
+            // console.log('spawn closed');
+        });
+        proc.on('exit', function (code) {
+            // console.log('spawn exited with code ' + code);
+            proc.stdin.end();
+            proc.stdout.destroy();
+            proc.stderr.destroy();
+        });
+    });
+    return promise;
+}
+
 var stopWallet = function(wallet) {
     var results = "";
     var promise = new Promise(function(resolve, reject) {
@@ -175,8 +293,6 @@ var stopWallet = function(wallet) {
     });
     return promise;
 }
-
-var resyncWallet = function() {}
 
 var getBlockCount = function(wallet) {
     var results = "";
@@ -1775,6 +1891,8 @@ var resetForceStop = function() {
 
 module.exports.startWallet = startWallet; // starting wallet
 module.exports.stopWallet = stopWallet; // stopping wallet
+module.exports.reindexWallet = reindexWallet; // stopping wallet
+module.exports.rescanWallet = rescanWallet; // stopping wallet
 module.exports.getBlockCount = getBlockCount; // returning current block count
 module.exports.getBlock = getBlock; // returning block details
 module.exports.getBlockHash = getBlockHash; // returning specific block hash by index position

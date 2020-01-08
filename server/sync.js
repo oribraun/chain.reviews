@@ -1152,6 +1152,7 @@ if (wallet) {
                     createFile();
                     var currentBlock = 0;
                     var exit_count = 0;
+                    var cpuCount = 1;
                     var startReIndexClusterLinerAll = function() {
                         TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
                             if(latestTx.length) {
@@ -1170,7 +1171,7 @@ if (wallet) {
                                 process.exit();
                                 return;
                             }
-                            for (let i = 0; i < numCPUs; i++) {
+                            for (let i = 0; i < cpuCount; i++) {
                                 var worker = cluster.fork();
                                 worker.on('message', function (msg) {
                                     if (msg.finished) {
@@ -1185,7 +1186,7 @@ if (wallet) {
                                 })
                                 worker.on('exit', (code, signal) => {
                                     exit_count++;
-                                    if (exit_count === numCPUs) {
+                                    if (exit_count === cpuCount) {
                                         console.log('took - ', helpers.getFinishTime(startTime));
                                         deleteFile();
                                         db.multipleDisconnect();
@@ -1320,7 +1321,7 @@ if (wallet) {
                 var limit = 50000;
                 var countBlocks = 0;
                 var offset = 0;
-                var cpuCount = numCPUs;
+                var cpuCount = 1;
                 var clusterQ = [];
                 var gettingNextBlocksInProgress = false;
                 var exit_count = 0;
@@ -2047,6 +2048,42 @@ if (wallet) {
         }
         case 'updatrichlist': {
             endReindexNew();
+            break;
+        }
+        case 'reindexwallet': {
+            wallet_commands.stopWallet(wallet).then(function(res){
+                console.log(res)
+                reindex();
+            }).catch(function(err){
+                if(err.indexOf('couldn\'t connect to server') > -1) {
+                    reindex();
+                }
+            })
+            var reindex = function() {
+                wallet_commands.rescanWallet(wallet).then(function(res){
+                    console.log(res)
+                }).catch(function(err){
+                    console.log('err', err)
+                })
+            }
+            break;
+        }
+        case 'resyncwallet': {
+            wallet_commands.stopWallet(wallet).then(function(res){
+                console.log(res)
+                rescan();
+            }).catch(function(err){
+                if(err.indexOf('couldn\'t connect to server') > -1) {
+                    rescan();
+                }
+            })
+            var rescan = function() {
+                wallet_commands.rescanWallet(wallet).then(function(res){
+                    console.log(res)
+                }).catch(function(err){
+                    console.log('err', err)
+                })
+            }
             break;
         }
         case 'killall': {
