@@ -1,6 +1,7 @@
 const settings = require('./../wallets/all_settings');
 const db = require('./../database/db');
 const fs = require('fs-extra');
+const spawn = require('child_process').spawn;
 
 var wallet = process.argv[2];
 
@@ -41,12 +42,12 @@ var default_settings = {
 }
 
 if(!settings[wallet]) {
-    console.log(wallet)
+    console.log('wallet', wallet)
     var current_settings = default_settings;
     current_settings.coin = wallet;
     current_settings.dbSettings.user = "masternode" + wallet + "user";
     current_settings.dbSettings.password = Array(20)
-        .fill('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz~!@#$%^&*()_-+')
+        .fill('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz~!@#$^&*()_-+')
         .map(function(x) { return x[Math.floor(Math.random() * x.length)] })
         .join('');
     current_settings.dbSettings.database = wallet + 'db';
@@ -57,34 +58,42 @@ if(!settings[wallet]) {
         }
         console.log("The file was saved!");
     });
+    createDb(current_settings);
 }
 
-
-
-const spawn = require('child_process').spawn;
-const pipe = spawn('mongo');
-pipe.stdout.on('data', function (data) {
-    console.log((data.toString('utf8')));
-});
-
-pipe.stderr.on('data', (data) => {
-    console.log(data.toString('utf8'));
-    const pipe2 = spawn('use fixdb');
-    pipe2.stdout.on('data', function (data) {
-        console.log((data.toString('utf8')));
+function createDb(settings) {
+    const pipe = spawn('mongo', [settings.dbSettings.database, '--eval', "printjson(db.createUser(" +
+    "            {" +
+    "                user: '" + settings.dbSettings.user + "'," +
+    "                pwd: '" + settings.dbSettings.password + "'," +
+    "                roles:[{role:'root', db:'admin'}]," +
+    "            }))"], {}, function done(err, stdout, stderr) {
+        if (err) {
+            console.error('Error:', err.stack);
+            try {
+                proc.kill('SIGINT');
+                // fs.removeSync(__dirname + sess.dir);
+                // delete sess.proc;
+                // delete sess.dir;
+            } catch(e) {
+                console.log('e', e);
+            }
+            // throw err;
+        }
+        // console.log('Success', stdout);
+        // console.log('Err', stderr);
+    });
+// const pipe = spawn('mongo', ['--eval', "printjson(db.getCollectionNames())"]);
+    pipe.stdout.on('data', function (data) {
+        console.log((data.toString('utf8').replace('undefined', '')));
     });
 
-    pipe2.stderr.on('data', (data) => {
-        console.log(data.toString('utf8'));
-        const pipe2 = spawn('use fixdb');
+    pipe.stderr.on('data', (data) => {
+        console.log('err', data.toString('utf8'));
     });
 
-    pipe2.on('close', (code) => {
+    pipe.on('close', (code) => {
         console.log('Process exited with code: '+ code);
     });
-});
-
-pipe.on('close', (code) => {
-    console.log('Process exited with code: '+ code);
-});
+}
 

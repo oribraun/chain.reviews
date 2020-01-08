@@ -45,10 +45,10 @@ var db = {
         });
         const db = mongoose.connection;
         db.on("error", () => {
-            console.log("> error occurred from the database");
+            console.log("> error occurred from the database", dbSettings.database);
         });
         db.once("open", () => {
-            console.log("> successfully opened the database");
+            console.log("> successfully opened the database", dbSettings.database);
         });
     },
     connect2: function(wallet, dbSettings) {
@@ -129,14 +129,17 @@ var db = {
             //     })
             // }
             // test(i);
-            connections[i].on("error", () => {
-                console.log('db._readyState error', conn._readyState)
-                console.log("> error occurred from the database");
-            });
-            connections[i].once("open", () => {
-                console.log('db._readyState', conn._readyState)
-                console.log("> successfully opened the database");
-            });
+            function on(c) {
+                c.on("error", (e) => {
+                    console.log('db._readyState error', c._readyState)
+                    console.log("> error occurred from the database", e);
+                });
+                c.once("open", () => {
+                    console.log('db._readyState', c._readyState)
+                    console.log("> successfully opened the database", c.name);
+                });
+            }
+            on(connections[i]);
         }
     },
     getConnections: function() {

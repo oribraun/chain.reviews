@@ -50,6 +50,9 @@ var generalCommand = function(command, args, execFileOpts, options) {
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -108,6 +111,9 @@ var startWallet = function(wallet) {
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
@@ -168,6 +174,9 @@ var reindexWallet = function(wallet) {
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             proc.stdin.end();
@@ -227,6 +236,9 @@ var rescanWallet = function(wallet) {
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             proc.stdin.end();
@@ -284,6 +296,9 @@ var stopWallet = function(wallet) {
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -307,7 +322,7 @@ var getBlockCount = function(wallet) {
                 // console.error('Error:', err.stack);
                 reject(err.stack);
                 try {
-                    proc.kill('SIGINT');
+                    // proc.kill('SIGINT');
                     // fs.removeSync(__dirname + sess.dir);
                     // delete sess.proc;
                     // delete sess.dir;
@@ -340,6 +355,9 @@ var getBlockCount = function(wallet) {
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
@@ -402,6 +420,9 @@ var getBlock = function(wallet, hash) {
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -463,6 +484,9 @@ var getBlockHash = function(wallet, index) {
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
@@ -678,6 +702,9 @@ var getAllMasternodes = function(wallet) {
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -739,6 +766,9 @@ var getMasternodeCount = function(wallet) {
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -790,6 +820,9 @@ var getRawTransaction = function(wallet, txid) {
             // console.log('data', data);
             results += data.replace(/\n|\r/g, "");
             // process.stdout.write(data);
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('close', function(code, signal) {
             if(results) {
@@ -885,6 +918,9 @@ var getRawTransactionFull = function(wallet, txid) {
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -946,6 +982,9 @@ var getMaxMoney = function(wallet){
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -1005,6 +1044,9 @@ var getMaxVote = function(wallet){
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
@@ -1066,6 +1108,9 @@ var getVote = function(wallet){
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -1125,6 +1170,9 @@ var getPhase = function(wallet){
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
@@ -1186,6 +1234,9 @@ var getReward = function(wallet){
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -1245,6 +1296,9 @@ var getNextRewardEstimate = function(wallet){
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
@@ -1306,6 +1360,9 @@ var getNextRewardWhenstr = function(wallet){
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -1365,6 +1422,9 @@ var getConnectionCount = function(wallet){
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
@@ -1426,6 +1486,9 @@ var getInfo = function(wallet){
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -1485,6 +1548,9 @@ var getPeerInfo = function(wallet){
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
@@ -1546,6 +1612,9 @@ var getDifficulty = function(wallet){
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -1606,6 +1675,9 @@ var getNetworkHashps = function(wallet){
             // console.log('signal', signal);
             // console.log('spawn closed');
         });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
             // proc.stdin.end();
@@ -1665,6 +1737,9 @@ var getMiningInfo = function(wallet){
             // console.log('code', code);
             // console.log('signal', signal);
             // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
         });
         proc.on('exit', function (code) {
             // console.log('spawn exited with code ' + code);
