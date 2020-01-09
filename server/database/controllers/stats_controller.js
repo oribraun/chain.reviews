@@ -58,7 +58,7 @@ function updateOne(obj, cb) { // update or create
                     console.log(err);
                     return cb();
                 } else {
-                    console.log("initial stats entry created for %s", obj.coin);
+                    // console.log("initial stats entry created for %s", obj.coin);
                     //console.log(newStats);
                     return cb();
                 }
@@ -140,7 +140,7 @@ function createStats(coin, cb) {
             console.log(err);
             return cb();
         } else {
-            console.log("initial stats entry created for %s", coin);
+            // console.log("initial stats entry created for %s", coin);
             //console.log(newStats);
             return cb();
         }
@@ -191,7 +191,7 @@ function updateWalletStats(obj, cb) { // update or create
                     console.log(err);
                     return cb();
                 } else {
-                    console.log("initial stats entry created for %s", obj.coin);
+                    // console.log("initial stats entry created for %s", obj.coin);
                     //console.log(newStats);
                     return cb();
                 }

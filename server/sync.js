@@ -516,6 +516,9 @@ if (wallet) {
                                             }
                                         })(this.id, currentBlock++)
                                     }
+                                    if (msg.blockNotFound) {
+                                        cluster.workers[this.id].send({kill: true});
+                                    }
                                 })
                                 var exit_count = 0;
                                 worker.on('exit', (code, signal) => {
@@ -626,6 +629,7 @@ if (wallet) {
                                 startReIndexClusterLiner(blockNum);
                             } else {
                                 console.log('error getting block - ' + blockNum, err);
+                                cluster.worker.send({blockNotFound: true});
                             }
                         });
                     }).catch(function (err) {
@@ -633,6 +637,7 @@ if (wallet) {
                             startReIndexClusterLiner(blockNum);
                         } else {
                             console.log('error getting block hash - ' + blockNum, err);
+                            cluster.worker.send({blockNotFound: true});
                         }
                     })
                 }
@@ -1183,6 +1188,9 @@ if (wallet) {
                                             }
                                         })(this.id, currentBlock++)
                                     }
+                                    if (msg.blockNotFound) {
+                                        cluster.workers[this.id].send({kill: true});
+                                    }
                                 })
                                 worker.on('exit', (code, signal) => {
                                     exit_count++;
@@ -1294,6 +1302,7 @@ if (wallet) {
                                 startReIndexClusterLiner(blockNum);
                             } else {
                                 console.log('error getting block - ' + blockNum, err);
+                                cluster.worker.send({blockNotFound: true});
                             }
                         });
                     }).catch(function (err) {
@@ -1301,6 +1310,7 @@ if (wallet) {
                             startReIndexClusterLiner(blockNum);
                         } else {
                             console.log('error getting block hash - ' + blockNum, err);
+                            cluster.worker.send({blockNotFound: true});
                         }
                     })
                 }
@@ -1590,6 +1600,9 @@ if (wallet) {
                                         }
                                     })(this.id, currentBlock++)
                                 }
+                                if (msg.blockNotFound) {
+                                    cluster.workers[this.id].send({kill: true});
+                                }
                             })
                             worker.on('exit', (code, signal) => {
                                 exit_count++;
@@ -1712,6 +1725,7 @@ if (wallet) {
                                 startReIndexClusterLiner(blockNum);
                             } else {
                                 console.log('error getting block - ' + blockNum, err);
+                                cluster.worker.send({blockNotFound: true});
                             }
                         });
                     }).catch(function (err) {
@@ -1719,6 +1733,7 @@ if (wallet) {
                             startReIndexClusterLiner(blockNum);
                         } else {
                             console.log('error getting block hash - ' + blockNum, err);
+                            cluster.worker.send({blockNotFound: true});
                         }
                     })
                 }
@@ -1962,21 +1977,22 @@ if (wallet) {
             break;
 
         case 'updatemasternodes':
-            console.log('getting all masternodes from ' + wallet + ' wallet');
+            // console.log('getting all masternodes from ' + wallet + ' wallet');
             wallet_commands.getAllMasternodes(wallet).then(function(masternodes) {
                 // db.connect(settings[wallet].dbSettings);
                 var masternodes = JSON.parse(masternodes);
-                console.log('got all masternodes', masternodes.length);
+                // console.log('got all masternodes', masternodes.length);
                 MasternodeController.deleteAll(function () {
                     if(masternodes.length) {
-                        console.log('deleted all');
+                        // console.log('deleted all');
 
                         function updateMasternode(i) {
                             MasternodeController.updateOne(masternodes[i], function () {
-                                console.log('masernode ' + i + ' updated');
+                                // console.log('masernode ' + i + ' updated');
                                 if (i < masternodes.length - 1) {
                                     updateMasternode(++i);
                                 } else {
+                                    // console.log('masternodes updated');
                                     db.multipleDisconnect();
                                     process.exit();
                                 }
@@ -2014,11 +2030,12 @@ if (wallet) {
                                 if(err) {
                                     console.log(err)
                                 }
-                                console.log('updated peer', peer.address);
+                                // console.log('updated peer', peer.address);
                                 i++;
                                 if (i < results.length - 1) {
                                     updatePeer(i)
                                 } else {
+                                    // console.log('peers updated');
                                     end();
                                 }
                             });

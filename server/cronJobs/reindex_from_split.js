@@ -48,7 +48,12 @@ function startReindex() {
     });
     proc.stdout.on('data', function (data) {
         // var data = JSON.parse(data);
-        console.log('data', data.replace('\n', ''));
+        // console.log('data', data.replace('\n', ''));
+        var array = data.split('\n');
+        for(var i = 0; i < array.length - 1; i++) {
+            console.log('data', array[i]);
+        }
+        array = null;
         // results += data;
         // process.stdout.write(data);
     });
@@ -91,7 +96,12 @@ function startUpdateVinVout() {
     });
     proc.stdout.on('data', function (data) {
         // var data = JSON.parse(data);
-        console.log('data', data.replace('\n', ''));
+        // console.log('data', data.replace('\n', ''));
+        var array = data.split('\n');
+        for(var i = 0; i < array.length - 1; i++) {
+            console.log('data', array[i]);
+        }
+        array = null;
         // results += data;
         // process.stdout.write(data);
     });

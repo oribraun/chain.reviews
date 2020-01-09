@@ -339,7 +339,11 @@ router.get('/getBlockHash/:number', (req, res) => {
         return;
     }
     TxController.getOne(req.params['number'],function(result) {
-        res.send(JSON.stringify(result.blockhash, null, 2));
+        if(result) {
+            res.send(JSON.stringify(result.blockhash, null, 2));
+        } else {
+            res.send('block not found');
+        }
     })
 });
 

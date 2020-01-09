@@ -49,7 +49,7 @@ function updateOne(obj, cb) { // update or create
                     console.log(err);
                     return cb();
                 } else {
-                    console.log("initial stats entry created");
+                    // console.log("initial stats entry created");
                     //console.log(newStats);
                     return cb();
                 }
