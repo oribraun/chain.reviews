@@ -13,7 +13,7 @@ if(!wallet) {
 }
 var startTime = new Date();
 function startReindex() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'reindexclusterlinearchunks'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'save_tx'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
@@ -57,11 +57,15 @@ function startReindex() {
         console.log('code', code);
         console.log('signal', signal);
         console.log('spawn closed');
-        startUpdateVinVout()
+        if(!code) {
+            startUpdateVinVout()
+        } else {
+            process.exit(1);
+        }
     });
 }
 function startUpdateVinVout() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'calcvinvoutclusterlinearchunks'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'save_tx_vin_vout_and_addresses'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
@@ -106,7 +110,11 @@ function startUpdateVinVout() {
         console.log('signal', signal);
         console.log('spawn closed');
         console.log(helpers.getFinishTime(startTime));
-        process.exit();
+        if(!code) {
+            process.exit();
+        } else {
+            process.exit(1);
+        }
     });
 }
 function startUpdateAddresses() {

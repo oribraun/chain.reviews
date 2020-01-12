@@ -13,7 +13,7 @@ if(!wallet) {
 }
 var startTime = new Date();
 function startReindex() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'updateclusterlinearchunks'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'update_tx'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
@@ -57,7 +57,11 @@ function startReindex() {
         console.log('code', code);
         console.log('signal', signal);
         console.log('spawn closed');
-        startUpdateVinVout()
+        if(!code) {
+            startUpdateVinVout()
+        } else {
+            process.exit(1);
+        }
     });
     proc.on('exit', function (code) {
         // console.log('spawn exited with code ' + code);
@@ -67,7 +71,7 @@ function startReindex() {
     });
 }
 function startUpdateVinVout() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'updatecalcvinvoutclusterlinearchunks'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'update_tx_vin_vout_and_addresses'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
@@ -112,7 +116,11 @@ function startUpdateVinVout() {
         console.log('signal', signal);
         console.log('spawn closed');
         console.log(helpers.getFinishTime(startTime));
-        process.exit();
+        if(!code) {
+            process.exit();
+        } else {
+            process.exit(1);
+        }
     });
     proc.on('exit', function (code) {
         // console.log('spawn exited with code ' + code);

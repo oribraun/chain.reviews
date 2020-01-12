@@ -49,7 +49,11 @@ proc.on('close', function (code, signal) {
     console.log('code', code);
     console.log('signal', signal);
     console.log('spawn closed');
-    process.exit();
+    if(!code) {
+        process.exit();
+    } else {
+        process.exit(1);
+    }
 });
 proc.on('exit', function (code) {
     // console.log('spawn exited with code ' + code);

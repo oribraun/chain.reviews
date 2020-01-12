@@ -51,7 +51,7 @@ var db = {
             console.log("> successfully opened the database", dbSettings.database);
         });
     },
-    connect2: function(wallet, dbSettings) {
+    connect2: function(wallet, dbSettings, onError) {
         var dbString = 'mongodb://' + dbSettings.user;
         dbString = dbString + ':' + dbSettings.password;
         dbString = dbString + '@' + dbSettings.address;
@@ -63,7 +63,8 @@ var db = {
                 console.log(err)
                 console.log('Unable to connect to database: %s', dbString);
                 console.log('Aborting');
-                process.exit(1);
+                onError();
+                // process.exit(1);
 
             }
             isConnected = true;
