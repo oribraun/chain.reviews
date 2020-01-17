@@ -2,7 +2,7 @@ const settings = require('./../wallets/all_settings');
 const db = require('./../database/db');
 const fs = require('fs-extra');
 
-var string = "# cron.d/myCronTabs -- schedules wallet updates\n";
+var string = "# /etc/cron.d/myCronTabs -- schedules wallet updates\n";
 for (var wallet in settings) {
     // var txid = settings[wallet].example_txid;
     // var hash = settings[wallet].example_hash;

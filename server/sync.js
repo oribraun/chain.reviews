@@ -37,6 +37,8 @@ if(settings[wallet]) {
                 cluster.worker.send({mongoTimeout: true});
             }
             deleteFile();
+            deleteFile('mn');
+            deleteFile('peers');
             process.exit(1);
         });
         db.setCurrentConnection(wallet);
@@ -657,7 +659,7 @@ if (wallet) {
                                         updateBlockTx(++i, current_block);
                                     }
                                 }).catch(function (err) {
-                                    if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                                    if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                                         startReIndexClusterLiner(blockNum);
                                     }
                                     else if(err && err.indexOf('No information available about transaction') > -1) {
@@ -699,7 +701,7 @@ if (wallet) {
                             }
                             updateBlockTx(0, current_block);
                         }).catch(function (err) {
-                            if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                            if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                                 startReIndexClusterLiner(blockNum);
                             } else {
                                 if(err && err.toString().indexOf("couldn't connect to server") > -1) {
@@ -710,7 +712,7 @@ if (wallet) {
                             }
                         });
                     }).catch(function (err) {
-                        if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                        if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                             startReIndexClusterLiner(blockNum);
                         } else {
                             if(err && err.toString().indexOf("couldn't connect to server") > -1) {
@@ -1403,7 +1405,7 @@ if (wallet) {
                                         updateBlockTx(++i, current_block);
                                     }
                                 }).catch(function (err) {
-                                    if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                                    if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                                         startReIndexClusterLiner(blockNum);
                                     }
                                     else if(err && err.indexOf('No information available about transaction') > -1) {
@@ -1445,7 +1447,7 @@ if (wallet) {
                             }
                             updateBlockTx(0, current_block);
                         }).catch(function (err) {
-                            if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                            if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                                 startReIndexClusterLiner(blockNum);
                             } else {
                                 if(err && err.toString().indexOf("couldn't connect to server") > -1) {
@@ -1456,7 +1458,7 @@ if (wallet) {
                             }
                         });
                     }).catch(function (err) {
-                        if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                        if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                             startReIndexClusterLiner(blockNum);
                         } else {
                             if(err && err.toString().indexOf("couldn't connect to server") > -1) {
@@ -1900,7 +1902,7 @@ if (wallet) {
                                         updateBlockTx(++i, current_block);
                                     }
                                 }).catch(function (err) {
-                                    if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                                    if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                                         startReIndexClusterLiner(blockNum);
                                     }
                                     else if(err && err.indexOf('No information available about transaction') > -1) {
@@ -1942,7 +1944,7 @@ if (wallet) {
                             }
                             updateBlockTx(0, current_block);
                         }).catch(function (err) {
-                            if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                            if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                                 startReIndexClusterLiner(blockNum);
                             } else {
                                 if(err && err.toString().indexOf("couldn't connect to server") > -1) {
@@ -1953,7 +1955,7 @@ if (wallet) {
                             }
                         });
                     }).catch(function (err) {
-                        if(err && err.indexOf("couldn't parse reply from server") > -1) {
+                        if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                             startReIndexClusterLiner(blockNum);
                         } else {
                             if(err && err.toString().indexOf("couldn't connect to server") > -1) {
