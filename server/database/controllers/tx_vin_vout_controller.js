@@ -141,6 +141,16 @@ function count(cb) {
     });
 }
 
+function estimatedDocumentCount(cb) {
+    TxVinVout[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function countByBlockIndex(cb) {
     TxVinVout[db.getCurrentConnection()].countDocuments({}, function (err, count) {
         if(err) {
@@ -161,5 +171,6 @@ module.exports.deleteAllWhereGte = deleteAllWhereGte;
 module.exports.getTxBlockByTxid = getTxBlockByTxid;
 module.exports.update = update;
 module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getAll2 = getAll2;

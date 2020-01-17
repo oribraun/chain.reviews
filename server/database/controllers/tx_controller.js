@@ -179,6 +179,16 @@ function count(cb) {
     });
 }
 
+function estimatedDocumentCount(cb) {
+    Tx[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function countByBlockIndex(cb) {
     Tx[db.getCurrentConnection()].countDocuments({}, function (err, count) {
         if(err) {
@@ -384,6 +394,7 @@ module.exports.getTxBlockByTxid = getTxBlockByTxid;
 module.exports.getTxBlockByHash = getTxBlockByHash;
 module.exports.update = update;
 module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getBlockHashJoin = getBlockHashJoin;
 module.exports.getAll2Join = getAll2Join;

@@ -103,6 +103,16 @@ function count(cb) {
     });
 }
 
+function estimatedDocumentCount(cb) {
+    Peers[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -110,3 +120,4 @@ module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.update = update;
 module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;

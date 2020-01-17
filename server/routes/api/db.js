@@ -232,19 +232,19 @@ router.get('/getRichlistReceived', (req, res) => {
 
 
 router.get('/getTxCount', (req, res) => {
-    TxController.count(function(count) {
+    TxController.estimatedDocumentCount(function(count) {
         res.json(count);
     })
 });
 
 router.get('/getTxVinVoutCount', (req, res) => {
-    TxVinVoutController.count(function(count) {
+    TxVinVoutController.estimatedDocumentCount(function(count) {
         res.json(count);
     })
 });
 
 router.get('/getAddressesCount', (req, res) => {
-    AddressToUpdateController.count(function(count) {
+    AddressToUpdateController.estimatedDocumentCount(function(count) {
         res.json(count);
     })
 });
@@ -375,7 +375,7 @@ router.get('/listMasternodes/:limit', (req, res) => {
 })
 
 router.get('/getMasternodeCount', (req, res) => {
-    MasternodeController.count(function(count) {
+    MasternodeController.estimatedDocumentCount(function(count) {
         res.json(count);
     })
 });

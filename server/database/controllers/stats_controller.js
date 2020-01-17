@@ -112,6 +112,16 @@ function count(cb) {
     });
 }
 
+function estimatedDocumentCount(cb) {
+    Stats[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function checkStats(coin, cb) {
     Stats[db.getCurrentConnection()].findOne({coin: coin}, function(err, stats) {
         if(stats) {
@@ -207,4 +217,5 @@ module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.update = update;
 module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.updateWalletStats = updateWalletStats;

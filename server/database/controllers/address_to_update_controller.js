@@ -90,6 +90,16 @@ function count(cb) {
     });
 }
 
+function estimatedDocumentCount(cb) {
+    AddressToUpdate[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function getMany(address, cb) {
     AddressToUpdate[db.getCurrentConnection()].find({address: address}, function(err, address) {
         if(address) {
@@ -201,18 +211,22 @@ function getRichlist(sortBy, order, limit, cb) {
 }
 
 function countUnique(cb) {
-    AddressToUpdate[db.getCurrentConnection()].aggregate([
-        {
-            "$group": {
-                "_id": "$address"
-            }
-        },
-    ]).allowDiskUse(true).exec(function(err, address) {
-        if(address) {
-            return cb(address.length);
-        } else {
-            return cb(null);
-        }
+    // AddressToUpdate[db.getCurrentConnection()].aggregate([
+    //     {
+    //         "$group": {
+    //             "_id": "$address"
+    //         }
+    //     },
+    // ]).allowDiskUse(true).exec(function(err, address) {
+    //     if(address) {
+    //         return cb(address.length);
+    //     } else {
+    //         return cb(null);
+    //     }
+    // });
+
+    AddressToUpdate[db.getCurrentConnection()].distinct("address", function(err, results){
+        return cb(results.length);
     });
 }
 
@@ -292,6 +306,7 @@ module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.getMany = getMany;
 module.exports.getOneJoin = getOneJoin;
 module.exports.getRichlist = getRichlist;

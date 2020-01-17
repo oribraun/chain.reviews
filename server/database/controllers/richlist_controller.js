@@ -136,6 +136,16 @@ function count(cb) {
     });
 }
 
+function estimatedDocumentCount(cb) {
+    Richlist[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function updateRichlistByList(list, cb){
     if(list == 'received') {
         Address[db.getCurrentConnection()].find({}).sort({received: 'desc'}).limit(100).exec(function(err, addresses){
@@ -190,3 +200,4 @@ module.exports.deleteAll = deleteAll;
 module.exports.updateRichlist = updateRichlist;
 module.exports.update = update;
 module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;

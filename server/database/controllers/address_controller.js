@@ -381,6 +381,16 @@ function count(cb) {
     });
 }
 
+function estimatedDocumentCount(cb) {
+    Address[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function getOneWithTx(hash, cb) {
     Address[db.getCurrentConnection()].aggregate([
         { $match : { a_id : hash } },
@@ -437,6 +447,7 @@ module.exports.updateAddress = updateAddress;
 module.exports.getRichlist = getRichlist;
 module.exports.update = update;
 module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;
 
 module.exports.updateAddress1 = updateAddress1;
 module.exports.createAddress1 = createAddress1;
