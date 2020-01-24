@@ -199,7 +199,7 @@ function countByBlockIndex(cb) {
     });
 }
 
-function getAllBlocks(sortBy, order, limit, cb) {
+function getAllBlocks(sortBy, order, limit, offset, cb) {
     var sort = {};
     sort[sortBy] = order == 'asc' ? 1 : -1;
     Tx[db.getCurrentConnection()].aggregate([
@@ -215,6 +215,7 @@ function getAllBlocks(sortBy, order, limit, cb) {
             }
         },
         {$sort:sort},
+        {$skip:offset},
         {$limit: limit }
         // {$group:{_id : "$blockindex", "blockhash": { "$first": "$blockhash" }, doc: { "$first": "$$ROOT" }}},
         // {$group:{_id:"$blockhash",items:{$push:{blockhash:"$blockhash"}}}},

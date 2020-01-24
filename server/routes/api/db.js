@@ -6,6 +6,7 @@ const settings = require('./../../wallets/all_settings');
 const wallet_commands = require('../../wallet_commands');
 
 var TxController = require('./../../database/controllers/tx_controller');
+var BlockController = require('./../../database/controllers/block_controller');
 var TxVinVoutController = require('./../../database/controllers/tx_vin_vout_controller');
 var AddressController = require('./../../database/controllers/address_controller');
 var AddressToUpdateController = require('./../../database/controllers/address_to_update_controller');
@@ -14,7 +15,7 @@ var RichlistController = require('./../../database/controllers/richlist_controll
 var MasternodeController = require('./../../database/controllers/masternode_controller');
 var PeersController = require('./../../database/controllers/peers_controller');
 
-var wallet = process.argv[2];
+// var wallet = process.argv[2];
 
 // router.get('/', (req, res) => {
 //     res.json({item: res.locals.wallet + ' db api'});
@@ -53,9 +54,12 @@ router.get('/getAllBlocks/:limit', (req, res) => {
         res.send('limit value have to be number');
         return;
     }
-    TxController.getAllBlocks('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
+    BlockController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
         res.send(JSON.stringify(results, null, 2));
     })
+    // BlockController.estimatedDocumentCount(function(count) {
+    //     res.json(count);
+    // })
 });
 
 router.get('/getAllTx/:limit', (req, res) => {
@@ -237,6 +241,12 @@ router.get('/getTxCount', (req, res) => {
     })
 });
 
+router.get('/getBlockCount', (req, res) => {
+    BlockController.estimatedDocumentCount(function(count) {
+        res.json(count);
+    })
+});
+
 router.get('/getTxVinVoutCount', (req, res) => {
     TxVinVoutController.estimatedDocumentCount(function(count) {
         res.json(count);
@@ -254,7 +264,7 @@ router.get('/getUniqueAddressesCount', (req, res) => {
     })
 });
 
-router.get('/getLatestBlockIndex', (req, res) => {
+router.get('/getLatestTxBlockIndex', (req, res) => {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
         // console.log('latestTx', latestTx);
         if(latestTx.length) {
