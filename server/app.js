@@ -1,6 +1,8 @@
 var express = require('express');
 var session = require('express-session');
 var cors = require('cors');
+var ejs = require('ejs');
+var bodyParser = require("body-parser");
 // var fs = require('fs-extra');
 // const execFile = require('child_process').execFile;
 const spawn = require('child_process').spawn;
@@ -18,6 +20,13 @@ const settings = require('./wallets/all_settings');
 
 db.multipleConnect(settings);
 db.setCurrentConnection('fix');
+
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
+app.engine("html", ejs.renderFile);
+app.use("/exp",express.static(__dirname + "/../explorer/dist"));
+// app.set('view engine', 'ejs');
+
 const routes = require('./routes');
 
 process.on('SIGINT', function() {
@@ -33,6 +42,7 @@ app.use(session({
     saveUninitialized: false ,
     cookie: { secure: false, maxAge: 1000*60*60*24 }
 }))
+
 app.use(cors());
 http.listen(port, function() {
     console.log('Server Works !!! At port ' + port);

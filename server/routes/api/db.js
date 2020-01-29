@@ -45,7 +45,7 @@ router.get('/getStats', (req, res) => {
     });
 });
 
-router.get('/getAllBlocks/:limit', (req, res) => {
+router.get('/getAllBlocks/:limit/:offset', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
     //     return;
@@ -54,7 +54,11 @@ router.get('/getAllBlocks/:limit', (req, res) => {
         res.send('limit value have to be number');
         return;
     }
-    BlockController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
+    if(isNaN(parseInt(req.params['offset']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    BlockController.getAll2({}, {blockindex: true, blockhash: true, txid: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
         res.send(JSON.stringify(results, null, 2));
     })
     // BlockController.estimatedDocumentCount(function(count) {

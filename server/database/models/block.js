@@ -5,7 +5,7 @@ var db = require('./../db');
 var TxSchema = new Schema({
   blockhash: { type: String, index: true, unique: true },
   timestamp: { type: Number, default: 0 },
-  blockindex: {type: Number, default: 0, index: true},
+  blockindex: {type: Number, default: 0, index: true, unique: true},
 }, {id: false, timestamps: true});
 var connections = db.getConnections();
 var obj = {};

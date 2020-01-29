@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const api = require('./api');
+const explorer = require('./explorer');
 
 const db = require('./../database/db');
 const settings = require('./../wallets/all_settings');
@@ -21,4 +22,5 @@ app.get('/', function(req, res) {
 // }, api);
 
 app.use("/api", api);
+app.use("/explorer", explorer);
 module.exports = app;
