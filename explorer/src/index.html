@@ -9,7 +9,7 @@
   <script type="application/javascript">
     let DATA = "<%-data.replace(/\"/g, '\\\"')%>";
     var index = DATA.indexOf('}');
-    if(true) {
+    if(index > -1) {
       DATA = JSON.parse(DATA);
     } else {
       DATA = {};

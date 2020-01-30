@@ -1,2 +1,65 @@
-<p>blocks works!</p>
-{{data | json}}
+<!--<p>blocks works!</p>-->
+<!--{{data | json}}<br>-->
+<!--{{currentTable | json}}<br>-->
+<!--{{pagination | json}}-->
+
+<div class="my-table">
+  <div class="header">
+    <div class="row">
+      <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-0-7 my-th">Block</div>
+      <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-9-3 my-th">Hash</div>
+      <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-th">Time</div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="my-tr">
+      <div class="row" *ngFor="let block of currentTable">
+        <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-0-7 my-td" [innerHtml]="block.blockindex"></div>
+        <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-9-3 my-td"><a href="" [innerHtml]="block.blockhash"></a></div>
+        <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="block.timestamp | prettyTime"></div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex justify-content-center loader" *ngIf="gettingBlocks">
+    <div class="d-table h-100">
+      <div class="d-table-cell align-middle">
+        <div class="spinner-grow" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!--<table class="table">-->
+<!--  <thead>-->
+<!--  <tr>-->
+<!--    <th width="5%" scope="col">Block</th>-->
+<!--    <th width="65%" scope="col">Hash</th>-->
+<!--    <th width="30%" scope="col">time</th>-->
+<!--  </tr>-->
+<!--  </thead>-->
+<!--  <tbody>-->
+<!--  <tr *ngFor="let block of currentTable">-->
+<!--    <td [innerHtml]="block.blockindex"></td>-->
+<!--    <td [innerHtml]="block.blockhash"></td>-->
+<!--    <td [innerHtml]="block.timestamp | prettyTime"></td>-->
+<!--  </tr>-->
+<!--  </tbody>-->
+<!--</table>-->
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+    <li class="page-item">
+      <a class="page-link" href="#" aria-label="Previous" (click)="prevPage()">
+        <span aria-hidden="true">&laquo;</span>
+        <span class="sr-only">Previous</span>
+      </a>
+    </li>
+    <li class="page-item" (click)="setPage(num)" [ngClass]="{'active': pagination.current === num}" *ngFor="let num of ([] | range :pagination.start :pagination.end :1)"><a class="page-link" href="#">{{num}}</a></li>
+    <li class="page-item">
+      <a class="page-link" href="#" aria-label="Next" (click)="nextPage()">
+        <span aria-hidden="true">&raquo;</span>
+        <span class="sr-only">Next</span>
+      </a>
+    </li>
+  </ul>
+</nav>

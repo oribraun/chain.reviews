@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Explorer</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script type="application/javascript">
+    let DATA = '{ "wallet": "fix", "stats": { "last_block": 162169, "difficulty": "6101728.418038337", "moneysupply": "2663986220.565851", "hashrate": "230773.1195", "supply": 0, "blockcount": 162169, "connections": 62, "last_price": 0, "_id": "5e020327fe45c95428e829e6", "last": 154326, "coin": "fix", "__v": 0, "updatedAt": "2020-01-18T22:20:47.171Z", "masternodesCount": { "total": 1236, "stable": 1009, "obfcompat": 1009, "enabled": 1235, "inqueue": 411, "ipv4": 255, "ipv6": 981, "onion": 0 }, "createdAt": "2020-01-07T18:31:38.758Z" }, "total": 163490 }';
+    var index = DATA.indexOf('}');
+    if(index > -1) {
+      DATA = JSON.parse(DATA);
+    } else {
+      DATA = {};
+    }
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

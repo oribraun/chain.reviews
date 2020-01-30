@@ -18,16 +18,18 @@ router.get('/', (req, res) => {
     // console.log(__dirname + "/../../../explorer/dist/index.html");
     // console.log(path.resolve(__dirname + "/../../../explorer/dist/index.html"));
     // BlockController.getAll2({}, {blockindex: true, blockhash: true, txid: true},'blockindex', 'desc', 10, 0, function(results) {
+    StatsController.getOne(res.locals.wallet, function(stats) {
         BlockController.estimatedDocumentCount(function(total) {
             var data = {
                 wallet: res.locals.wallet,
-                // results: results,
+                stats: stats,
                 total: total
             };
             console.log(data);
             res.render(path.resolve(__dirname + "/../../../explorer/dist/index.html"), {
                 data: JSON.stringify(data),
             });
+        })
         // });
     })
 });

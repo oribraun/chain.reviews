@@ -58,7 +58,7 @@ router.get('/getAllBlocks/:limit/:offset', (req, res) => {
         res.send('limit value have to be number');
         return;
     }
-    BlockController.getAll2({}, {blockindex: true, blockhash: true, txid: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
+    BlockController.getAll2({}, {blockindex: true, blockhash: true, timestamp: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
         res.send(JSON.stringify(results, null, 2));
     })
     // BlockController.estimatedDocumentCount(function(count) {

@@ -1,0 +1,198 @@
+//@design: {
+//    position: relative;
+//    min-height: 1px;
+//    padding-left: 7px;
+//    padding-right: 7px;
+//}
+@direction : left;
+.bootstrap-ext(@original_num, @num, @step, @original_step, @classes, @limit, @temp_array) when (@num <= @limit) {
+    @temp: ~'@{classes}.col-@{num}-@{step},.col-sm-@{num}-@{step},.col-md-@{num}-@{step},.col-lg-@{num}-@{step},.col-xl-@{num}-@{step}';
+    @xs : extract(@temp_array,1);
+    @sm : extract(@temp_array,2);
+    @md : extract(@temp_array,3);
+    @lg : extract(@temp_array,4);
+    @xl : extract(@temp_array,5);
+    @temp-xs : ~'@{xs}.col-@{num}';
+    @temp-sm : ~'@{sm}.col-sm-@{num}';
+    @temp-md : ~'@{md}.col-md-@{num}';
+    @temp-lg : ~'@{lg}.col-lg-@{num}';
+    @temp-xl : ~'@{xl}.col-xl-@{num}';
+    @new_array : @temp-xs,@sm,@md,@lg,@xl;
+    & when(@num < @limit) {
+        & when(@step < 10) {
+            @temp: ~'@{classes}.col-@{num}-@{step},.col-sm-@{num}-@{step},.col-md-@{num}-@{step},.col-lg-@{num}-@{step},.col-xl-@{num}-@{step},';
+            @temp-xs : ~'@{xs}.col-@{num}-@{step},';
+            @temp-sm : ~'@{sm}.col-sm-@{num}-@{step},';
+            @temp-md : ~'@{md}.col-md-@{num}-@{step},';
+            @temp-lg : ~'@{lg}.col-lg-@{num}-@{step},';
+            @temp-xl : ~'@{xl}.col-xl-@{num}-@{step},';
+            @new_array : @temp-xs,@temp-sm,@temp-md,@temp-lg,@temp-xl;
+            .bootstrap-ext(@original_num, @num, @step + @original_step, @original_step, @temp, @limit, @new_array);
+        }
+        & when (@step = 10) {
+            @next_num : @num + 1;
+            @temp: ~'@{classes}.col-@{next_num},.col-sm-@{next_num},.col-md-@{next_num},.col-lg-@{next_num},.col-xl-@{next_num},';
+            @temp-xs : ~'@{xs}.col-@{next_num},';
+            @temp-sm : ~'@{sm}.col-sm-@{next_num},';
+            @temp-md : ~'@{md}.col-md-@{next_num},';
+            @temp-lg : ~'@{lg}.col-lg-@{next_num},';
+            @temp-xl : ~'@{xl}.col-xl-@{next_num},';
+            @new_array : @temp-xs,@temp-sm,@temp-md,@temp-lg,@temp-xl;
+            .bootstrap-ext(@original_num, @next_num, @original_step, @original_step, @temp, @limit, @new_array);
+        }
+    }
+    & when (@num = @limit) {
+        @{temp} {
+            position: relative;
+            min-height: 1px;
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+        .row {
+            display: -webkit-box;
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -15px;
+            margin-left: -15px;
+        }
+        @{temp-xl} {
+            @media (min-width: 1200px) {
+                //float: @direction;
+                -webkit-box-flex: 0;
+            }
+        }
+        @{temp-lg} {
+            @media (min-width: 992px) {
+                //float: @direction;
+                -webkit-box-flex: 0;
+            }
+        }
+        @{temp-md} {
+            @media (min-width: 768px) {
+                //float: @direction;
+                -webkit-box-flex: 0;
+            }
+        }
+        @{temp-sm} {
+            @media (min-width: 576px) {
+                //float: @direction;
+                -webkit-box-flex: 0;
+            }
+        }
+        @{temp-xs} {
+            //float:@direction;
+            -webkit-box-flex: 0;
+        }
+
+        .bootstrap-ext-width(@original_num, @original_step, @step, xs, @limit);
+        .bootstrap-ext-offset(@original_num, @original_step, @step, xs, @limit);
+
+        @media (min-width: 576px) {
+            .bootstrap-ext-width(@original_num, @original_step, @step, sm, @limit);
+            .bootstrap-ext-offset(@original_num, @original_step, @step, sm, @limit);
+        }
+
+        @media (min-width: 768px) {
+            .bootstrap-ext-width(@original_num, @original_step, @step, md, @limit);
+            .bootstrap-ext-offset(@original_num, @original_step, @step, md, @limit);
+        }
+
+        @media (min-width: 992px) {
+            .bootstrap-ext-width(@original_num, @original_step, @step, lg, @limit);
+            .bootstrap-ext-offset(@original_num, @original_step, @step, lg, @limit);
+        }
+        @media (min-width: 1200px) {
+            .bootstrap-ext-width(@original_num, @original_step, @step, xl, @limit);
+            .bootstrap-ext-offset(@original_num, @original_step, @step, xl, @limit);
+        }
+    }
+}
+.bootstrap-ext-width(@num,@original_step,@step,@type,@limit) when (@num < @limit) {
+    & when (@step < 10) {
+        @real-num : (@num + @step/10);
+        @width : (@real-num / @limit) * 100;
+        & when (@type = xs) {
+            .col-@{num}-@{step} {
+                //width:~'@{width}%';
+                //-webkit-box-flex: 0;
+                flex: ~'0 0 @{width}%';
+                max-width: ~'@{width}%';
+            }
+        }
+        & when not (@type = xs) {
+            .col-@{type}-@{num}-@{step} {
+                //width:~'@{width}%';
+                //-webkit-box-flex: 0;
+                flex: ~'0 0 @{width}%';
+                max-width: ~'@{width}%';
+            }
+        }
+        .bootstrap-ext-width(@num,@original_step,@step + @original_step,@type,@limit)
+    }
+    & when (@step = 10) {
+        @real-num : (@num + @step/10);
+        @width : (@real-num / @limit) * 100;
+        @next_num : @num + 1;
+        & when (@type = xs) {
+            .col-@{next_num} {
+              //width:~'@{width}%';
+              //-webkit-box-flex: 0;
+                flex: ~'0 0 @{width}%';
+                max-width: ~'@{width}%';
+            }
+        }
+        & when not (@type = xs) {
+            .col-@{type}-@{next_num} {
+              //width:~'@{width}%';
+              //-webkit-box-flex: 0;
+                flex: ~'0 0 @{width}%';
+                max-width: ~'@{width}%';
+            }
+        }
+        .bootstrap-ext-width(@next_num,@original_step,@original_step,@type,@limit)
+    }
+}
+
+.bootstrap-ext-offset(@num,@original_step,@step,@type,@limit) when (@num < @limit) {
+    & when (@step < 10) {
+        @real-num : (@num + @step/10);
+        @offset : (@real-num / @limit) * 100;
+        //.col-@{type}-offset-@{num}-@{step} {
+        //    margin-@{direction}:~'@{offset}%';
+        //}
+        & when (@type = xs) {
+            .offset-@{num}-@{step} {
+                margin-@{direction}:~'@{offset}%';
+            }
+        }
+        & when not (@type = xs) {
+            .offset-@{type}-@{num}-@{step} {
+                margin-@{direction}:~'@{offset}%';
+            }
+        }
+        .bootstrap-ext-offset(@num,@original_step,@step + @original_step,@type,@limit)
+    }
+    & when (@step = 10) {
+        @real-num : (@num + @step/10);
+        @offset : (@real-num / @limit) * 100;
+        @next_num : @num + 1;
+        //.col-@{type}-offset-@{next_num} {
+        //    margin-@{direction}:~'@{offset}%';
+        //}
+        & when (@type = xs) {
+            .offset-@{next_num} {
+                margin-@{direction}:~'@{offset}%';
+            }
+        }
+        & when not (@type = xs) {
+            .offset-@{type}-@{next_num} {
+                margin-@{direction}:~'@{offset}%';
+            }
+        }
+        .bootstrap-ext-offset(@next_num,@original_step,@original_step,@type,@limit)
+    }
+}
+
+@classes : '';
+@temp_array : '','','','','';
+.bootstrap-ext(0, 0, 1, 1, @classes, 12, @temp_array);// start_number, start_number(increases), step, step(increases), changes classes string, limit, temp array for classes string
