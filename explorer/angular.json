@@ -29,7 +29,8 @@
             ],
             "styles": [
               "src/styles.less",
-              "node_modules/bootstrap/dist/css/bootstrap.min.css"
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "src/bootstrap-ext-all.less"
             ],
             "scripts": [
               "node_modules/bootstrap/dist/js/bootstrap.min.js"
@@ -155,7 +156,7 @@
             "styles": [
               "src/styles.less",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "src/assets/css/bootstrap-ext-all.less"
+              "src/bootstrap-ext-all.less"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",
