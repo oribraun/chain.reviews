@@ -60,6 +60,15 @@ for (var wallet in settings) {
     }
 }
 
+string = "";
+for (var wallet in settings) {
+    var currentRoute;
+    string += '<h1>' + wallet + '</h1>' + '<br>';
+    currentRoute = ('/explorer/' + wallet);
+    addLinkToString(currentRoute);
+    currentRoute = ('/explorer/' + wallet + '#/richlist');
+    addLinkToString(currentRoute);
+}
 function addLinkToString(route) {
     string += "<a href='" + route + "' target='_blank'>" + route + "</a>";
     string += '<br>';

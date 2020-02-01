@@ -1,4 +1,5 @@
 var Tx = require('../models/tx');
+var TxVinVout = require('../models/txVinVout');
 var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
@@ -230,6 +231,81 @@ function getAllBlocks(sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAllTxWithVinVoutByHash(hash, sortBy, order, cb) {
+    var sort = {};
+    sort[sortBy] = order == 'asc' ? 1 : -1;
+    Tx[db.getCurrentConnection()].aggregate([
+        { $match : { blockhash : hash } },
+        {
+            "$lookup": {
+                "from": TxVinVout[db.getCurrentConnection()].collection.name,
+                "localField": "txid",
+                "foreignField": "txid",
+                // "pipeline":[
+                // {"$unwind":"$vout"},
+                // {"$match":{"$expr":{"$eq":["$$vin.vout","$vout.n"]}}}
+                // ],
+                "as": "vintx"
+                // where vin.vout = vout[0].n
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$vintx",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$project": {
+                "vout": { "$ifNull" : [ "$vintx.vout", [ ] ] },
+                "vin": { "$ifNull" : [ "$vintx.vin", [ ] ] },
+                "timestamp": "$vintx.timestamp",
+                "blockindex": "$vintx.blockindex",
+                "txid": "$vintx.txid",
+                "blockhash": "$vintx.blockhash",
+                "createdAt": "$vintx.createdAt",
+                "updatedAt": "$vintx.updatedAt",
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$vout",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            $group: {
+                _id: "$txid",
+                totalAmount: { $sum: "$vout.amount" },
+                "vout" : { "$push": "$vout" },
+                "vin" : { "$first": "$vin" },
+                "timestamp" : { "$first": "$timestamp" },
+                "blockindex" : { "$first": "$blockindex" },
+                "txid" : { "$first": "$txid" },
+                "blockhash" : { "$first": "$blockhash" },
+            }
+        },
+        {$sort:sort},
+        // {$group:{_id : "$blockindex", "blockhash": { "$first": "$blockhash" }, doc: { "$first": "$$ROOT" }}},
+        // {$group:{_id:"$blockhash",items:{$push:{blockhash:"$blockhash"}}}},
+        // {$project:{items:{$slice:["$items", 2]}}}
+    ]).exec( function(err, tx) {
+        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb();
+        }
+    });
+    // Tx[db.getCurrentConnection()].find(where, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+    //     if(tx) {
+    //         return cb(tx);
+    //     } else {
+    //         return cb();
+    //     }
+    // });
+}
+
 function getBlockHashJoin(txid, cb) {
     Tx[db.getCurrentConnection()].aggregate([
         { $match : { txid : txid } },
@@ -400,3 +476,4 @@ module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getBlockHashJoin = getBlockHashJoin;
 module.exports.getAll2Join = getAll2Join;
 module.exports.getAllBlocks = getAllBlocks;
+module.exports.getAllTxWithVinVoutByHash = getAllTxWithVinVoutByHash;

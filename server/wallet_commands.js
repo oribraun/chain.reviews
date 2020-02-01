@@ -1498,6 +1498,69 @@ var getInfo = function(wallet){
     });
     return promise;
 }
+var getTxoutsetInfo = function(wallet){
+    var results = "";
+    var promise = new Promise(function(resolve, reject) {
+        if(!settings[wallet]) {
+            reject('this wallet do not exist in our system');
+        }
+        var wallet_cli = settings[wallet]['cli'];
+        var get_block_command = settings[wallet]['commands']['gettxoutsetinfo'];
+        var proc = spawn(wallet_cli, [get_block_command], { execFileOpts, options }, function done(err, stdout, stderr) {
+            if (err) {
+                // console.error('Error:', err.stack);
+                reject(err.stack);
+                try {
+                    proc.kill('SIGINT');
+                    // fs.removeSync(__dirname + sess.dir);
+                    // delete sess.proc;
+                    // delete sess.dir;
+                } catch(e) {
+                    // console.log('e', e);
+                }
+                // throw err;
+            }
+            // console.log('Success', stdout);
+            // console.log('Err', stderr);
+        });
+        proc.stdout.setEncoding('utf8');
+        // sess.proc = proc;
+        // sess.dir = dir;
+        // console.log("sess.proc.pid before", sess.proc.pid)
+
+        proc.stderr.on('data', function(data) {
+            // console.log('err', data.toString('utf8'));
+            reject(data.toString('utf8'));
+            // process.stderr.write(data);
+        });
+        proc.stdout.on('data', function(data) {
+            // var data = JSON.parse(data);
+            // console.log('data', data);
+            results += data.replace(/\n|\r/g, "");
+            // process.stdout.write(data);
+        });
+        proc.on('close', function(code, signal) {
+            if(results) {
+                resolve(results);
+            } else {
+                reject('empty');
+            }
+            // console.log('code', code);
+            // console.log('signal', signal);
+            // console.log('spawn closed');
+        });
+        proc.on('error', function(code, signal) {
+            reject(code);
+        });
+        proc.on('exit', function (code) {
+            // console.log('spawn exited with code ' + code);
+            // proc.stdin.end();
+            // proc.stdout.destroy();
+            // proc.stderr.destroy();
+        });
+    });
+    return promise;
+}
 var getPeerInfo = function(wallet){
     var results = "";
     var promise = new Promise(function(resolve, reject) {
@@ -1989,6 +2052,7 @@ module.exports.getRawTransactionFull = getRawTransactionFull; // getting transac
 // module.exports.getNextRewardWhenstr = getNextRewardWhenstr;
 module.exports.getConnectionCount = getConnectionCount;
 module.exports.getInfo = getInfo;
+module.exports.getTxoutsetInfo = getTxoutsetInfo;
 module.exports.getPeerInfo = getPeerInfo;
 module.exports.getDifficulty = getDifficulty;
 module.exports.getNetworkHashps = getNetworkHashps;

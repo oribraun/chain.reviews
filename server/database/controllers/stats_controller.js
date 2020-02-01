@@ -175,6 +175,7 @@ function updateWalletStats(obj, cb) { // update or create
             stats.blockcount = obj.blockcount;
             stats.connections = obj.connections;
             stats.masternodesCount = obj.masternodesCount;
+            stats.supply = obj.supply;
             stats.save(function(err) {
                 if (err) {
                     return cb(err);
@@ -194,6 +195,7 @@ function updateWalletStats(obj, cb) { // update or create
                 blockcount: obj.blockcount,
                 connections: obj.connections,
                 masternodesCount: obj.masternodesCount,
+                supply: obj.supply,
             });
 
             newStats.save(function(err) {

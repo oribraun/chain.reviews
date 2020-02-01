@@ -1,6 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import {FormsModule} from "@angular/forms";
 import { MockBackendInterceptor } from './services/mock.backend.interceptor';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -9,6 +10,10 @@ import { BlocksComponent } from './components/blocks/blocks.component';
 import { RangePipe } from './pipes/range/range.pipe';
 import { PrettyTimePipe } from './pipes/prettyTime/pretty-time.pipe';
 import { HeaderComponent } from './components/header/header.component';
+import { TxComponent } from './components/tx/tx.component';
+import { BlockComponent } from './components/block/block.component';
+import { RichlistComponent } from './components/richlist/richlist.component';
+import { AddressComponent } from './components/address/address.component';
 
 @NgModule({
   declarations: [
@@ -16,12 +21,17 @@ import { HeaderComponent } from './components/header/header.component';
     BlocksComponent,
     RangePipe,
     PrettyTimePipe,
-    HeaderComponent
+    HeaderComponent,
+    TxComponent,
+    BlockComponent,
+    AddressComponent,
+    RichlistComponent
   ],
   imports: [
     BrowserModule,
     HttpClientModule,
-    AppRoutingModule
+    AppRoutingModule,
+    FormsModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: MockBackendInterceptor, multi: true },

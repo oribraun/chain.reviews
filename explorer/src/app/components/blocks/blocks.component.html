@@ -15,7 +15,7 @@
     <div class="my-tr">
       <div class="row" *ngFor="let block of currentTable">
         <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-0-7 my-td" [innerHtml]="block.blockindex"></div>
-        <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-9-3 my-td"><a href="" [innerHtml]="block.blockhash"></a></div>
+        <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-9-3 my-td"><a [routerLink]="['/block/' + block.blockhash]" [innerHtml]="block.blockhash"></a></div>
         <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="block.timestamp | prettyTime"></div>
       </div>
     </div>
@@ -30,22 +30,6 @@
     </div>
   </div>
 </div>
-<!--<table class="table">-->
-<!--  <thead>-->
-<!--  <tr>-->
-<!--    <th width="5%" scope="col">Block</th>-->
-<!--    <th width="65%" scope="col">Hash</th>-->
-<!--    <th width="30%" scope="col">time</th>-->
-<!--  </tr>-->
-<!--  </thead>-->
-<!--  <tbody>-->
-<!--  <tr *ngFor="let block of currentTable">-->
-<!--    <td [innerHtml]="block.blockindex"></td>-->
-<!--    <td [innerHtml]="block.blockhash"></td>-->
-<!--    <td [innerHtml]="block.timestamp | prettyTime"></td>-->
-<!--  </tr>-->
-<!--  </tbody>-->
-<!--</table>-->
 <nav aria-label="Page navigation">
   <ul class="pagination justify-content-center">
     <li class="page-item">
@@ -60,6 +44,11 @@
         <span aria-hidden="true">&raquo;</span>
         <span class="sr-only">Next</span>
       </a>
+    </li>
+    <li class="page-item">
+      <form action="" (submit)="setPage(input)">
+        <input class="page-link input" name="input" [(ngModel)]="input" type="text" size="1" placeholder="page">
+      </form>
     </li>
   </ul>
 </nav>

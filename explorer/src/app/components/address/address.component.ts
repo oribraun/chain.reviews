@@ -1,21 +1,23 @@
 import {Component, HostListener, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
+import {ActivatedRoute} from "@angular/router";
 
 declare var DATA: any;
-declare var $: any;
 @Component({
-  selector: 'app-blocks',
-  templateUrl: './blocks.component.html',
-  styleUrls: ['./blocks.component.less']
+  selector: 'app-address',
+  templateUrl: './address.component.html',
+  styleUrls: ['./address.component.less']
 })
-export class BlocksComponent implements OnInit {
+export class AddressComponent implements OnInit {
 
   public data;
-  public input = '';
-  public blocks: [];
+  public txs: any[] = [];
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
-  public gettingBlocks = false;
+  public addressDetails: any;
+  public addr: string;
+  public gettingTxs: boolean = false;
+  public gettingAddressCount: boolean = false;
   public pagination: any = {
     current: 1,
     start: 1,
@@ -25,12 +27,16 @@ export class BlocksComponent implements OnInit {
     offset: 0,
     limit: 10
   }
+  public input = '';
   private http: HttpClient;
-  constructor(http: HttpClient) {
+  private route: ActivatedRoute;
+  constructor(http: HttpClient, route: ActivatedRoute) {
     this.http = http;
-  }
+    this.route = route;
+    this.route.params.subscribe(params => {
+      this.addr = params['address'];
+    });
 
-  ngOnInit() {
     let data: any = {}; /// from server node ejs data
     if (typeof DATA !== "undefined") {
       data = DATA;
@@ -39,10 +45,19 @@ export class BlocksComponent implements OnInit {
     this.data = data;
     this.setCurrentTable();
     this.setPages();
-    this.getBlocks();
-
+    this.getAddressCount();
+    this.getAddressTxList();
   }
 
+  ngOnInit() {
+  }
+
+  setCurrentTable() {
+    for(var i = 0; i < this.pagination.maxPages; i++) {
+      this.emptyTable.push( {"txid": "&nbsp;","timestamp": "","amount": "","type": "","blockindex": ""});
+    }
+    this.currentTable = this.emptyTable.slice();
+  }
   setPages() {
     if(window.innerWidth <= 415) {
       this.pagination.maxPages = 5;
@@ -59,17 +74,11 @@ export class BlocksComponent implements OnInit {
       this.pagination.end = this.pagination.pages;
     }
   }
-  setCurrentTable() {
-    for(var i = 0; i < this.pagination.maxPages; i++) {
-      this.emptyTable.push( { "blockindex": "&nbsp;", "_id": "", "blockhash": "", "timestamp": "" });
-    }
-    this.currentTable = this.emptyTable.slice();
-  }
   nextPage() {
-    if(this.gettingBlocks) return;
+    if(this.gettingTxs) return;
     if(this.pagination.current < this.pagination.pages) {
       this.pagination.current++;
-      this.getBlocks();
+      this.getAddressTxList();
     }
     if(this.pagination.end < this.pagination.pages && this.pagination.current > Math.floor(this.pagination.maxPages / 2)) {
       this.pagination.start++;
@@ -79,10 +88,10 @@ export class BlocksComponent implements OnInit {
   }
 
   prevPage() {
-    if(this.gettingBlocks) return;
+    if(this.gettingTxs) return;
     if(this.pagination.current > 1) {
       this.pagination.current--;
-      this.getBlocks();
+      this.getAddressTxList();
     }
     if(this.pagination.start > 1 && this.pagination.current < this.pagination.pages - Math.ceil(this.pagination.maxPages / 2)) {
       this.pagination.start--;
@@ -92,7 +101,7 @@ export class BlocksComponent implements OnInit {
   }
 
   setPage(page) {
-    if(this.gettingBlocks) return;
+    if(this.gettingTxs) return;
     if(page == this.pagination.current || !page || isNaN(page)) {
       return;
     }
@@ -118,28 +127,45 @@ export class BlocksComponent implements OnInit {
     if(this.pagination.current > this.pagination.end) {
       this.pagination.current = this.pagination.end;
     }
-    this.getBlocks();
+    this.getAddressTxList();
   }
 
-  getBlocks() {
-    this.gettingBlocks = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAllBlocks/' + this.pagination.limit + '/' + this.pagination.offset;
+  getAddressTxList() {
+    this.gettingTxs = true;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressTxs/' + this.addr + '/' + this.pagination.limit + '/' + this.pagination.offset;
     console.log('url', url)
     this.http.get(url).subscribe(
-      (blocks: []) => {
-        this.blocks = blocks;
+      (txs: any) => {
+        this.txs = txs;
         this.currentTable = this.emptyTable.slice();
-        for(var i = 0; i< this.blocks.length; i++) {
-          this.currentTable[i] = this.blocks[i];
+        for(var i = 0; i< this.txs.length; i++) {
+          this.currentTable[i] = this.txs[i];
         }
-        this.gettingBlocks = false;
+        this.gettingTxs = false;
       },
       (error) => {
-        console.log(error)
-        this.gettingBlocks = false;
+        console.log(error);
+        this.gettingTxs = false;
       }
     )
   }
+
+  getAddressCount() {
+    this.gettingAddressCount = true;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressDetails/' + this.addr;
+    console.log('url', url)
+    this.http.get(url).subscribe(
+      (addressDetails: any) => {
+        this.addressDetails = addressDetails;
+        this.gettingAddressCount = false;
+      },
+      (error) => {
+        console.log(error);
+        this.gettingAddressCount = false;
+      }
+    )
+  }
+
   @HostListener('window:resize')
   onWindowResize() {
     //debounce resize, wait for resize to finish before doing stuff

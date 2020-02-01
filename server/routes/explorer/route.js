@@ -14,7 +14,8 @@ var RichlistController = require('./../../database/controllers/richlist_controll
 var MasternodeController = require('./../../database/controllers/masternode_controller');
 var PeersController = require('./../../database/controllers/peers_controller');
 
-router.get('/', (req, res) => {
+router.get('/*', (req, res) => {
+    // console.log('req.url', req.url)
     // console.log(__dirname + "/../../../explorer/dist/index.html");
     // console.log(path.resolve(__dirname + "/../../../explorer/dist/index.html"));
     // BlockController.getAll2({}, {blockindex: true, blockhash: true, txid: true},'blockindex', 'desc', 10, 0, function(results) {
@@ -32,6 +33,10 @@ router.get('/', (req, res) => {
         })
         // });
     })
+});
+
+router.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname + "/../../../explorer/dist/index.html"));
 });
 
 // router.get('/richlist', (req, res) => {

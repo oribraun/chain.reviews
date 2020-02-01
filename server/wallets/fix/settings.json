@@ -17,6 +17,7 @@
         "getblockcount": "getblockcount",
         "getconnectioncount": "getconnectioncount",
         "getinfo": "getinfo",
+        "gettxoutsetinfo": "gettxoutsetinfo",
         "getpeerinfo": "getpeerinfo",
         "getmasternodecount": "getmasternodecount",
         "getdifficulty": "getdifficulty",

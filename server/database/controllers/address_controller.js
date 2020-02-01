@@ -438,6 +438,16 @@ function getOneWithTx(hash, cb) {
     });
 }
 
+function getAllFotTx(txid, cb) {
+    Address[db.getCurrentConnection()].find({txid: txid}).exec( function(err, addresses) {
+        if(addresses) {
+            return cb(addresses);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -452,3 +462,4 @@ module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.updateAddress1 = updateAddress1;
 module.exports.createAddress1 = createAddress1;
 module.exports.getOneWithTx = getOneWithTx;
+module.exports.getAllFotTx = getAllFotTx;

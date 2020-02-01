@@ -2759,28 +2759,30 @@ function updateStats() {
                         var hashrate = (networkhashps / 1000000000).toFixed(4);
                         wallet_commands.getConnectionCount(wallet).then(function(connections) {
                             wallet_commands.getBlockCount(wallet).then(function(blockcount) {
-                                var stats = {
-                                    coin: settings[wallet].coin,
-                                    difficulty: info.difficulty,
-                                    moneysupply: info.moneysupply,
-                                    hashrate: hashrate,
-                                    masternodesCount: JSON.parse(masterNodesCount),
-                                    connections: parseInt(connections),
-                                    blockcount: parseInt(blockcount),
-                                    last_block: latestTx[0].blockindex
-                                    // supply: stats.supply,
-                                    // last_price: stats.last_price,
-                                };
-                                console.log(stats)
-                                StatsController.updateWalletStats(stats, function (err) {
-                                    if (err) {
-                                        console.log(err)
-                                    }
-                                    console.log('reindex cluster complete - ', latestTx[0].blockindex);
-                                    console.log('took - ', helpers.getFinishTime(startTime));
-                                    deleteFile();
-                                    db.multipleDisconnect();
-                                    process.exit();
+                                get_supply('GETINFO').then(function(supply) {
+                                    var stats = {
+                                        coin: settings[wallet].coin,
+                                        difficulty: info.difficulty,
+                                        moneysupply: info.moneysupply,
+                                        hashrate: hashrate,
+                                        masternodesCount: JSON.parse(masterNodesCount),
+                                        connections: parseInt(connections),
+                                        blockcount: parseInt(blockcount),
+                                        last_block: latestTx[0].blockindex,
+                                        supply: supply,
+                                        // last_price: stats.last_price,
+                                    };
+                                    console.log(stats)
+                                    StatsController.updateWalletStats(stats, function (err) {
+                                        if (err) {
+                                            console.log(err)
+                                        }
+                                        console.log('reindex cluster complete - ', latestTx[0].blockindex);
+                                        console.log('took - ', helpers.getFinishTime(startTime));
+                                        deleteFile();
+                                        db.multipleDisconnect();
+                                        process.exit();
+                                    });
                                 });
                             }).catch(function(err) {
                                 console.log(err)
@@ -2930,6 +2932,30 @@ var getNextTxsVinVout = function(limit, offset, blockindex) {
     });
     return promise;
 }
+
+function get_supply(type) {
+    var promise = new Promise(function(resolve, reject) {
+        if (type == 'GETINFO') {
+            wallet_commands.getInfo(wallet).then(function(results){
+                resolve(JSON.parse(results).moneysupply)
+            })
+        } else if (type == 'BALANCES') {
+            AddressToUpdateController.getBalanceSupply(function(supply) {
+                resolve(supply.balance/100000000)
+            });
+        } else if (type == 'TXOUTSET') {
+            wallet_commands.getTxoutsetInfo(wallet).then(function(results){
+                resolve(JSON.parse(results).total_amount)
+            })
+        } else {
+            AddressToUpdateController.getCoinbaseSupply(function(coinbase) {
+                resolve(coinbase.sent/100000000)
+            });
+        }
+    })
+    return promise;
+};
+
 function forceProcess(onYes, onNo) {
     console.log('would you like to force reindex');
     console.log('Y/N');
