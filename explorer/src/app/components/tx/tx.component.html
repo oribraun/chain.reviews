@@ -45,16 +45,18 @@
           </div>
         </div>
         <div class="body">
-          <div class="my-tr">
-            <div class="row" *ngFor="let vin of tx.vin">
+          <div class="my-tr" *ngFor="let vin of tx.vin">
+            <div class="row">
               <div class="col-8 my-td" *ngIf="vin.addresses != 'coinbase'"><a [routerLink]="['/address/' + vin.addresses]">{{vin.addresses}}</a></div>
               <div class="col-4 my-td bg-success text-white" *ngIf="vin.addresses != 'coinbase'">{{(vin.amount / 100000000).toFixed(8)}}</div>
             </div>
-            <div class="row" *ngIf="!tx.vin.length">
-              <div class="col-12 my-th my-td text-center bg-info text-white">POS</div>
-            </div>
             <div class="row" *ngIf="tx.vin.length && tx.vin[0].addresses == 'coinbase'">
               <div class="col-12 my-th my-td text-center bg-info text-white">New Coins</div>
+            </div>
+          </div>
+          <div class="my-tr" *ngIf="!tx.vin.length">
+            <div class="row">
+              <div class="col-12 my-th my-td text-center bg-info text-white">POS</div>
             </div>
           </div>
         </div>

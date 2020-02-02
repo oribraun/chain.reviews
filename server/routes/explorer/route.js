@@ -23,6 +23,7 @@ router.get('/*', (req, res) => {
         BlockController.estimatedDocumentCount(function(total) {
             var data = {
                 wallet: res.locals.wallet,
+                devAddress: settings[res.locals.wallet].dev_address,
                 stats: stats,
                 total: total
             };
@@ -35,9 +36,9 @@ router.get('/*', (req, res) => {
     })
 });
 
-router.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname + "/../../../explorer/dist/index.html"));
-});
+// router.get('*', (req, res) => {
+//     res.sendFile(path.resolve(__dirname + "/../../../explorer/dist/index.html"));
+// });
 
 // router.get('/richlist', (req, res) => {
 //     RichlistController.getOne(settings[res.locals.wallet].coin, function(results) {

@@ -12,8 +12,8 @@
     </div>
   </div>
   <div class="body">
-    <div class="my-tr">
-      <div class="row" *ngFor="let block of currentTable">
+    <div class="my-tr" *ngFor="let block of currentTable">
+      <div class="row">
         <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-0-7 my-td" [innerHtml]="block.blockindex"></div>
         <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-9-3 my-td"><a [routerLink]="['/block/' + block.blockhash]" [innerHtml]="block.blockhash"></a></div>
         <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="block.timestamp | prettyTime"></div>

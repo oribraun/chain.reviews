@@ -14,6 +14,7 @@ import { TxComponent } from './components/tx/tx.component';
 import { BlockComponent } from './components/block/block.component';
 import { RichlistComponent } from './components/richlist/richlist.component';
 import { AddressComponent } from './components/address/address.component';
+import { MasternodesComponent } from './components/masternodes/masternodes.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { AddressComponent } from './components/address/address.component';
     TxComponent,
     BlockComponent,
     AddressComponent,
-    RichlistComponent
+    RichlistComponent,
+    MasternodesComponent
   ],
   imports: [
     BrowserModule,

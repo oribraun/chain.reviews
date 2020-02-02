@@ -1,49 +1,122 @@
 <div *ngIf="!gettingRichlist">
-  {{stats | json}}
-  {{dist | json}}
-  <ul class="nav nav-tabs">
-    <li class="nav-item">
-      <a class="nav-link pointer" [ngClass]="{'active': currentType === 'balance'}" (click)="setCurrentType('balance')">Balance</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link pointer" [ngClass]="{'active': currentType === 'received'}" (click)="setCurrentType('received')">Received</a>
-    </li>
-  </ul>
-  <div class="my-table" *ngIf="currentType === 'balance'">
-    <div class="header">
-      <div class="row">
-        <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-2 my-th">Balance({{data.wallet}})</div>
-        <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-8 my-th">Address</div>
-        <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-th">%</div>
+  <div class="row">
+    <div class="col-xl-7">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link pointer" [ngClass]="{'active': currentType === 'balance'}" (click)="setCurrentType('balance')">Balance</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link pointer" [ngClass]="{'active': currentType === 'received'}" (click)="setCurrentType('received')">Received</a>
+        </li>
+      </ul>
+      <div class="my-table" *ngIf="currentType === 'balance'">
+        <div class="header">
+          <div class="row">
+            <div class="col-5 col-sm-4-4 col-md-3-2 col-lg-2-2 col-xl-3-4 my-th">Balance({{data.wallet}})</div>
+            <div class="col-7 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-7-6 my-th">Address</div>
+            <div class="d-none d-sm-block col-sm-1-4 col-md-1-2 col-lg-1 col-xl-1 my-th">%</div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="my-tr">
+            <div class="row" *ngFor="let obj of richlistBalance">
+              <div class="col-5 col-sm-4-4 col-md-3-2 col-lg-2-2 col-xl-3-4 my-td" [innerHtml]="(obj.balance / 100000000).toFixed(8)"></div>
+              <div class="col-7 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-7-6 my-td" [ngClass]="{'dev-fund': data.devAddress === obj.address}"><a [routerLink]="['/address/' + obj.address]" [innerHtml]="obj.address"></a></div>
+              <div class="d-none d-sm-block col-sm-1-4 col-md-1-2 col-lg-1 col-xl-1 my-td" [innerHtml]="((obj.balance / 100000000) / stats.supply * 100).toFixed(2)"></div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="body">
-      <div class="my-tr">
-        <div class="row" *ngFor="let obj of richlistBalance">
-          <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-2 my-td" [innerHtml]="(obj.balance / 100000000).toFixed(8)"></div>
-          <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-8 my-td"><a [routerLink]="['/address/' + obj.address]" [innerHtml]="obj.address"></a></div>
-          <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="0"></div>
+      <div class="my-table" *ngIf="currentType === 'received'">
+        <div class="header">
+          <div class="row">
+            <div class="col-5 col-sm-4-4 col-md-3-2 col-lg-2-2 col-xl-3-4 my-th">Received({{data.wallet}})</div>
+            <div class="col-7 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-7-6 my-th">Address</div>
+            <div class="d-none d-sm-block col-sm-1-4 col-md-1-2 col-lg-1 col-xl-1 my-th">%</div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="my-tr">
+            <div class="row" *ngFor="let obj of richlistReceived">
+              <div class="col-5 col-sm-4-4 col-md-3-2 col-lg-2-2 col-xl-3-4 my-td" [innerHtml]="(obj.received / 100000000).toFixed(8)"></div>
+              <div class="col-7 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-7-6 my-td"><a [routerLink]="['/address/' + obj.address]" [innerHtml]="obj.address"></a></div>
+              <div class="d-none d-sm-block col-sm-1-4 col-md-1-2 col-lg-1 col-xl-1 my-td" [innerHtml]="((obj.received / 100000000) / stats.supply * 100).toFixed(2)"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="my-table" *ngIf="currentType === 'received'">
-    <div class="header">
-      <div class="row">
-        <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-2 my-th">Received({{data.wallet}})</div>
-        <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-8 my-th">Address</div>
-        <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-th">%</div>
-      </div>
-    </div>
-    <div class="body">
-      <div class="my-tr">
-        <div class="row" *ngFor="let obj of richlistReceived">
-          <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-2 my-td" [innerHtml]="(obj.received / 100000000).toFixed(8)"></div>
-          <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-8 my-td"><a [routerLink]="['/address/' + obj.address]" [innerHtml]="obj.address"></a></div>
-          <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="0"></div>
+    <div class="col-xl-5">
+      <div>
+        <h3>Coin Supply</h3>
+        <div class="my-table">
+          <div class="body">
+            <div class="my-tr">
+              <div class="row">
+                <div class="col-12 text-center my-td" [innerHtml]="stats.supply"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+      <div>
+        <h3>Wealth Distribution</h3>
+        <div class="my-table wealth-dist">
+          <div class="header">
+            <div class="row">
+              <div class="col-3-4 col-sm-3 col-md-2-2 col-lg-2-8 col-xl-3-7 my-th"></div>
+              <div class="col-8-6 col-sm-7-5 col-md-8-6 col-lg-8-2 col-xl-7 my-th">Amount({{data.wallet}})</div>
+              <div class="d-none d-sm-block col-sm-1-5 col-md-1-2 col-lg-1 col-xl-1-3 my-th">%</div>
+            </div>
+          </div>
+          <div class="body">
+            <div class="my-tr">
+              <div class="row">
+                <div class="col-3-4 col-sm-3 col-md-2-2 col-lg-2-8 col-xl-3-7 my-td my-th">
+                  <div class=" color red float-left"></div>
+                  <span>Top 1-25</span>
+                </div>
+                <div class="col-8-6 col-sm-7-5 col-md-8-6 col-lg-8-2 col-xl-7 my-td">{{dist.a.total}}</div>
+                <div class="d-none d-sm-block col-sm-1-5 col-md-1-2 col-lg-1 col-xl-1-3 my-td">{{dist.a.percent}}</div>
+              </div>
+              <div class="row">
+                <div class="col-3-4 col-sm-3 col-md-2-2 col-lg-2-8 col-xl-3-7 my-td my-th">
+                  <div class=" color green float-left"></div>
+                  <span>Top 26-50</span>
+                </div>
+                <div class="col-8-6 col-sm-7-5 col-md-8-6 col-lg-8-2 col-xl-7 my-td">{{dist.b.total}}</div>
+                <div class="d-none d-sm-block col-sm-1-5 col-md-1-2 col-lg-1 col-xl-1-3 my-td">{{dist.b.percent}}</div>
+              </div>
+              <div class="row">
+                <div class="col-3-4 col-sm-3 col-md-2-2 col-lg-2-8 col-xl-3-7 my-td my-th">
+                  <div class=" color blue float-left"></div>
+                  <span>Top 51-75</span>
+                </div>
+                <div class="col-8-6 col-sm-7-5 col-md-8-6 col-lg-8-2 col-xl-7 my-td">{{dist.c.total}}</div>
+                <div class="d-none d-sm-block col-sm-1-5 col-md-1-2 col-lg-1 col-xl-1-3 my-td">{{dist.c.percent}}</div>
+              </div>
+              <div class="row">
+                <div class="col-3-4 col-sm-3 col-md-2-2 col-lg-2-8 col-xl-3-7 my-td my-th">
+                  <div class=" color gray float-left"></div>
+                  <span>Top 76-100</span>
+                </div>
+                <div class="col-8-6 col-sm-7-5 col-md-8-6 col-lg-8-2 col-xl-7 my-td">{{dist.d.total}}</div>
+                <div class="d-none d-sm-block col-sm-1-5 col-md-1-2 col-lg-1 col-xl-1-3 my-td">{{dist.d.percent}}</div>
+              </div>
+              <div class="row">
+                <div class="col-3-4 col-sm-3 col-md-2-2 col-lg-2-8 col-xl-3-7 my-td my-th">
+                  <span>Total</span>
+                </div>
+                <div class="col-8-6 col-sm-7-5 col-md-8-6 col-lg-8-2 col-xl-7 my-td"></div>
+                <div class="d-none d-sm-block col-sm-1-5 col-md-1-2 col-lg-1 col-xl-1-3 my-td">{{dist.total}}</div>
+              </div>
+            </div>
+            <div class="my-tr">
+              <div id="pieChart"></div>
+            </div>
+          </div>
+        </div>
+      </div>
   </div>
 </div>
 <div class="d-flex justify-content-center loader" *ngIf="gettingRichlist">

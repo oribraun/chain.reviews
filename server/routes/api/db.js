@@ -280,6 +280,7 @@ router.get('/getRichlist', (req, res) => {
                     distc: distribution.t_51_75,
                     distd: distribution.t_76_100,
                     diste: distribution.t_101plus,
+                    distTotal: (100 - parseFloat(distribution.t_76_100.percent)).toFixed(2),
                     // show_dist: settings.richlist.distribution,
                     // show_received: settings.richlist.received,
                     // show_balance: settings.richlist.balance,

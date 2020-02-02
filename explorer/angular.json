@@ -30,10 +30,13 @@
             "styles": [
               "src/styles.less",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/jqplot/jquery.jqplot.min.css",
               "src/bootstrap-ext-all.less"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/jqplot/jquery.jqplot.min.js",
+              "node_modules/jqplot/jqplot.donutRenderer.js",
               "node_modules/bootstrap/dist/js/bootstrap.min.js"
             ]
           },
@@ -157,10 +160,13 @@
             "styles": [
               "src/styles.less",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "src/lib/jqplot/jquery.jqplot.min.css",
               "src/bootstrap-ext-all.less"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",
+              "src/lib/jqplot/jquery.jqplot.min.js",
+              "src/lib/jqplot/plugins/jqplot.pieRenderer.js",
               "node_modules/bootstrap/dist/js/bootstrap.min.js"
             ]
           },

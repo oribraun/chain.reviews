@@ -5,6 +5,7 @@ import {TxComponent} from "./components/tx/tx.component";
 import {BlockComponent} from "./components/block/block.component";
 import {AddressComponent} from "./components/address/address.component";
 import {RichlistComponent} from "./components/richlist/richlist.component";
+import {MasternodesComponent} from "./components/masternodes/masternodes.component";
 
 
 const routes: Routes = [
@@ -13,6 +14,7 @@ const routes: Routes = [
   { path: 'tx/:hash', component: TxComponent },
   { path: 'address/:address', component: AddressComponent },
   { path: 'richlist', component: RichlistComponent },
+  { path: 'masternodes', component: MasternodesComponent },
   // { path: 'login', component: LoginComponent },
 ];
 

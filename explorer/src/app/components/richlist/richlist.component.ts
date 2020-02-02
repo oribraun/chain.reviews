@@ -3,6 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {ActivatedRoute} from "@angular/router";
 
 declare var DATA: any;
+declare var $: any;
 @Component({
   selector: 'app-richlist',
   templateUrl: './richlist.component.html',
@@ -20,6 +21,7 @@ export class RichlistComponent implements OnInit {
     c: '',
     d: '',
     e: '',
+    total: ''
   };
   public type: string;
   public gettingRichlist: boolean = false;
@@ -59,9 +61,13 @@ export class RichlistComponent implements OnInit {
         this.dist.c = data.distc;
         this.dist.d = data.distd;
         this.dist.e = data.diste;
+        this.dist.total = data.distTotal;
         this.richlistBalance = data.balance;
         this.richlistReceived = data.received;
         this.gettingRichlist = false;
+        setTimeout(() => {
+          this.drawChart();
+        })
       },
       (error) => {
         console.log(error);
@@ -72,6 +78,57 @@ export class RichlistComponent implements OnInit {
 
   setCurrentType(type) {
     this.currentType = type;
+  }
+
+  drawChart() {
+    var data = [
+      ['Top 1-25', parseFloat(this.dist.a.percent)],
+      ['Top 26-50', parseFloat(this.dist.b.percent)],
+      ['Top 51-75', parseFloat(this.dist.c.percent)],
+      ['Top 76-100', parseFloat(this.dist.d.percent)],
+      ['101+', parseFloat(this.dist.e.percent)]
+    ];
+    var pieWealthDist;
+    function draw() {
+      $('#pieChart').height($('#pieChart').width());
+      pieWealthDist = $.jqplot('pieChart', [data],
+        {
+          // height: $('#pieChart').width(),
+          // width: $('#pieChart').width(),
+          seriesColors: ["#d9534f", "#5cb85c", "#428bca", "#222", "#CCC"],
+          series: [{
+            // Make this a pie chart.
+            renderer: $.jqplot.PieRenderer,
+            rendererOptions: {
+              diameter: $('#pieChart').height() - $('#pieChart').height() / 10,
+              padding: 0,
+              sliceMargin: 4,
+              // Put data labels on the pie slices.
+              // By default, labels show the percentage of the slice.
+              showDataLabels: false,
+            }
+          }],
+          gridPadding: {top: 0, bottom: 0, left: 0, right: 0},
+          grid: {borderWidth: 0, shadow: false, backgroundColor: 'transparent',},
+          legend: {
+            show: false,
+            rendererOptions: {
+              numberRows: 1,
+              border: 'none'
+            },
+            location: 's'
+          }
+        }
+      )
+    }
+    draw();
+    $(window).resize(function () {
+      console.log('resize')
+      pieWealthDist.destroy();
+      // pieWealthDist.height = $('#pieChart').width();
+      // pieWealthDist.width = $('#pieChart').width();
+      draw();
+    });
   }
 
 }
