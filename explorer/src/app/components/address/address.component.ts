@@ -14,10 +14,10 @@ export class AddressComponent implements OnInit {
   public txs: any[] = [];
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
-  public addressDetails: any;
+  public addressDetails: any = {};
   public addr: string;
   public gettingTxs: boolean = false;
-  public gettingAddressCount: boolean = false;
+  public gettingAddressDetails: boolean = false;
   public pagination: any = {
     current: 1,
     start: 1,
@@ -44,7 +44,6 @@ export class AddressComponent implements OnInit {
     console.log(data);
     this.data = data;
     this.setCurrentTable();
-    this.setPages();
     this.getAddressCount();
     this.getAddressTxList();
   }
@@ -64,14 +63,27 @@ export class AddressComponent implements OnInit {
     } else {
       this.pagination.maxPages = 10;
     }
-    this.pagination.pages = Math.ceil(this.data.total / this.pagination.maxPages);
-    this.pagination.start = this.pagination.start + (this.pagination.offset * this.pagination.maxPages);
-    this.pagination.end = this.pagination.maxPages + (this.pagination.offset * this.pagination.maxPages);
-    if(this.pagination.start + (this.pagination.offset * this.pagination.maxPages) > this.pagination.pages - this.pagination.maxPages) {
-      this.pagination.start = this.pagination.pages - this.pagination.maxPages;
+    this.pagination.pages = Math.ceil(this.addressDetails.count / this.pagination.limit);
+    this.pagination.start = this.pagination.current - Math.floor(this.pagination.maxPages / 2) + 1;
+    this.pagination.end = this.pagination.current + Math.floor(this.pagination.maxPages / 2);
+    if(this.pagination.start < 1) {
+      this.pagination.start = 1;
+      // this.pagination.current = this.pagination.start;
+      this.pagination.end = this.pagination.maxPages;
     }
-    if(this.pagination.end + (this.pagination.offset * this.pagination.maxPages) > this.pagination.pages) {
+    if(this.pagination.end > this.pagination.pages) {
       this.pagination.end = this.pagination.pages;
+      // this.pagination.current = this.pagination.end;
+      this.pagination.start = this.pagination.end - this.pagination.maxPages + 1;
+      if(this.pagination.start < 1) {
+        this.pagination.start = 1;
+      }
+    }
+    if(this.pagination.current < 1) {
+      this.pagination.current = this.pagination.start;
+    }
+    if(this.pagination.current > this.pagination.end) {
+      this.pagination.current = this.pagination.end;
     }
   }
   nextPage() {
@@ -108,25 +120,7 @@ export class AddressComponent implements OnInit {
     this.pagination.current = parseInt(page);
     this.pagination.offset = (this.pagination.current - 1) * this.pagination.maxPages;
 
-    this.pagination.start = this.pagination.current - Math.floor(this.pagination.maxPages / 2);
-    this.pagination.end = this.pagination.current + Math.floor(this.pagination.maxPages / 2);
-
-    if(this.pagination.start < 1) {
-      this.pagination.start = 1;
-      // this.pagination.current = this.pagination.start;
-      this.pagination.end = this.pagination.maxPages;
-    }
-    if(this.pagination.end > this.pagination.pages) {
-      this.pagination.end = this.pagination.pages;
-      // this.pagination.current = this.pagination.end;
-      this.pagination.start = this.pagination.end - this.pagination.maxPages;
-    }
-    if(this.pagination.current < 1) {
-      this.pagination.current = this.pagination.start;
-    }
-    if(this.pagination.current > this.pagination.end) {
-      this.pagination.current = this.pagination.end;
-    }
+    this.setPages();
     this.getAddressTxList();
   }
 
@@ -151,17 +145,18 @@ export class AddressComponent implements OnInit {
   }
 
   getAddressCount() {
-    this.gettingAddressCount = true;
+    this.gettingAddressDetails = true;
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressDetails/' + this.addr;
     console.log('url', url)
     this.http.get(url).subscribe(
       (addressDetails: any) => {
         this.addressDetails = addressDetails;
-        this.gettingAddressCount = false;
+        this.setPages();
+        this.gettingAddressDetails = false;
       },
       (error) => {
         console.log(error);
-        this.gettingAddressCount = false;
+        this.gettingAddressDetails = false;
       }
     )
   }

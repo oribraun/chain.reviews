@@ -48,13 +48,26 @@ export class MasternodesComponent implements OnInit {
       this.pagination.maxPages = 10;
     }
     this.pagination.pages = Math.ceil(this.masternodes.length / this.pagination.limit);
-    this.pagination.start = this.pagination.start + (this.pagination.offset * this.pagination.maxPages);
-    this.pagination.end = this.pagination.maxPages + (this.pagination.offset * this.pagination.maxPages);
-    if(this.pagination.start + (this.pagination.offset * this.pagination.maxPages) > this.pagination.pages - this.pagination.maxPages) {
-      this.pagination.start = this.pagination.pages - this.pagination.maxPages + 1;
+    this.pagination.start = this.pagination.current - Math.floor(this.pagination.maxPages / 2) + 1;
+    this.pagination.end = this.pagination.current + Math.floor(this.pagination.maxPages / 2);
+    if(this.pagination.start < 1) {
+      this.pagination.start = 1;
+      // this.pagination.current = this.pagination.start;
+      this.pagination.end = this.pagination.maxPages;
     }
-    if(this.pagination.end + (this.pagination.offset * this.pagination.maxPages) > this.pagination.pages) {
+    if(this.pagination.end > this.pagination.pages) {
       this.pagination.end = this.pagination.pages;
+      // this.pagination.current = this.pagination.end;
+      this.pagination.start = this.pagination.end - this.pagination.maxPages + 1;
+      if(this.pagination.start < 1) {
+        this.pagination.start = 1;
+      }
+    }
+    if(this.pagination.current < 1) {
+      this.pagination.current = this.pagination.start;
+    }
+    if(this.pagination.current > this.pagination.end) {
+      this.pagination.current = this.pagination.end;
     }
   }
   setCurrentTable() {
@@ -99,27 +112,8 @@ export class MasternodesComponent implements OnInit {
     this.pagination.current = parseInt(page);
     this.pagination.offset = (this.pagination.current - 1) * this.pagination.limit;
 
-    this.pagination.start = this.pagination.current - Math.floor(this.pagination.maxPages / 2);
-    this.pagination.end = this.pagination.current + Math.floor(this.pagination.maxPages / 2);
-
-    if(this.pagination.start < 1) {
-      this.pagination.start = 1;
-      // this.pagination.current = this.pagination.start;
-      this.pagination.end = this.pagination.maxPages;
-    }
-    if(this.pagination.end > this.pagination.pages) {
-      this.pagination.end = this.pagination.pages;
-      // this.pagination.current = this.pagination.end;
-      this.pagination.start = this.pagination.end - this.pagination.maxPages + 1;
-    }
-    if(this.pagination.current < 1) {
-      this.pagination.current = this.pagination.start;
-    }
-    if(this.pagination.current > this.pagination.end) {
-      this.pagination.current = this.pagination.end;
-    }
-    // this.getBlocks();
-    this.getNextBlocks();
+    this.setPages();
+    this.getNextBlocks()
   }
 
   getBlocks() {
