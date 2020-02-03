@@ -92,7 +92,7 @@ router.get('/getAllTx/:limit', (req, res) => {
 //         res.send(JSON.stringify(results, null, 2));
 //     })
 // });
-router.get('/getAllTxVinVout/:limit', (req, res) => {
+router.get('/getAllTxVinVout/:limit/:offset', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
     //     return;
@@ -101,7 +101,7 @@ router.get('/getAllTxVinVout/:limit', (req, res) => {
         res.send('limit value have to be number');
         return;
     }
-    TxVinVoutController.getAll('blockindex', 'desc', parseInt(req.params['limit']), function(results) {
+    TxVinVoutController.getAll2({total: {$gt: 0}}, {timestamp: true, txid: true, total: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
         res.send(JSON.stringify(results, null, 2));
     })
 });
@@ -341,6 +341,12 @@ router.get('/getTxByTxid/:txid', (req, res) => {
 
 router.get('/getTxByHash/:hash', (req, res) => {
     TxController.getTxBlockByHash(req.params['hash'],function(result) {
+        res.send(JSON.stringify(result, null, 2));
+    })
+});
+
+router.get('/getTxVinVoutByTxid/:txid', (req, res) => {
+    TxVinVoutController.getTxBlockByTxid(req.params['txid'],function(result) {
         res.send(JSON.stringify(result, null, 2));
     })
 });

@@ -1,23 +1,22 @@
 import {Component, HostListener, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {ActivatedRoute} from "@angular/router";
 
 declare var DATA: any;
 @Component({
-  selector: 'app-address',
-  templateUrl: './address.component.html',
-  styleUrls: ['./address.component.less']
+  selector: 'app-movement',
+  templateUrl: './movement.component.html',
+  styleUrls: ['./movement.component.less']
 })
-export class AddressComponent implements OnInit {
+export class MovementComponent implements OnInit {
 
   public data;
-  public txs: any[] = [];
+  public input = '';
+  public txs: [];
+  public txVinVoutCount: any;
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
-  public addressDetails: any = {};
-  public addr: string;
-  public gettingTxs: boolean = false;
-  public gettingAddressDetails: boolean = false;
+  public gettingTxs = false;
+  public gettingTxVinVoutCount = false;
   public pagination: any = {
     current: 1,
     start: 1,
@@ -27,16 +26,17 @@ export class AddressComponent implements OnInit {
     offset: 0,
     limit: 10
   }
-  public input = '';
+  public flags = {
+    "min_amount": 100,
+    "low_flag": 9999999, // flaga
+    "high_flag": 10000000 // flagb
+  };
   private http: HttpClient;
-  private route: ActivatedRoute;
-  constructor(http: HttpClient, route: ActivatedRoute) {
+  constructor(http: HttpClient) {
     this.http = http;
-    this.route = route;
-    this.route.params.subscribe(params => {
-      this.addr = params['address'];
-    });
+  }
 
+  ngOnInit() {
     let data: any = {}; /// from server node ejs data
     if (typeof DATA !== "undefined") {
       data = DATA;
@@ -44,26 +44,19 @@ export class AddressComponent implements OnInit {
     console.log(data);
     this.data = data;
     this.setCurrentTable();
-    this.getAddressDetails();
-    this.getAddressTxList();
+    this.getTxVinVoutCount();
+    this.setPages();
+    this.getTxs();
+
   }
 
-  ngOnInit() {
-  }
-
-  setCurrentTable() {
-    for(var i = 0; i < this.pagination.maxPages; i++) {
-      this.emptyTable.push( {"txid": "&nbsp;","timestamp": "","amount": "","type": "","blockindex": ""});
-    }
-    this.currentTable = this.emptyTable.slice();
-  }
   setPages() {
     if(window.innerWidth <= 415) {
       this.pagination.maxPages = 5;
     } else {
       this.pagination.maxPages = 10;
     }
-    this.pagination.pages = Math.ceil(this.addressDetails.count / this.pagination.limit);
+    this.pagination.pages = Math.ceil(this.data.total / this.pagination.limit);
     this.pagination.start = this.pagination.current - Math.floor(this.pagination.maxPages / 2) + 1;
     this.pagination.end = this.pagination.current + Math.floor(this.pagination.maxPages / 2);
     if(this.pagination.start < 1) {
@@ -86,30 +79,36 @@ export class AddressComponent implements OnInit {
       this.pagination.current = this.pagination.end;
     }
   }
+  setCurrentTable() {
+    for(var i = 0; i < this.pagination.maxPages; i++) {
+      this.emptyTable.push( { "timestamp": "", "total": "", "_id": "", "txid": "&nbsp;" });
+    }
+    this.currentTable = this.emptyTable.slice();
+  }
   nextPage() {
     if(this.gettingTxs) return;
     if(this.pagination.current < this.pagination.pages) {
       this.pagination.current++;
-      this.getAddressTxList();
+      this.getTxs();
     }
     if(this.pagination.end < this.pagination.pages && this.pagination.current > Math.floor(this.pagination.maxPages / 2)) {
       this.pagination.start++;
       this.pagination.end++;
     }
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.maxPages;
+    this.pagination.offset = (this.pagination.current - 1) * this.pagination.limit;
   }
 
   prevPage() {
     if(this.gettingTxs) return;
     if(this.pagination.current > 1) {
       this.pagination.current--;
-      this.getAddressTxList();
+      this.getTxs();
     }
     if(this.pagination.start > 1 && this.pagination.current < this.pagination.pages - Math.ceil(this.pagination.maxPages / 2)) {
       this.pagination.start--;
       this.pagination.end--;
     }
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.maxPages;
+    this.pagination.offset = (this.pagination.current - 1) * this.pagination.limit;
   }
 
   setPage(page) {
@@ -118,18 +117,34 @@ export class AddressComponent implements OnInit {
       return;
     }
     this.pagination.current = parseInt(page);
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.maxPages;
+    this.pagination.offset = (this.pagination.current - 1) * this.pagination.limit;
 
     this.setPages();
-    this.getAddressTxList();
+    this.getTxs();
   }
 
-  getAddressTxList() {
-    this.gettingTxs = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressTxs/' + this.addr + '/' + this.pagination.limit + '/' + this.pagination.offset;
+  getTxVinVoutCount() {
+    this.gettingTxVinVoutCount = true;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getTxVinVoutCount';
     console.log('url', url)
     this.http.get(url).subscribe(
-      (txs: any) => {
+      (txVinVoutCount: any) => {
+        this.txVinVoutCount = txVinVoutCount;
+        this.setPages();
+        this.gettingTxVinVoutCount = false;
+      },
+      (error) => {
+        console.log(error);
+        this.gettingTxVinVoutCount = false;
+      }
+    )
+  }
+  getTxs() {
+    this.gettingTxs = true;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAllTxVinVout/' + this.pagination.limit + '/' + this.pagination.offset;
+    console.log('url', url)
+    this.http.get(url).subscribe(
+      (txs: []) => {
         this.txs = txs;
         this.currentTable = this.emptyTable.slice();
         for(var i = 0; i< this.txs.length; i++) {
@@ -138,29 +153,11 @@ export class AddressComponent implements OnInit {
         this.gettingTxs = false;
       },
       (error) => {
-        console.log(error);
+        console.log(error)
         this.gettingTxs = false;
       }
     )
   }
-
-  getAddressDetails() {
-    this.gettingAddressDetails = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressDetails/' + this.addr;
-    console.log('url', url)
-    this.http.get(url).subscribe(
-      (addressDetails: any) => {
-        this.addressDetails = addressDetails;
-        this.setPages();
-        this.gettingAddressDetails = false;
-      },
-      (error) => {
-        console.log(error);
-        this.gettingAddressDetails = false;
-      }
-    )
-  }
-
   @HostListener('window:resize')
   onWindowResize() {
     //debounce resize, wait for resize to finish before doing stuff

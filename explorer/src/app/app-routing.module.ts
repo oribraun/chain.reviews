@@ -6,6 +6,7 @@ import {BlockComponent} from "./components/block/block.component";
 import {AddressComponent} from "./components/address/address.component";
 import {RichlistComponent} from "./components/richlist/richlist.component";
 import {MasternodesComponent} from "./components/masternodes/masternodes.component";
+import {MovementComponent} from "./components/movement/movement.component";
 
 
 const routes: Routes = [
@@ -15,6 +16,7 @@ const routes: Routes = [
   { path: 'address/:address', component: AddressComponent },
   { path: 'richlist', component: RichlistComponent },
   { path: 'masternodes', component: MasternodesComponent },
+  { path: 'movement', component: MovementComponent },
   // { path: 'login', component: LoginComponent },
 ];
 

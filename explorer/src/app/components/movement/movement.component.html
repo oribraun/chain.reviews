@@ -6,21 +6,26 @@
 <div class="my-table">
   <div class="header">
     <div class="row">
-      <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-0-7 my-th">Block</div>
-      <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-9-3 my-th">Hash</div>
-      <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-th">Time</div>
+      <div class="col-5 col-sm-3-8 col-md-3-9 col-lg-3 col-xl-2-7 my-th">Timestamp</div>
+      <div class="col-7 col-sm-6-2 col-md-6-6 col-lg-7-8 col-xl-8-3 my-th">Txid</div>
+      <div class="d-none d-sm-block col-sm-2 col-md-1-5 col-lg-1-2 col-xl-1 my-th">Amount</div>
     </div>
   </div>
   <div class="body">
-    <div class="my-tr" *ngFor="let block of currentTable">
+    <div class="my-tr" *ngFor="let tx of currentTable">
       <div class="row">
-        <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-0-7 my-td" [innerHtml]="block.blockindex"></div>
-        <div class="col-8-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-9-3 my-td"><a [routerLink]="['/block/' + block.blockhash]" [innerHtml]="block.blockhash"></a></div>
-        <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="block.timestamp | prettyTime"></div>
+        <div class="col-5 col-sm-3-8 col-md-3-9 col-lg-3 col-xl-2-7 my-td" [innerHtml]="tx.timestamp | prettyTime"></div>
+        <div class="col-7 col-sm-6-2 col-md-6-6 col-lg-7-8 col-xl-8-3 my-td"><a [routerLink]="['/tx/' + tx.txid]" [innerHtml]="tx.txid"></a></div>
+        <div class="d-none d-sm-block col-sm-2 col-md-1-5 col-lg-1-2 col-xl-1 my-td">
+          <span class="badge badge-success" [ngClass]="{
+        'badge-danger':(tx.total / 100000000) > flags.low_flag,
+        'badge-warning':(tx.total / 100000000) > flags.high_flag
+        }" [innerHtml]="tx.total ? (tx.total / 100000000).toFixed(1) : ''"></span>
+        </div>
       </div>
     </div>
   </div>
-  <div class="d-flex justify-content-center loader" *ngIf="gettingBlocks">
+  <div class="d-flex justify-content-center loader" *ngIf="gettingTxs">
     <div class="d-table h-100">
       <div class="d-table-cell align-middle">
         <div class="spinner-grow" role="status">

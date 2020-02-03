@@ -2917,6 +2917,70 @@ var search2 = {
   "result": "000000428366d3a156c38c5061d74317d201781f539460aeeeaae1091de6e4cc"
 }
 
+var txVinVoutCount = 458502;
+var txVinVout = [
+  {
+    "timestamp": 1580729173,
+    "total": 1522070000000,
+    "_id": "5e380361b7089e19996c16a5",
+    "txid": "27df92ba05522d62f2abd6e150025bca17bd9986732804f2b11363f8aa237372"
+  },
+  {
+    "timestamp": 1580729058,
+    "total": 1217655799999,
+    "_id": "5e380360b7089e19996c1680",
+    "txid": "c0c3b938d37f75cd356863b9294f5f1f825728959ceac10e7f2c2e2a7c2f3951"
+  },
+  {
+    "timestamp": 1580729058,
+    "total": 50881939797,
+    "_id": "5e380360b7089e19996c167d",
+    "txid": "578ba5d70f28f3c88ffa010a2470afe6c7091fc66f63919ac23615f6ca91b905"
+  },
+  {
+    "timestamp": 1580729058,
+    "total": 51258599076,
+    "_id": "5e380360b7089e19996c1679",
+    "txid": "3325378563d3c96195f97fef71666527a9425321cad7f3357e6325d5a82434db"
+  },
+  {
+    "timestamp": 1580729058,
+    "total": 1522070000000,
+    "_id": "5e38035fb7089e19996c1675",
+    "txid": "d19b4b17db9c12efe8f3108ec9b82283b2a4f6ba0acc7063c54a40f658e1a18b"
+  },
+  {
+    "timestamp": 1580728689,
+    "total": 1522070000000,
+    "_id": "5e38022d287fc513e9500f46",
+    "txid": "6897780c6b36f246d3a1de46ac5f92bf9ee5e291f8aa514fb5d0b4b4b94bab1d"
+  },
+  {
+    "timestamp": 1580728661,
+    "total": 1217655900000,
+    "_id": "5e38022d287fc513e9500f3f",
+    "txid": "a62ac36d97c879ad57cb8a16830fb7cebf48eadca87499a74c36297479f97b23"
+  },
+  {
+    "timestamp": 1580728661,
+    "total": 10169687018395,
+    "_id": "5e38022d287fc513e9500f3a",
+    "txid": "484e4abec644f3b55017762a7075c27a9fd141cb1e97c05057fce36c908a57b0"
+  },
+  {
+    "timestamp": 1580728661,
+    "total": 1522070000000,
+    "_id": "5e38022d287fc513e9500f37",
+    "txid": "878a6bbb890f4663609f4caaf43f54add4af24b8603d04f3e0192d57a3c8bb55"
+  },
+  {
+    "timestamp": 1580728607,
+    "total": 1522070000000,
+    "_id": "5e38022d287fc513e9500f31",
+    "txid": "63268c8339ec0093dab2bd8c9d7204e1c533d27ae4aa9da7978c62099e2f9749"
+  }
+];
+
 @Injectable()
 export class MockBackendInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -2984,6 +3048,18 @@ export class MockBackendInterceptor implements HttpInterceptor {
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
           return getSearch(wallet);
+        case url.indexOf('/getTxVinVoutCount') > -1 && method === 'GET':
+          var host = window.location.protocol + '//' + window.location.host + '/';
+          var array = url.replace(host, '').split('/');
+          var wallet = array[2];
+          return getTxVinVoutCount(wallet);
+        case url.indexOf('/getAllTxVinVout') > -1 && method === 'GET':
+          var host = window.location.protocol + '//' + window.location.host + '/';
+          var array = url.replace(host, '').split('/');
+          var wallet = array[2];
+          var limit = parseInt(array[4]);
+          var offset = parseInt(array[5]);
+          return getAllTxVinVout(wallet, limit, offset);
         default:
           // pass through any requests not handled above
           return next.handle(request);
@@ -3013,6 +3089,12 @@ export class MockBackendInterceptor implements HttpInterceptor {
     }
     function getSearch(wallet) {
       return ok(search);
+    }
+    function getAllTxVinVout(wallet, limit, offset) {
+      return ok(txVinVout.slice(offset*limit, limit + offset*limit));
+    }
+    function getTxVinVoutCount(wallet) {
+      return ok(txVinVoutCount);
     }
 
     function ok(body?) {
