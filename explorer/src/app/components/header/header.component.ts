@@ -12,7 +12,7 @@ export class HeaderComponent implements OnInit {
 
   public data:any;
   public search: string;
-  private searching: boolean = false;
+  public searching: boolean = false;
   private http: HttpClient;
   private router: Router;
   constructor(http: HttpClient, router: Router) {
