@@ -6,14 +6,14 @@
 
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
-      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}">
-        <a class="nav-link" data-toggle="collapse" data-target=".navbar-collapse.show" href="#" [routerLink]="'/'">Home</a>
+      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
+        <a class="nav-link" href="#" [routerLink]="'/'">Home</a>
       </li>
-      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}">
-        <a class="nav-link" data-toggle="collapse" data-target=".navbar-collapse.show" href="#" [routerLink]="'/richlist'">Richlist</a>
+      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
+        <a class="nav-link" href="#" [routerLink]="'/richlist'">Richlist</a>
       </li>
-      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}">
-        <a class="nav-link" data-toggle="collapse" data-target=".navbar-collapse.show" href="#" [routerLink]="'/masternodes'">Masternodes</a>
+      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
+        <a class="nav-link" href="#" [routerLink]="'/masternodes'">Masternodes</a>
       </li>
     </ul>
     <form class="form search my-2 my-lg-0" (ngSubmit)="onSearch()">
