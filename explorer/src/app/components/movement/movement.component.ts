@@ -45,7 +45,6 @@ export class MovementComponent implements OnInit {
     this.data = data;
     this.setCurrentTable();
     this.getTxVinVoutCount();
-    this.setPages();
     this.getTxs();
 
   }
@@ -56,7 +55,7 @@ export class MovementComponent implements OnInit {
     } else {
       this.pagination.maxPages = 10;
     }
-    this.pagination.pages = Math.ceil(this.data.total / this.pagination.limit);
+    this.pagination.pages = Math.ceil(this.txVinVoutCount / this.pagination.limit);
     this.pagination.start = this.pagination.current - Math.floor(this.pagination.maxPages / 2) + 1;
     this.pagination.end = this.pagination.current + Math.floor(this.pagination.maxPages / 2);
     if(this.pagination.start < 1) {
