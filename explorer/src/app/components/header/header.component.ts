@@ -3,6 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
 
 declare var DATA: any;
+declare var $: any;
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
@@ -37,7 +38,8 @@ export class HeaderComponent implements OnInit {
     console.log('this.search', this.search)
     this.searching = true;
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/search/' + this.search;
-    console.log('url', url)
+    console.log('url', url);
+    $('.navbar-collapse').collapse('hide');
     this.http.get(url).subscribe(
       (data: any) => {
         console.log(data);
