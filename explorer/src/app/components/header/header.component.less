@@ -12,3 +12,40 @@
     //font-size: .5rem;
   }
 }
+
+.search {
+  width: 50%;
+  .input-group-text {
+    cursor: pointer;
+    background: transparent;
+  }
+  input {
+    border-right: none;
+    outline:none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+  }
+  button:focus {
+    outline:none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+  }
+  input:focus ~ .input-group-append {
+    .input-group-text {
+      border-color: #80bdff;
+    }
+  }
+}
+
+.loader {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background: rgba(255,255,255,.7);
+  z-index: 4;
+}
+

@@ -1,5 +1,6 @@
 import {Component, HostListener, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
+import {FilterPipe} from "../../pipes/filter/filter.pipe";
 
 declare var DATA: any;
 @Component({
@@ -11,7 +12,7 @@ export class MasternodesComponent implements OnInit {
 
   public data;
   public input = '';
-  public masternodes: [];
+  public masternodes: any[] = [];
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
   public gettingMasternodes = false;
@@ -24,6 +25,8 @@ export class MasternodesComponent implements OnInit {
     offset: 0,
     limit: 10
   }
+  public search: string;
+  private filterPipe: FilterPipe = new FilterPipe();
   private http: HttpClient;
   constructor(http: HttpClient) {
     this.http = http;
@@ -47,7 +50,7 @@ export class MasternodesComponent implements OnInit {
     } else {
       this.pagination.maxPages = 10;
     }
-    this.pagination.pages = Math.ceil(this.masternodes.length / this.pagination.limit);
+    this.pagination.pages = Math.ceil(this.filterMasternodes().length / this.pagination.limit);
     this.pagination.start = this.pagination.current - Math.floor(this.pagination.maxPages / 2) + 1;
     this.pagination.end = this.pagination.current + Math.floor(this.pagination.maxPages / 2);
     if(this.pagination.start < 1) {
@@ -118,7 +121,7 @@ export class MasternodesComponent implements OnInit {
 
   getBlocks() {
     this.gettingMasternodes = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/listMasternodes/' + this.pagination.limit;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/listMasternodes/0';
     console.log('url', url)
     this.http.get(url).subscribe(
       (masternodes: []) => {
@@ -139,7 +142,9 @@ export class MasternodesComponent implements OnInit {
   getNextBlocks() {
     this.currentTable = this.emptyTable.slice();
     for(var i = 0; i< this.currentTable.length; i++) {
-      this.currentTable[i] = this.masternodes[(this.pagination.current - 1) * this.pagination.limit + i];
+      if(this.masternodes[(this.pagination.current - 1) * this.pagination.limit + i]) {
+        this.currentTable[i] = this.masternodes[(this.pagination.current - 1) * this.pagination.limit + i];
+      }
     }
   }
   @HostListener('window:resize')
@@ -151,6 +156,10 @@ export class MasternodesComponent implements OnInit {
       this.pagination.maxPages = 10;
     }
     this.setPages();
+  }
+
+  filterMasternodes() {
+    return this.filterPipe.transform(this.masternodes, this.search, ['addr','collateral','status'])
   }
 
 }

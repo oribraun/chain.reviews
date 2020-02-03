@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import {HttpClient} from "@angular/common/http";
+import {Router} from "@angular/router";
 
 declare var DATA: any;
 @Component({
@@ -9,7 +11,14 @@ declare var DATA: any;
 export class HeaderComponent implements OnInit {
 
   public data:any;
-  constructor() { }
+  public search: string;
+  private searching: boolean = false;
+  private http: HttpClient;
+  private router: Router;
+  constructor(http: HttpClient, router: Router) {
+    this.http = http;
+    this.router = router;
+  }
 
   ngOnInit() {
     let data: any = {}; /// from server node ejs data
@@ -19,6 +28,31 @@ export class HeaderComponent implements OnInit {
     console.log('session data');
     console.log(data);
     this.data = data;
+  }
+
+  onSearch() {
+    if(!this.search) {
+      return;
+    }
+    console.log('this.search', this.search)
+    this.searching = true;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/search/' + this.search;
+    console.log('url', url)
+    this.http.get(url).subscribe(
+      (data: any) => {
+        console.log(data);
+        if(data && data.type && data.result) {
+          this.router.navigateByUrl('/' + data.type + '/' + data.result);
+        } else {
+          alert('Search found no results for: ' + this.search)
+        }
+        this.searching = false;
+      },
+      (error) => {
+        console.log(error)
+        this.searching = false;
+      }
+    )
   }
 
 }

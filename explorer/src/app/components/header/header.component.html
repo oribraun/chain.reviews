@@ -16,9 +16,13 @@
         <a class="nav-link" href="#" [routerLink]="'/masternodes'">Masternodes</a>
       </li>
     </ul>
-    <form class="form-inline my-2 my-lg-0">
-      <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    <form class="form search my-2 my-lg-0" (ngSubmit)="onSearch()">
+      <div class="input-group">
+        <input type="text" class="form-control bg-light" placeholder="Search" name="main-search" [(ngModel)]="search">
+        <div class="input-group-append">
+          <button class="input-group-text" type="submit" id="basic-addon1"><span class="fa fa-search form-control-feedback"></span></button>
+        </div>
+      </div>
     </form>
   </div>
 </nav>
@@ -40,6 +44,16 @@
     <div class="col-sm header-box">
       <h4>Masternodes</h4>
       <h6>total: {{data.stats.masternodesCount.total}}, enabled: {{data.stats.masternodesCount.enabled}}</h6>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex justify-content-center loader" *ngIf="searching">
+  <div class="d-table h-100">
+    <div class="d-table-cell align-middle">
+      <div class="spinner-grow" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
     </div>
   </div>
 </div>

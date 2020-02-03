@@ -479,6 +479,39 @@ router.get('/getAllPeers/:limit', (req, res) => {
     })
 })
 
+router.get('/search/:hash', (req, res) => {
+    var result = {
+        type: '',
+        result: ''
+    }
+    BlockController.getBlockByHash(req.params['hash'], function(block) {
+        if(block) {
+            result.type = 'block';
+            result.result = req.params['hash'];
+            sendResult()
+        } else {
+            TxController.getTxBlockByTxid(req.params['hash'], function (tx) {
+                if(tx) {
+                    result.type = 'tx';
+                    result.result = req.params['hash'];
+                    sendResult()
+                } else {
+                    AddressToUpdateController.getOne(req.params['hash'], function (address) {
+                        if(address) {
+                            result.type = 'address';
+                            result.result = req.params['hash'];
+                        }
+                        sendResult()
+                    })
+                }
+            })
+        }
+        function sendResult() {
+            res.send(JSON.stringify(result, null, 2));
+        }
+    })
+});
+
 module.exports = router;
 
 

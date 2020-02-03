@@ -2903,6 +2903,20 @@ var masternodes = [
   }
 ]
 
+var search = {
+  "type": "address",
+  "result": "FCoB1M2CxxN1fAezRAZC31AWtMBZ3zSvyF"
+}
+
+var search1 = {
+  "type": "tx",
+  "result": "30d701a30486a3e1791f1a29a7ac452a7adf72e7a3bef98235f9bf935fb34827"
+}
+var search2 = {
+  "type": "block",
+  "result": "000000428366d3a156c38c5061d74317d201781f539460aeeeaae1091de6e4cc"
+}
+
 @Injectable()
 export class MockBackendInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -2965,6 +2979,11 @@ export class MockBackendInterceptor implements HttpInterceptor {
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
           return getMasternodes(wallet);
+        case url.indexOf('/search') > -1 && method === 'GET':
+          var host = window.location.protocol + '//' + window.location.host + '/';
+          var array = url.replace(host, '').split('/');
+          var wallet = array[2];
+          return getSearch(wallet);
         default:
           // pass through any requests not handled above
           return next.handle(request);
@@ -2991,6 +3010,9 @@ export class MockBackendInterceptor implements HttpInterceptor {
     }
     function getMasternodes(wallet) {
       return ok(masternodes);
+    }
+    function getSearch(wallet) {
+      return ok(search);
     }
 
     function ok(body?) {
