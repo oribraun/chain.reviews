@@ -1,36 +1,38 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="#">Explorer({{data.wallet}})</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
+<div class="wrapper">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">Explorer({{data.wallet}})</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-  <div class="collapse navbar-collapse" id="navbarSupportedContent">
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
-        <a class="nav-link" href="#" [routerLink]="'/'">Home</a>
-      </li>
-      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
-        <a class="nav-link" href="#" [routerLink]="'/richlist'">Richlist</a>
-      </li>
-      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
-        <a class="nav-link" href="#" [routerLink]="'/masternodes'">Masternodes</a>
-      </li>
-      <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
-        <a class="nav-link" href="#" [routerLink]="'/movement'">Movement</a>
-      </li>
-    </ul>
-    <form class="form search my-2 my-lg-0" (ngSubmit)="onSearch()">
-      <div class="input-group">
-        <input type="text" class="form-control bg-light" placeholder="Search" name="main-search" [(ngModel)]="search">
-        <div class="input-group-append">
-          <button class="input-group-text" type="submit" id="basic-addon1"><span class="fa fa-search form-control-feedback"></span></button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
+          <a class="nav-link" href="#" [routerLink]="'/'">Home</a>
+        </li>
+        <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
+          <a class="nav-link" href="#" [routerLink]="'/richlist'">Richlist</a>
+        </li>
+        <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
+          <a class="nav-link" href="#" [routerLink]="'/masternodes'">Masternodes</a>
+        </li>
+        <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
+          <a class="nav-link" href="#" [routerLink]="'/movement'">Movement</a>
+        </li>
+      </ul>
+      <form class="form search my-2 my-lg-0" (ngSubmit)="onSearch()">
+        <div class="input-group">
+          <input type="text" class="form-control bg-light" placeholder="Search" name="main-search" [(ngModel)]="search">
+          <div class="input-group-append">
+            <button class="input-group-text" type="submit" id="basic-addon1"><span class="fa fa-search form-control-feedback"></span></button>
+          </div>
         </div>
-      </div>
-    </form>
-  </div>
-</nav>
+      </form>
+    </div>
+  </nav>
+</div>
 
-<div class="container">
+<div class="container stats">
   <div class="row">
     <div class="col-sm header-box">
       <h4>Difficulty</h4>
