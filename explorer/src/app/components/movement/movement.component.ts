@@ -117,7 +117,13 @@ export class MovementComponent implements OnInit {
       return;
     }
     this.pagination.current = parseInt(page);
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.limit;
+    if(this.pagination.current < 1) {
+      this.pagination.current = this.pagination.start;
+    }
+    if(this.pagination.current > this.pagination.pages) {
+      this.pagination.current = this.pagination.pages;
+    }
+    this.pagination.offset = (parseInt(this.pagination.current) - 1) * parseInt(this.pagination.limit);
 
     this.setPages();
     this.getTxs();
@@ -125,7 +131,7 @@ export class MovementComponent implements OnInit {
 
   getTxVinVoutCount() {
     this.gettingTxVinVoutCount = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getTxVinVoutCount';
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getTxVinVoutCountWhereTotal';
     console.log('url', url)
     this.http.get(url).subscribe(
       (txVinVoutCount: any) => {

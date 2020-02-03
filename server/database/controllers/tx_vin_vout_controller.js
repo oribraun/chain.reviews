@@ -151,6 +151,16 @@ function estimatedDocumentCount(cb) {
     });
 }
 
+function countWhereTotal(cb) {
+    TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}}).count({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function countByBlockIndex(cb) {
     TxVinVout[db.getCurrentConnection()].countDocuments({}, function (err, count) {
         if(err) {
@@ -172,5 +182,6 @@ module.exports.getTxBlockByTxid = getTxBlockByTxid;
 module.exports.update = update;
 module.exports.count = count;
 module.exports.estimatedDocumentCount = estimatedDocumentCount;
+module.exports.countWhereTotal = countWhereTotal;
 module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getAll2 = getAll2;

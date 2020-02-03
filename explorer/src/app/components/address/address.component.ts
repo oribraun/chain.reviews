@@ -118,7 +118,13 @@ export class AddressComponent implements OnInit {
       return;
     }
     this.pagination.current = parseInt(page);
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.maxPages;
+    if(this.pagination.current < 1) {
+      this.pagination.current = this.pagination.start;
+    }
+    if(this.pagination.current > this.pagination.pages) {
+      this.pagination.current = this.pagination.pages;
+    }
+    this.pagination.offset = (parseInt(this.pagination.current) - 1) * parseInt(this.pagination.limit);
 
     this.setPages();
     this.getAddressTxList();

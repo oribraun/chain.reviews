@@ -101,7 +101,7 @@ router.get('/getAllTxVinVout/:limit/:offset', (req, res) => {
         res.send('limit value have to be number');
         return;
     }
-    TxVinVoutController.getAll2({total: {$gt: 0}}, {timestamp: true, txid: true, total: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
+    TxVinVoutController.getAll2({total: {$gt: 0}}, {timestamp: true, txid: true, total: true, blockindex: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
         res.send(JSON.stringify(results, null, 2));
     })
 });
@@ -307,6 +307,12 @@ router.get('/getBlockCount', (req, res) => {
 
 router.get('/getTxVinVoutCount', (req, res) => {
     TxVinVoutController.estimatedDocumentCount(function(count) {
+        res.json(count);
+    })
+});
+
+router.get('/getTxVinVoutCountWhereTotal', (req, res) => {
+    TxVinVoutController.countWhereTotal(function(count) {
         res.json(count);
     })
 });
