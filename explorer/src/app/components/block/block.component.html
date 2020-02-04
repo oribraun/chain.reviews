@@ -49,7 +49,7 @@
         <div class="row" *ngFor="let tx of blockTxs">
           <div class="col-3-4 col-sm-1-4 col-md-1-2 col-lg-0-8 col-xl-0-7 my-td" [innerHtml]="tx.blockindex"></div>
           <div class="col-8-6 col-sm-1-8 col-md-4-4 col-lg-6-4 col-xl-7-3 my-td"><a [routerLink]="['/tx/' + tx.txid]" [innerHtml]="tx.txid"></a></div>
-          <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="tx.totalAmount"></div>
+          <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="(tx.totalAmount / 100000000).toFixed(8)"></div>
           <div class="d-none d-sm-block col-sm-4-4 col-md-3-2 col-lg-2-4 col-xl-2 my-td" [innerHtml]="tx.vout.length"></div>
         </div>
       </div>

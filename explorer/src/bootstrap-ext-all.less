@@ -84,26 +84,27 @@
             -webkit-box-flex: 0;
         }
 
+      @offset-step: (@step - 1);
         .bootstrap-ext-width(@original_num, @original_step, @step, xs, @limit);
-        .bootstrap-ext-offset(@original_num, @original_step, @step, xs, @limit);
+        .bootstrap-ext-offset(@original_num, @original_step, @offset-step, xs, @limit);
 
         @media (min-width: 576px) {
             .bootstrap-ext-width(@original_num, @original_step, @step, sm, @limit);
-            .bootstrap-ext-offset(@original_num, @original_step, @step, sm, @limit);
+            .bootstrap-ext-offset(@original_num, @original_step, @offset-step, sm, @limit);
         }
 
         @media (min-width: 768px) {
             .bootstrap-ext-width(@original_num, @original_step, @step, md, @limit);
-            .bootstrap-ext-offset(@original_num, @original_step, @step, md, @limit);
+            .bootstrap-ext-offset(@original_num, @original_step, @offset-step, md, @limit);
         }
 
         @media (min-width: 992px) {
             .bootstrap-ext-width(@original_num, @original_step, @step, lg, @limit);
-            .bootstrap-ext-offset(@original_num, @original_step, @step, lg, @limit);
+            .bootstrap-ext-offset(@original_num, @original_step, @offset-step, lg, @limit);
         }
         @media (min-width: 1200px) {
             .bootstrap-ext-width(@original_num, @original_step, @step, xl, @limit);
-            .bootstrap-ext-offset(@original_num, @original_step, @step, xl, @limit);
+            .bootstrap-ext-offset(@original_num, @original_step, @offset-step, xl, @limit);
         }
     }
 }
@@ -154,7 +155,25 @@
 }
 
 .bootstrap-ext-offset(@num,@original_step,@step,@type,@limit) when (@num < @limit) {
-    & when (@step < 10) {
+    & when (@step = 0) {
+        @real-num : (@num + @step/10);
+        @offset : (@real-num / @limit) * 100;
+        //.col-@{type}-offset-@{num}-@{step} {
+        //    margin-@{direction}:~'@{offset}%';
+        //}
+        & when (@type = xs) {
+          .offset-@{num} {
+            margin-@{direction}:~'@{offset}%';
+          }
+        }
+        & when not (@type = xs) {
+          .offset-@{type}-@{num} {
+            margin-@{direction}:~'@{offset}%';
+          }
+        }
+        .bootstrap-ext-offset(@num,@original_step,@step + @original_step,@type,@limit)
+    }
+    & when (@step < 10) and (@step > 0) {
         @real-num : (@num + @step/10);
         @offset : (@real-num / @limit) * 100;
         //.col-@{type}-offset-@{num}-@{step} {
