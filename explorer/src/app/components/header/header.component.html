@@ -1,6 +1,6 @@
 <div class="wrapper">
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="#">Explorer({{data.wallet}})</a>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light1">
+    <a class="navbar-brand" href="#">{{data.wallet | titlecase}} Coin</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -8,7 +8,7 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
         <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
-          <a class="nav-link" href="#" [routerLink]="'/'">Home</a>
+          <a class="nav-link" href="#" [routerLink]="'/'">Explorer</a>
         </li>
         <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
           <a class="nav-link" href="#" [routerLink]="'/richlist'">Richlist</a>
@@ -24,7 +24,7 @@
         <div class="input-group">
           <input type="text" class="form-control bg-light" placeholder="Search" name="main-search" [(ngModel)]="search">
           <div class="input-group-append">
-            <button class="input-group-text" type="submit" id="basic-addon1"><span class="fa fa-search form-control-feedback"></span></button>
+            <button class="input-group-text bg-light" type="submit" id="basic-addon1"><span class="fa fa-search form-control-feedback"></span></button>
           </div>
         </div>
       </form>
@@ -32,23 +32,31 @@
   </nav>
 </div>
 
-<div class="container-md stats">
+<div class="stats">
   <div class="row">
-    <div class="col-sm header-box">
-      <h4>Difficulty</h4>
-      <h6>{{data.stats.difficulty}}</h6>
+    <div class="col-sm">
+      <div class="header-box">
+        <h4>Difficulty</h4>
+        <h6>{{data.stats.difficulty}}</h6>
+      </div>
     </div>
-    <div class="col-sm header-box">
-      <h4>Coin Supply</h4>
-      <h6>{{data.stats.moneysupply}}</h6>
+    <div class="col-sm mt-3 mt-sm-0">
+      <div class="header-box">
+        <h4>Coin Supply</h4>
+        <h6>{{data.stats.moneysupply}}</h6>
+      </div>
     </div>
-    <div class="col-sm header-box">
-      <h4>Network</h4>
-      <h6>{{data.stats.hashrate}} (GH/s)</h6>
+    <div class="col-md mt-3 mt-md-0">
+      <div class="header-box">
+        <h4>Network</h4>
+        <h6>{{data.stats.hashrate}} (GH/s)</h6>
+      </div>
     </div>
-    <div class="col-lg header-box">
-      <h4>Masternodes</h4>
-      <h6>total: {{data.stats.masternodesCount.total}}, enabled: {{data.stats.masternodesCount.enabled}}</h6>
+    <div class="col-lg mt-3 mt-lg-0">
+      <div class="header-box">
+        <h4>Masternodes</h4>
+        <h6>total: {{data.stats.masternodesCount.total}}, enabled: {{data.stats.masternodesCount.enabled}}</h6>
+      </div>
     </div>
   </div>
 </div>
