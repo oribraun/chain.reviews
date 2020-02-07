@@ -414,22 +414,34 @@ router.get('/getBlockWithTxsByHash/:hash', (req, res) => {
 });
 
 router.get('/getBlockTxsByHash/:hash', (req, res) => {
-    wallet_commands.getBlock(res.locals.wallet, req.params['hash']).then(function(block) {
-        TxController.getAllTxWithVinVoutByHash(req.params['hash'], 'blockindex', 'desc', function (txs) {
-            var data = {block: JSON.parse(block), txs: txs}
-            res.send(JSON.stringify(data, null, 2));
-        })
-    });
+    BlockController.getBlockByHash(req.params['hash'], function(block) {
+        if(block) {
+            wallet_commands.getBlock(res.locals.wallet, req.params['hash']).then(function (block) {
+                TxController.getAllTxWithVinVoutByHash(req.params['hash'], 'blockindex', 'desc', function (txs) {
+                    var data = {block: JSON.parse(block), txs: txs}
+                    res.send(JSON.stringify(data, null, 2));
+                })
+            });
+        } else {
+            res.send(JSON.stringify(null, null, 2));
+        }
+    })
 });
 
 router.get('/getTxDetails/:txid', (req, res) => {
-    wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function(tx) {
-        TxVinVoutController.getTxBlockByTxid(req.params['txid'], function (txVinVout) {
-            tx.height = txVinVout.blockindex;
-            tx.vin = txVinVout.vin;
-            tx.vout = txVinVout.vout;
-            res.send(JSON.stringify(tx, null, 2));
-        })
+    TxController.getTxBlockByTxid(req.params['txid'], function(tx) {
+        if(tx) {
+            wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {
+                TxVinVoutController.getTxBlockByTxid(req.params['txid'], function (txVinVout) {
+                    tx.height = txVinVout.blockindex;
+                    tx.vin = txVinVout.vin;
+                    tx.vout = txVinVout.vout;
+                    res.send(JSON.stringify(tx, null, 2));
+                })
+            });
+        } else {
+            res.send(JSON.stringify(null, null, 2));
+        }
     });
 });
 

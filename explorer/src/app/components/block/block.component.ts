@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 
 declare var DATA: any;
 @Component({
@@ -18,9 +18,11 @@ export class BlockComponent implements OnInit {
 
   private http: HttpClient;
   private route: ActivatedRoute;
-  constructor(http: HttpClient, route: ActivatedRoute) {
+  private router: Router;
+  constructor(http: HttpClient, route: ActivatedRoute, router: Router) {
     this.http = http;
     this.route = route;
+    this.router = router;
     this.route.params.subscribe(params => {
       this.hash = params['hash'];
     });
@@ -43,9 +45,13 @@ export class BlockComponent implements OnInit {
     console.log('url', url)
     this.http.get(url).subscribe(
       (data: any) => {
-        this.block = data.block;
-        this.blockTxs = data.txs;
-        console.log('this.blockTxs', this.blockTxs)
+        if(!data) {
+          this.router.navigateByUrl('/');
+        } else {
+          this.block = data.block;
+          this.blockTxs = data.txs;
+          console.log('this.blockTxs', this.blockTxs)
+        }
         this.gettingBlockTxs = false;
       },
       (error) => {

@@ -47,7 +47,6 @@ export class AddressComponent implements OnInit {
     this.data = data;
     this.setCurrentTable();
     this.getAddressDetails();
-    this.getAddressTxList();
   }
 
   ngOnInit() {
@@ -158,11 +157,13 @@ export class AddressComponent implements OnInit {
     console.log('url', url)
     this.http.get(url).subscribe(
       (addressDetails: any) => {
-        if(addressDetails === 'no address found') {
+        if(!addressDetails || addressDetails === 'no address found') {
           this.router.navigateByUrl('/');
+        } else {
+          this.addressDetails = addressDetails;
+          this.getAddressTxList();
+          this.setPages();
         }
-        this.addressDetails = addressDetails;
-        this.setPages();
         this.gettingAddressDetails = false;
       },
       (error) => {
