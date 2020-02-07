@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const api = require('./api');
+const public_api = require('./public-api');
 const explorer = require('./explorer');
 
 const db = require('./../database/db');
@@ -21,6 +22,25 @@ app.get('/', function(req, res) {
 //     next();
 // }, api);
 
-app.use("/api", api);
+var allowOnlyForExplorer = function (req, res, next) {
+    // res.header('Content-Type', 'application/json');
+    console.log("add to header called ... " + req.url + " origin - " + req.headers.referer);
+    // // res.header("charset", "utf-8")
+    var allowedOrigins = ["http://139.59.131.210/explorer", "https://139.59.131.210/explorer"];
+    var referer = req.headers.referer;
+    var allowed = false;
+    for(var i = 0;i < allowedOrigins.length && !allowed; i++) {
+        if(referer && referer.indexOf(allowedOrigins[i]) > -1) {
+            allowed = true;
+        }
+    }
+    if(allowed) {
+        next();
+    } else {
+        res.send('not allowed')
+    }
+};
+app.use("/api", allowOnlyForExplorer, api);
+app.use("/public-api", public_api);
 app.use("/explorer", explorer);
 module.exports = app;

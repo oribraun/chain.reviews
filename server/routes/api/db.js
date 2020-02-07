@@ -496,33 +496,96 @@ router.get('/search/:hash', (req, res) => {
         type: '',
         result: ''
     }
-    BlockController.getBlockByHash(req.params['hash'], function(block) {
-        if(block) {
-            result.type = 'block';
-            result.result = req.params['hash'];
-            sendResult()
-        } else {
-            TxController.getTxBlockByTxid(req.params['hash'], function (tx) {
-                if(tx) {
-                    result.type = 'tx';
-                    result.result = req.params['hash'];
+    var hash = req.params['hash'].trim();
+    // var hash = req.params['hash'].replace(/ /g,'');
+    var hashType = '';
+    if(hash.length === 64) {
+        hashType = 'block_tx';
+    } else if(hash.length === 34) {
+        hashType = 'address';
+    } else if(/^\d+$/.test(hash)) {
+        hashType = 'number';
+    }
+    if(hashType === 'block_tx') {
+        BlockController.getBlockByHash(hash, function (block) {
+            if (block) {
+                result.type = 'block';
+                result.result = hash;
+                sendResult()
+            } else {
+                TxController.getTxBlockByTxid(hash, function (tx) {
+                    if (tx) {
+                        result.type = 'tx';
+                        result.result = hash;
+                    }
                     sendResult()
-                } else {
-                    AddressToUpdateController.getOne(req.params['hash'], function (address) {
-                        if(address) {
-                            result.type = 'address';
-                            result.result = req.params['hash'];
-                        }
-                        sendResult()
-                    })
-                }
-            })
-        }
-        function sendResult() {
-            res.send(JSON.stringify(result, null, 2));
-        }
-    })
+                })
+            }
+        });
+    } else if(hashType === 'number') {
+        BlockController.getOne(hash, function(block) {
+            if (block) {
+                result.type = 'block';
+                result.result = block.blockhash;
+            }
+            sendResult()
+        });
+    } else if(hashType === 'address') {
+        AddressToUpdateController.getOne(hash, function (address) {
+            if (address) {
+                result.type = 'address';
+                result.result = hash;
+            }
+            sendResult()
+        })
+    } else {
+        sendResult()
+    }
+    function sendResult() {
+        res.send(JSON.stringify(result, null, 2));
+    }
 });
+
+// router.get('/search/:hash', (req, res) => {
+//     var result = {
+//         type: '',
+//         result: ''
+//     }
+//     BlockController.getOne(req.params['hash'], function(block) {
+//         if (block) {
+//             result.type = 'block';
+//             result.result = block.blockhash;
+//             sendResult()
+//         } else {
+//             BlockController.getBlockByHash(req.params['hash'], function (block) {
+//                 if (block) {
+//                     result.type = 'block';
+//                     result.result = req.params['hash'];
+//                     sendResult()
+//                 } else {
+//                     TxController.getTxBlockByTxid(req.params['hash'], function (tx) {
+//                         if (tx) {
+//                             result.type = 'tx';
+//                             result.result = req.params['hash'];
+//                             sendResult()
+//                         } else {
+//                             AddressToUpdateController.getOne(req.params['hash'], function (address) {
+//                                 if (address) {
+//                                     result.type = 'address';
+//                                     result.result = req.params['hash'];
+//                                 }
+//                                 sendResult()
+//                             })
+//                         }
+//                     })
+//                 }
+//             })
+//         }
+//         function sendResult() {
+//             res.send(JSON.stringify(result, null, 2));
+//         }
+//     });
+// });
 
 module.exports = router;
 

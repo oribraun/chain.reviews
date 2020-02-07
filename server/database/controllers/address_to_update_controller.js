@@ -113,7 +113,7 @@ function getMany(address, cb) {
 function getOneJoin(address, limit, offset, cb) {
     var aggregate = [];
     aggregate.push({ $match : { address : address } });
-    aggregate.push({$sort:{blockindex:-1}});
+    // aggregate.push({$sort:{blockindex:-1}});
     if(parseInt(limit)) {
         aggregate.push({$limit: parseInt(limit) + parseInt(offset)});
     }
@@ -126,6 +126,7 @@ function getOneJoin(address, limit, offset, cb) {
             "preserveNullAndEmptyArrays": true
         }
     },);
+    aggregate.push({$sort:{blockindex:-1}});
     aggregate.push({
         "$group": {
             "_id": "$address",
@@ -140,7 +141,7 @@ function getOneJoin(address, limit, offset, cb) {
             "createdAt" : { "$first": "$createdAt" },
             "updatedAt" : { "$first": "$updatedAt" },
         }
-    },);
+    });
     AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
         if(address && address.length) {
             return cb(address[0]);

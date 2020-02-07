@@ -1,6 +1,6 @@
 import {Component, HostListener, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 
 declare var DATA: any;
 @Component({
@@ -14,7 +14,7 @@ export class AddressComponent implements OnInit {
   public txs: any[] = [];
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
-  public addressDetails: any = {};
+  public addressDetails: any;
   public addr: string;
   public gettingTxs: boolean = false;
   public gettingAddressDetails: boolean = false;
@@ -30,9 +30,11 @@ export class AddressComponent implements OnInit {
   public input = '';
   private http: HttpClient;
   private route: ActivatedRoute;
-  constructor(http: HttpClient, route: ActivatedRoute) {
+  private router: Router;
+  constructor(http: HttpClient, route: ActivatedRoute, router: Router) {
     this.http = http;
     this.route = route;
+    this.router = router;
     this.route.params.subscribe(params => {
       this.addr = params['address'];
     });
@@ -156,6 +158,9 @@ export class AddressComponent implements OnInit {
     console.log('url', url)
     this.http.get(url).subscribe(
       (addressDetails: any) => {
+        if(addressDetails === 'no address found') {
+          this.router.navigateByUrl('/');
+        }
         this.addressDetails = addressDetails;
         this.setPages();
         this.gettingAddressDetails = false;

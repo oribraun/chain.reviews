@@ -16,6 +16,7 @@ import { RichlistComponent } from './components/richlist/richlist.component';
 import { MasternodesComponent } from './components/masternodes/masternodes.component';
 import { FilterPipe } from './pipes/filter/filter.pipe';
 import { MovementComponent } from './components/movement/movement.component';
+import { ApiComponent } from './components/api/api.component';
 
 @NgModule({
   declarations: [
@@ -31,6 +32,7 @@ import { MovementComponent } from './components/movement/movement.component';
     MasternodesComponent,
     FilterPipe,
     MovementComponent,
+    ApiComponent,
   ],
   imports: [
     BrowserModule,
