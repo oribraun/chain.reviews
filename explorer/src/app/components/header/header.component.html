@@ -19,10 +19,13 @@
         <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">
           <a class="nav-link" href="#" [routerLink]="'/movement'">Movement</a>
         </li>
+<!--        <li class="nav-item" [routerLinkActive]="'active'" [routerLinkActiveOptions]="{exact:true}" data-toggle="collapse" data-target=".navbar-collapse.show">-->
+<!--          <a class="nav-link" href="#" [routerLink]="'/api'">Api</a>-->
+<!--        </li>-->
       </ul>
       <form class="form search my-2 my-lg-0" (ngSubmit)="onSearch()">
         <div class="input-group">
-          <input type="text" class="form-control" placeholder="Search" name="main-search" [(ngModel)]="search">
+          <input type="text" class="form-control" placeholder="Search block height, block hash, tx hash or address" name="main-search" [(ngModel)]="search">
           <div class="input-group-append">
             <button class="input-group-text" type="submit" id="basic-addon1"><span class="fa fa-search form-control-feedback"></span></button>
           </div>

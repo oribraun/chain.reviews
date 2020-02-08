@@ -1,0 +1,9 @@
+<div class="head"><h4>Api Details</h4></div>
+<ul>
+  <li class="my-4" *ngFor="let link of api">
+    <span>
+      <h5><small>{{link.desc}}</small></h5>
+      <a href="{{link.url}}" target="_blank">{{link.url}}</a>
+    </span>
+  </li>
+</ul>

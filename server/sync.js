@@ -2498,6 +2498,8 @@ if (wallet) {
                     var updatePeer = function(i) {
                         var address = results[i].addr.split(':')[0];
                         request({uri: 'http://freegeoip.app/json/' + address, json: true}, function (error, response, geo) {
+                            // console.log('address', address);
+                            // console.log('error', error);
                             var peer = {
                                 address: address,
                                 protocol: results[i].version,

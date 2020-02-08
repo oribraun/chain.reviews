@@ -4,6 +4,7 @@ var router = express.Router();
 const db = require('./../../database/db');
 const settings = require('./../../wallets/all_settings');
 const wallet_commands = require('../../wallet_commands');
+const helpers = require('../../helpers');
 
 var TxController = require('./../../database/controllers/tx_controller');
 var BlockController = require('./../../database/controllers/block_controller');
@@ -135,7 +136,7 @@ router.get('/getdistribution', (req, res) => {
                 for(var i in results.balance) {
                     balance.push({balance: (results.balance[i].balance).toFixed(8), address: results.balance[i].a_id})
                 }
-                var distribution = get_distribution({'received': received, 'balance': balance}, stats);
+                var distribution = helpers.get_distribution({'received': received, 'balance': balance}, stats);
                 res.send(JSON.stringify(distribution, null, 2));
             })
         } else {
@@ -156,46 +157,4 @@ router.get('/getAddress/:address', (req, res) => {
 })
 
 module.exports = router;
-
-var get_distribution = function(richlist, stats){
-    var distribution = {
-        supply: stats.supply,
-        t_1_25: {percent: 0, total: 0 },
-        t_26_50: {percent: 0, total: 0 },
-        t_51_75: {percent: 0, total: 0 },
-        t_76_100: {percent: 0, total: 0 },
-        t_101plus: {percent: 0, total: 0 }
-    };
-    for(var i = 0; i < richlist.balance.length; i++) {
-        var count = i + 1;
-        var percentage = ((richlist.balance[i].balance / 100000000) / stats.supply) * 100;
-        if (count <= 25) {
-            distribution.t_1_25.percent = distribution.t_1_25.percent + percentage;
-            distribution.t_1_25.total = distribution.t_1_25.total + (richlist.balance[i].balance / 100000000);
-        }
-        if (count <= 50 && count > 25) {
-            distribution.t_26_50.percent = distribution.t_26_50.percent + percentage;
-            distribution.t_26_50.total = distribution.t_26_50.total + (richlist.balance[i].balance / 100000000);
-        }
-        if (count <= 75 && count > 50) {
-            distribution.t_51_75.percent = distribution.t_51_75.percent + percentage;
-            distribution.t_51_75.total = distribution.t_51_75.total + (richlist.balance[i].balance / 100000000);
-        }
-        if (count <= 100 && count > 75) {
-            distribution.t_76_100.percent = distribution.t_76_100.percent + percentage;
-            distribution.t_76_100.total = distribution.t_76_100.total + (richlist.balance[i].balance / 100000000);
-        }
-    }
-    distribution.t_101plus.percent = parseFloat(100 - distribution.t_76_100.percent - distribution.t_51_75.percent - distribution.t_26_50.percent - distribution.t_1_25.percent).toFixed(2);
-    distribution.t_101plus.total = parseFloat(distribution.supply - distribution.t_76_100.total - distribution.t_51_75.total - distribution.t_26_50.total - distribution.t_1_25.total).toFixed(8);
-    distribution.t_1_25.percent = parseFloat(distribution.t_1_25.percent).toFixed(2);
-    distribution.t_1_25.total = parseFloat(distribution.t_1_25.total).toFixed(8);
-    distribution.t_26_50.percent = parseFloat(distribution.t_26_50.percent).toFixed(2);
-    distribution.t_26_50.total = parseFloat(distribution.t_26_50.total).toFixed(8);
-    distribution.t_51_75.percent = parseFloat(distribution.t_51_75.percent).toFixed(2);
-    distribution.t_51_75.total = parseFloat(distribution.t_51_75.total).toFixed(8);
-    distribution.t_76_100.percent = parseFloat(distribution.t_76_100.percent).toFixed(2);
-    distribution.t_76_100.total = parseFloat(distribution.t_76_100.total).toFixed(8);
-    return distribution;
-}
 

@@ -130,11 +130,13 @@ export class MasternodesComponent implements OnInit {
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/listMasternodes/0';
     console.log('url', url)
     this.http.get(url).subscribe(
-      (masternodes: []) => {
-        this.masternodes = masternodes;
-        this.currentTable = this.emptyTable.slice();
-        for(var i = 0; i< this.currentTable.length; i++) {
-          this.currentTable[i] = this.masternodes[i];
+      (response: any) => {
+        if(!response.err) {
+          this.masternodes = response.data;
+          this.currentTable = this.emptyTable.slice();
+          for (var i = 0; i < this.masternodes.length; i++) {
+            this.currentTable[i] = this.masternodes[i];
+          }
         }
         this.gettingMasternodes = false;
         this.setPages();

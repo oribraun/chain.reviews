@@ -136,11 +136,13 @@ export class AddressComponent implements OnInit {
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressTxs/' + this.addr + '/' + this.pagination.limit + '/' + this.pagination.offset;
     console.log('url', url)
     this.http.get(url).subscribe(
-      (txs: any) => {
-        this.txs = txs;
-        this.currentTable = this.emptyTable.slice();
-        for(var i = 0; i< this.txs.length; i++) {
-          this.currentTable[i] = this.txs[i];
+      (response: any) => {
+        if(!response.err) {
+          this.txs = response.data;
+          this.currentTable = this.emptyTable.slice();
+          for (var i = 0; i < this.txs.length; i++) {
+            this.currentTable[i] = this.txs[i];
+          }
         }
         this.gettingTxs = false;
       },
@@ -156,15 +158,17 @@ export class AddressComponent implements OnInit {
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressDetails/' + this.addr;
     console.log('url', url)
     this.http.get(url).subscribe(
-      (addressDetails: any) => {
-        if(!addressDetails || addressDetails === 'no address found') {
-          this.router.navigateByUrl('/');
-        } else {
-          this.addressDetails = addressDetails;
-          this.getAddressTxList();
+        (response: any) => {
+          if(!response.err) {
+            this.addressDetails = response.data;
+            this.getAddressTxList();
+          } else {
+            if(response.errMessage === 'no address found') {
+              this.router.navigateByUrl('/');
+            }
+          }
           this.setPages();
-        }
-        this.gettingAddressDetails = false;
+          this.gettingAddressDetails = false;
       },
       (error) => {
         console.log(error);

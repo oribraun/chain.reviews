@@ -4,9 +4,9 @@ var db = require('./../db');
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Peers[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
-        if(tx) {
-            return cb(tx);
+    Peers[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, peers) {
+        if(peers) {
+            return cb(peers);
         } else {
             return cb(null);
         }

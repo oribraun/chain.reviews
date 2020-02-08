@@ -41,10 +41,13 @@ export class HeaderComponent implements OnInit {
     console.log('url', url);
     $('.navbar-collapse').collapse('hide');
     this.http.get(url).subscribe(
-      (data: any) => {
-        console.log(data);
-        if(data && data.type && data.result) {
-          this.router.navigateByUrl('/' + data.type + '/' + data.result);
+      (response: any) => {
+        if(!response.err) {
+          if (response.data && response.data.type && response.data.result) {
+            this.router.navigateByUrl('/' + response.data.type + '/' + response.data.result);
+          } else {
+            alert('Search found no results for: ' + this.search)
+          }
         } else {
           alert('Search found no results for: ' + this.search)
         }

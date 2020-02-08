@@ -38,7 +38,7 @@ for (var wallet in settings) {
         if(walletRoute.stack[i] && walletRoute.stack[i].route) {
             currentRoute = ('/api/wallet/' + wallet + walletRoute.stack[i].route.path
                 .replace(':hash', hash)
-                .replace(':number', 0)
+                .replace(':number', 1)
                 .replace(':txid', txid));
             addLinkToString(currentRoute);
         }
@@ -49,7 +49,7 @@ for (var wallet in settings) {
         if(dbRoute.stack[i] && dbRoute.stack[i].route) {
             currentRoute = ('/api/db/' + wallet + dbRoute.stack[i].route.path
                 .replace(':hash', hash)
-                .replace(':number', 0)
+                .replace(':number', 1)
                 .replace(':address', dev_address)
                 .replace(':coin', wallet)
                 .replace(':limit', 10)

@@ -44,13 +44,13 @@ export class BlockComponent implements OnInit {
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getBlockTxsByHash/' + this.hash;
     console.log('url', url)
     this.http.get(url).subscribe(
-      (data: any) => {
-        if(!data) {
-          this.router.navigateByUrl('/');
-        } else {
-          this.block = data.block;
-          this.blockTxs = data.txs;
+      (response: any) => {
+        if(!response.err) {
+          this.block = response.data.block;
+          this.blockTxs = response.data.txs;
           console.log('this.blockTxs', this.blockTxs)
+        } else {
+          this.router.navigateByUrl('/');
         }
         this.gettingBlockTxs = false;
       },

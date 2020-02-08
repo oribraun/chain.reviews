@@ -127,11 +127,13 @@ export class BlocksComponent implements OnInit {
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAllBlocks/' + this.pagination.limit + '/' + this.pagination.offset;
     console.log('url', url)
     this.http.get(url).subscribe(
-      (blocks: []) => {
-        this.blocks = blocks;
-        this.currentTable = this.emptyTable.slice();
-        for(var i = 0; i< this.blocks.length; i++) {
-          this.currentTable[i] = this.blocks[i];
+      (response: any) => {
+        if(!response.err) {
+          this.blocks = response.data;
+          this.currentTable = this.emptyTable.slice();
+          for (var i = 0; i < this.blocks.length; i++) {
+            this.currentTable[i] = this.blocks[i];
+          }
         }
         this.gettingBlocks = false;
       },

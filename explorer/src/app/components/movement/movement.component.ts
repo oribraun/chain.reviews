@@ -12,7 +12,7 @@ export class MovementComponent implements OnInit {
   public data;
   public input = '';
   public txs: [];
-  public txVinVoutCount: any;
+  public txVinVoutCount: any = 0;
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
   public gettingTxs = false;
@@ -133,10 +133,12 @@ export class MovementComponent implements OnInit {
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getTxVinVoutCountWhereTotal';
     console.log('url', url)
     this.http.get(url).subscribe(
-      (txVinVoutCount: any) => {
-        this.txVinVoutCount = txVinVoutCount;
-        this.setPages();
+      (response: any) => {
+        if(!response.err) {
+          this.txVinVoutCount = response.data;
+        }
         this.gettingTxVinVoutCount = false;
+        this.setPages();
       },
       (error) => {
         console.log(error);
@@ -149,11 +151,13 @@ export class MovementComponent implements OnInit {
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAllTxVinVout/' + this.pagination.limit + '/' + this.pagination.offset;
     console.log('url', url)
     this.http.get(url).subscribe(
-      (txs: []) => {
-        this.txs = txs;
-        this.currentTable = this.emptyTable.slice();
-        for(var i = 0; i< this.txs.length; i++) {
-          this.currentTable[i] = this.txs[i];
+      (response: any) => {
+        if(!response.err) {
+          this.txs = response.data;
+          this.currentTable = this.emptyTable.slice();
+          for (var i = 0; i < this.txs.length; i++) {
+            this.currentTable[i] = this.txs[i];
+          }
         }
         this.gettingTxs = false;
       },

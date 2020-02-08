@@ -44,7 +44,7 @@
     </div>
   </div>
 </div>
-<nav aria-label="Page navigation" *ngIf="!gettingTxVinVoutCount">
+<nav aria-label="Page navigation" *ngIf="!gettingTxVinVoutCount && pagination.pages">
   <ul class="pagination justify-content-center">
     <li class="page-item">
       <a class="page-link pointer" aria-label="Previous" (click)="prevPage()">

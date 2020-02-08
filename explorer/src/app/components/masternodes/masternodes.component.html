@@ -36,7 +36,7 @@
     </div>
   </div>
 </div>
-<nav aria-label="Page navigation" *ngIf="!gettingMasternodes">
+<nav aria-label="Page navigation" *ngIf="!gettingMasternodes && masternodes.length">
   <ul class="pagination justify-content-center">
     <li class="page-item">
       <a class="page-link pointer" aria-label="Previous" (click)="prevPage()">

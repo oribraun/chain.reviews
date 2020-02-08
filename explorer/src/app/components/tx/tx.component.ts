@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 
 declare var DATA: any;
 @Component({
@@ -13,13 +13,15 @@ export class TxComponent implements OnInit {
   public data;
   public tx: any;
   public hash: string;
-  public gettingBlock: boolean = false;
+  public gettingTx: boolean = false;
 
   private http: HttpClient;
   private route: ActivatedRoute;
-  constructor(http: HttpClient, route: ActivatedRoute) {
+  private router: Router;
+  constructor(http: HttpClient, route: ActivatedRoute, router: Router) {
     this.http = http;
     this.route = route;
+    this.router = router;
     this.route.params.subscribe(params => {
       this.hash = params['hash'];
     });
@@ -37,17 +39,21 @@ export class TxComponent implements OnInit {
   }
 
   getTxDetails() {
-    this.gettingBlock = true;
+    this.gettingTx = true;
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getTxDetails/' + this.hash;
     console.log('url', url)
     this.http.get(url).subscribe(
-      (tx: any) => {
-        this.tx = tx;
-        this.gettingBlock = false;
+      (response: any) => {
+        if(!response.err) {
+          this.tx = response.data;
+        } else {
+          this.router.navigateByUrl('/');
+        }
+        this.gettingTx = false;
       },
       (error) => {
         console.log(error);
-        this.gettingBlock = false;
+        this.gettingTx = false;
       }
     )
   }

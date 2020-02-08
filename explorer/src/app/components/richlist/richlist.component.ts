@@ -54,20 +54,22 @@ export class RichlistComponent implements OnInit {
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getRichlist';
     console.log('url', url)
     this.http.get(url).subscribe(
-      (data: any) => {
-        this.stats = data.stats;
-        this.dist.a = data.dista;
-        this.dist.b = data.distb;
-        this.dist.c = data.distc;
-        this.dist.d = data.distd;
-        this.dist.e = data.diste;
-        this.dist.total = data.distTotal;
-        this.richlistBalance = data.balance;
-        this.richlistReceived = data.received;
-        this.gettingRichlist = false;
-        setTimeout(() => {
-          this.drawChart();
-        })
+      (response: any) => {
+        if(!response.err) {
+          this.stats = response.data.stats;
+          this.dist.a = response.data.dista;
+          this.dist.b = response.data.distb;
+          this.dist.c = response.data.distc;
+          this.dist.d = response.data.distd;
+          this.dist.e = response.data.diste;
+          this.dist.total = response.data.distTotal;
+          this.richlistBalance = response.data.balance;
+          this.richlistReceived = response.data.received;
+          this.gettingRichlist = false;
+          setTimeout(() => {
+            this.drawChart();
+          })
+        }
       },
       (error) => {
         console.log(error);
