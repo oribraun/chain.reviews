@@ -40,7 +40,7 @@ var allowOnlyForExplorer = function (req, res, next) {
         res.send('not allowed')
     }
 };
-app.use("/api", api);
+app.use("/api", allowOnlyForExplorer, api);
 app.use("/public-api", public_api);
 app.use("/explorer", explorer);
 module.exports = app;

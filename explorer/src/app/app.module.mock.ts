@@ -18,6 +18,7 @@ import { MasternodesComponent } from './components/masternodes/masternodes.compo
 import { FilterPipe } from './pipes/filter/filter.pipe';
 import { MovementComponent } from './components/movement/movement.component';
 import { ApiComponent } from './components/api/api.component';
+import { PrettyDaysHoursMinutesPipe } from './pipes/prettyDaysHoursMinutes/pretty-days-hours-minutes.pipe';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,8 @@ import { ApiComponent } from './components/api/api.component';
     MasternodesComponent,
     FilterPipe,
     MovementComponent,
-    ApiComponent
+    ApiComponent,
+    PrettyDaysHoursMinutesPipe
   ],
   imports: [
     BrowserModule,

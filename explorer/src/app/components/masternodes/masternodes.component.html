@@ -9,20 +9,24 @@
 <div class="my-table" *ngIf="masternodes.length">
   <div class="header">
     <div class="row">
-      <div class="col-8 col-sm-5 col-md-5 col-lg-5 col-xl-4 my-th">Address</div>
-      <div class="col-4 col-sm-2 col-md-2 col-lg-2 col-xl-2 my-th">Collateral</div>
-      <div class="d-none d-sm-block col-sm-2 col-md-2 col-lg-2 col-xl-3 my-th">Status</div>
-      <div class="d-none d-sm-block col-sm-3 col-md-3 col-lg-3 col-xl-3 my-th">Last Seen</div>
+      <div class="col-8 col-sm-5 col-md-5 col-lg-4 col-xl-3-4 my-th">Address</div>
+      <div class="col-4 col-sm-2 col-md-2 col-lg-1-5 col-xl-1-1 my-th">Collateral</div>
+      <div class="d-none d-sm-block col-sm-2 col-md-2 col-lg-1 col-xl-1 my-th">Status</div>
+      <div class="d-none d-sm-block col-sm-3 col-md-3 col-lg-2-5 col-xl-2 my-th">Last Seen</div>
+      <div class="d-none d-lg-block col-sm-3 col-md-3 col-lg-3 col-xl-2 my-th">Last Paid</div>
+      <div class="d-none d-xl-block col-sm-3 col-md-3 col-lg-2-5 col-xl-2-5 my-th">Active Time</div>
     </div>
   </div>
   <div class="body">
     <div class="my-tr" *ngFor="let masternode of filterMasternodes() | slice:(pagination.current - 1) * pagination.limit:pagination.current * pagination.limit; let i = index;">
       <div class="row">
 <!--        {{(pagination.current - 1) * pagination.limit + i}}-->
-        <div class="col-8 col-sm-5 col-md-5 col-lg-5 col-xl-4 my-td"><a [routerLink]="['/address/' + masternode.addr]" [innerHtml]="masternode.addr"></a></div>
-        <div class="col-4 col-sm-2 col-md-2 col-lg-2 col-xl-2 my-td" [innerHtml]="masternode.collateral"></div>
-        <div class="d-none d-sm-block col-sm-2 col-md-2 col-lg-2 col-xl-3 my-td" [innerHtml]="masternode.status"></div>
-        <div class="d-none d-sm-block col-sm-3 col-md-3 col-lg-3 col-xl-3 my-td" [innerHtml]="masternode.lastseen | prettyTime"></div>
+        <div class="col-8 col-sm-5 col-md-5 col-lg-4 col-xl-3-4 my-td"><a [routerLink]="['/address/' + masternode.addr]" [innerHtml]="masternode.addr"></a></div>
+        <div class="col-4 col-sm-2 col-md-2 col-lg-1-5 col-xl-1-1 my-td" [innerHtml]="masternode.collateral"></div>
+        <div class="d-none d-sm-block col-sm-2 col-md-2 col-lg-1 col-xl-1 my-td" [innerHtml]="masternode.status"></div>
+        <div class="d-none d-sm-block col-sm-3 col-md-3 col-lg-2-5 col-xl-2 my-td" [innerHtml]="masternode.lastseen | prettyTime"></div>
+        <div class="d-none d-lg-block col-sm-3 col-md-3 col-lg-3 col-xl-2 my-td" [innerHtml]="masternode.lastpaid | prettyTime"></div>
+        <div class="d-none d-xl-block col-sm-3 col-md-3 col-lg-2-5 col-xl-2-5 my-td" [innerHtml]="masternode.activetime | prettyDaysHoursMinutes"></div>
       </div>
     </div>
   </div>

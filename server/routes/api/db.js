@@ -600,7 +600,7 @@ router.get('/listMasternodes/:limit', (req, res) => {
     }
     // db.connect(settings[req.params['wallet']].dbSettings);
     const response = helpers.getGeneralResponse();
-    MasternodeController.getAll('rank', 'asc', parseInt(req.params['limit']), function(results) {
+    MasternodeController.getAll('lastseen', 'desc', parseInt(req.params['limit']), function(results) {
         if(results) {
             response.data = results;
         } else {
