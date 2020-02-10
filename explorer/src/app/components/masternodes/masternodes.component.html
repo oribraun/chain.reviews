@@ -8,7 +8,9 @@
 </form>
 <div class="row" *ngIf="masternodesCollateralCount">
   <!--    {{market.market_cap | json}}-->
-  <div class="col-sm-6 col-md-3 mb-3" *ngFor="let data of masternodesCollateralCount">
+  <div class="mb-3"
+       [ngClass]="'col-sm-' + (masternodesCollateralCount.length >= 4 ? 12/masternodesCollateralCount.length*2 : 12/masternodesCollateralCount.length) + ' col-md-' + + 12/masternodesCollateralCount.length"
+       *ngFor="let data of masternodesCollateralCount">
     <div class="box">
       <div class="header">collateral: {{data.collateral}}</div>
       <div class="amount">total: {{data.count}}</div>
