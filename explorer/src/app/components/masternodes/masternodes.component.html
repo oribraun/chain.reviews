@@ -6,6 +6,15 @@
     </div>
   </div>
 </form>
+<div class="row" *ngIf="masternodesCollateralCount">
+  <!--    {{market.market_cap | json}}-->
+  <div class="col-sm-6 col-md-3 mb-3" *ngFor="let data of masternodesCollateralCount">
+    <div class="box">
+      <div class="header">collateral: {{data.collateral}}</div>
+      <div class="amount">total: {{data.count}}</div>
+    </div>
+  </div>
+</div>
 <div class="my-table" *ngIf="masternodes.length">
   <div class="header">
     <div class="row">

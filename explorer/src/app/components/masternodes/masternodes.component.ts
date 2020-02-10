@@ -13,9 +13,11 @@ export class MasternodesComponent implements OnInit {
   public data;
   public input = '';
   public masternodes: any[] = [];
+  public masternodesCollateralCount: any[] = [];
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
   public gettingMasternodes = false;
+  public gettingMasternodesCollateralCount = false;
   public pagination: any = {
     current: 1,
     start: 1,
@@ -40,6 +42,7 @@ export class MasternodesComponent implements OnInit {
     console.log(data);
     this.data = data;
     this.setCurrentTable();
+    this.getMasternodesCollateralCount();
     this.getBlocks();
 
   }
@@ -155,6 +158,26 @@ export class MasternodesComponent implements OnInit {
       }
     }
   }
+
+  getMasternodesCollateralCount() {
+    this.gettingMasternodesCollateralCount = true;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/masternodesCollateralCount';
+    console.log('url', url)
+    this.http.get(url).subscribe(
+      (response: any) => {
+        if(!response.err) {
+          this.masternodesCollateralCount = response.data;
+          console.log(this.masternodesCollateralCount);
+        }
+        this.gettingMasternodesCollateralCount = false;
+      },
+      (error) => {
+        console.log(error)
+        this.gettingMasternodesCollateralCount = false;
+      }
+    )
+  }
+
   @HostListener('window:resize')
   onWindowResize() {
     //debounce resize, wait for resize to finish before doing stuff
