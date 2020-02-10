@@ -114,6 +114,7 @@ function getOneJoin(address, limit, offset, cb) {
     var aggregate = [];
     aggregate.push({ $match : { address : address } });
     // aggregate.push({$sort:{blockindex:-1}});
+    aggregate.push({$sort:{blockindex:-1}});
     if(parseInt(limit)) {
         aggregate.push({$limit: parseInt(limit) + parseInt(offset)});
     }
@@ -126,7 +127,6 @@ function getOneJoin(address, limit, offset, cb) {
             "preserveNullAndEmptyArrays": true
         }
     },);
-    aggregate.push({$sort:{blockindex:-1}});
     aggregate.push({
         "$group": {
             "_id": "$address",
