@@ -26,7 +26,7 @@ var allowOnlyForExplorer = function (req, res, next) {
     // res.header('Content-Type', 'application/json');
     console.log("add to header called ... " + req.url + " origin - " + req.headers.referer);
     // // res.header("charset", "utf-8")
-    var allowedOrigins = ["http://139.59.131.210/explorer", "https://139.59.131.210/explorer"];
+    var allowedOrigins = ["http://139.59.131.210/explorer", "https://139.59.131.210/explorer", "http://dev.masternode.review/explorer", "https://dev.masternode.review/explorer"];
     var referer = req.headers.referer;
     var allowed = false;
     for(var i = 0;i < allowedOrigins.length && !allowed; i++) {
@@ -37,7 +37,14 @@ var allowOnlyForExplorer = function (req, res, next) {
     if(allowed) {
         next();
     } else {
-        res.send('not allowed')
+        res.send('<html lang="en"><head>\n' +
+            '<meta charset="utf-8">\n' +
+            '<title>Error</title>\n' +
+            '</head>' +
+            '<body>' +
+            '<pre>Cannot GET /api/' + req.url + '</pre>' +
+            '</body>' +
+            '</html>')
     }
 };
 app.use("/api", allowOnlyForExplorer, api);
