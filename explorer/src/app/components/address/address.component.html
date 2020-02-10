@@ -55,7 +55,7 @@
         </li>
         <li class="page-item" (click)="setPage(num)" [ngClass]="{'active': pagination.current === num}" *ngFor="let num of ([] | range :pagination.start :pagination.end :1)"><a class="page-link" >{{num}}</a></li>
         <li class="page-item">
-          <a class="page-link" href="./" aria-label="Next" (click)="nextPage()">
+          <a class="page-link" aria-label="Next" (click)="nextPage()">
             <span aria-hidden="true">&raquo;</span>
             <span class="sr-only">Next</span>
           </a>
