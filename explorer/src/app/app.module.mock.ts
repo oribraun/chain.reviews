@@ -19,6 +19,7 @@ import { FilterPipe } from './pipes/filter/filter.pipe';
 import { MovementComponent } from './components/movement/movement.component';
 import { ApiComponent } from './components/api/api.component';
 import { PrettyDaysHoursMinutesPipe } from './pipes/prettyDaysHoursMinutes/pretty-days-hours-minutes.pipe';
+import { OrderByPipe } from './pipes/orderBy/order-by.pipe';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { PrettyDaysHoursMinutesPipe } from './pipes/prettyDaysHoursMinutes/prett
     FilterPipe,
     MovementComponent,
     ApiComponent,
-    PrettyDaysHoursMinutesPipe
+    PrettyDaysHoursMinutesPipe,
+    OrderByPipe
   ],
   imports: [
     BrowserModule,
