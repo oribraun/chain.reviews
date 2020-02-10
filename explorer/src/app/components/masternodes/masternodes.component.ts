@@ -1,6 +1,7 @@
 import {Component, HostListener, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {FilterPipe} from "../../pipes/filter/filter.pipe";
+import {OrderByPipe} from "../../pipes/orderBy/order-by.pipe";
 
 declare var DATA: any;
 @Component({
@@ -31,6 +32,7 @@ export class MasternodesComponent implements OnInit {
   }
   public search: string;
   private filterPipe: FilterPipe = new FilterPipe();
+  private orderByPipe: OrderByPipe = new OrderByPipe();
   private http: HttpClient;
   constructor(http: HttpClient) {
     this.http = http;
@@ -192,7 +194,9 @@ export class MasternodesComponent implements OnInit {
   }
 
   filterMasternodes() {
-    return this.filterPipe.transform(this.masternodes, this.search, ['addr','collateral','status'])
+    var a = this.orderByPipe.transform(this.masternodes, this.orderByOrder + this.orderBy);
+    var b = this.filterPipe.transform(a, this.search, ['addr','collateral','status'])
+    return b;
   }
 
   setOrderBy(orderBy: string) {
