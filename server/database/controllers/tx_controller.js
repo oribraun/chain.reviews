@@ -459,6 +459,20 @@ function getAll2Join(fields, sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAllDuplicate(cb) {
+    Tx[db.getCurrentConnection()].aggregate([
+        {
+            $group : {
+                "_id": "$txid",
+                "count": {$sum: 1}
+            }
+        },
+        {"$match": {"_id" :{ "$ne" : null } , "count" : {"$gt": 1} } },
+    ]).exec(function(err, results) {
+        cb(results);
+    })
+}
+
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.getAll2 = getAll2;
@@ -477,3 +491,4 @@ module.exports.getBlockHashJoin = getBlockHashJoin;
 module.exports.getAll2Join = getAll2Join;
 module.exports.getAllBlocks = getAllBlocks;
 module.exports.getAllTxWithVinVoutByHash = getAllTxWithVinVoutByHash;
+module.exports.getAllDuplicate = getAllDuplicate;

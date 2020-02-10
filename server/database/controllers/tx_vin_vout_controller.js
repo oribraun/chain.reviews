@@ -28,7 +28,7 @@ function getAll1(sortBy, order, limit, offset, cb) {
 function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     var sort = {};
     sort[sortBy] = order;
-    TxVinVout[db.getCurrentConnection()].find(where, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -171,6 +171,20 @@ function countByBlockIndex(cb) {
     });
 }
 
+function getAllDuplicate(cb) {
+    TxVinVout[db.getCurrentConnection()].aggregate([
+        {
+            $group : {
+                "_id": "$txid",
+                "count": {$sum: 1}
+            }
+        },
+        {"$match": {"_id" :{ "$ne" : null } , "count" : {"$gt": 1} } },
+    ]).exec(function(err, results) {
+        cb(results);
+    })
+}
+
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.updateOne = updateOne;
@@ -185,3 +199,4 @@ module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.countWhereTotal = countWhereTotal;
 module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getAll2 = getAll2;
+module.exports.getAllDuplicate = getAllDuplicate;

@@ -97,7 +97,7 @@ export class MasternodesComponent implements OnInit {
       this.pagination.start++;
       this.pagination.end++;
     }
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.limit;
+    this.pagination.offset = (this.pagination.current - 1);
   }
 
   prevPage() {
@@ -111,7 +111,7 @@ export class MasternodesComponent implements OnInit {
       this.pagination.start--;
       this.pagination.end--;
     }
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.limit;
+    this.pagination.offset = (this.pagination.current - 1);
   }
 
   setPage(page) {
@@ -126,7 +126,7 @@ export class MasternodesComponent implements OnInit {
     if(this.pagination.current > this.pagination.pages) {
       this.pagination.current = this.pagination.pages;
     }
-    this.pagination.offset = (parseInt(this.pagination.current) - 1) * parseInt(this.pagination.limit);
+    this.pagination.offset = (parseInt(this.pagination.current) - 1);
 
     this.setPages();
     this.getNextBlocks()

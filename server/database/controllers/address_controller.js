@@ -448,6 +448,20 @@ function getAllFotTx(txid, cb) {
     });
 }
 
+function getAllDuplicate(cb) {
+    Address[db.getCurrentConnection()].aggregate([
+        {
+            $group : {
+                "_id": "$blockhash",
+                "count": {$sum: 1}
+            }
+        },
+        {"$match": {"_id" :{ "$ne" : null } , "count" : {"$gt": 1} } },
+    ]).exec(function(err, results) {
+        cb(results);
+    })
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -463,3 +477,4 @@ module.exports.updateAddress1 = updateAddress1;
 module.exports.createAddress1 = createAddress1;
 module.exports.getOneWithTx = getOneWithTx;
 module.exports.getAllFotTx = getAllFotTx;
+module.exports.getAllDuplicate = getAllDuplicate;

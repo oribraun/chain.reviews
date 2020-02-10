@@ -28,7 +28,7 @@ function getAll1(sortBy, order, limit, offset, cb) {
 function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Block[db.getCurrentConnection()].find(where, fields).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
+    Block[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -144,6 +144,20 @@ function estimatedDocumentCount(cb) {
     });
 }
 
+function getAllDuplicate(cb) {
+    Block[db.getCurrentConnection()].aggregate([
+        {
+            $group : {
+                "_id": "$blockhash",
+                "count": {$sum: 1}
+            }
+        },
+        {"$match": {"_id" :{ "$ne" : null } , "count" : {"$gt": 1} } },
+    ]).exec(function(err, results) {
+        cb(results);
+    })
+}
+
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.getAll2 = getAll2;
@@ -156,3 +170,4 @@ module.exports.getBlockByHash = getBlockByHash;
 module.exports.update = update;
 module.exports.count = count;
 module.exports.estimatedDocumentCount = estimatedDocumentCount;
+module.exports.getAllDuplicate = getAllDuplicate;
