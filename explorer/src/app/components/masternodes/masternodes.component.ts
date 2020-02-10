@@ -18,6 +18,8 @@ export class MasternodesComponent implements OnInit {
   public currentTable: any[] = [];
   public gettingMasternodes = false;
   public gettingMasternodesCollateralCount = false;
+  public orderBy: string = 'lastseen';
+  public orderByOrder: string = '-';
   public pagination: any = {
     current: 1,
     start: 1,
@@ -191,6 +193,20 @@ export class MasternodesComponent implements OnInit {
 
   filterMasternodes() {
     return this.filterPipe.transform(this.masternodes, this.search, ['addr','collateral','status'])
+  }
+
+  setOrderBy(orderBy: string) {
+    if(orderBy != this.orderBy) {
+      this.orderBy = orderBy;
+      this.orderByOrder = '-';
+    } else {
+      if (this.orderByOrder == '-') {
+        this.orderByOrder = '+'
+      } else {
+        this.orderByOrder = '-';
+      }
+    }
+    console.log(this.orderByOrder + this.orderBy)
   }
 
 }
