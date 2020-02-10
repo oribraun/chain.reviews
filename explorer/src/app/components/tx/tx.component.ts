@@ -22,17 +22,16 @@ export class TxComponent implements OnInit {
     this.http = http;
     this.route = route;
     this.router = router;
-    this.route.params.subscribe(params => {
-      this.hash = params['hash'];
-    });
-
     let data: any = {}; /// from server node ejs data
     if (typeof DATA !== "undefined") {
       data = DATA;
     }
     console.log(data);
     this.data = data;
-    this.getTxDetails();
+    this.route.params.subscribe(params => {
+      this.hash = params['hash'];
+      this.getTxDetails();
+    });
   }
 
   ngOnInit() {

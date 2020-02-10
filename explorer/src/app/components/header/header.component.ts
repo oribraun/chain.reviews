@@ -35,7 +35,13 @@ export class HeaderComponent implements OnInit {
     if(!this.search) {
       return;
     }
-    console.log('this.search', this.search)
+    // console.log('this.search', this.search)
+    var currentRouteArray = this.router.url.split('/');
+    var currentHash = currentRouteArray[currentRouteArray.length - 1];
+    if(this.search === currentHash) {
+      return;
+    }
+    // console.log('currentHash', currentHash)
     this.searching = true;
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/search/' + this.search;
     console.log('url', url);

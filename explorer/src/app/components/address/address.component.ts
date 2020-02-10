@@ -35,18 +35,17 @@ export class AddressComponent implements OnInit {
     this.http = http;
     this.route = route;
     this.router = router;
-    this.route.params.subscribe(params => {
-      this.addr = params['address'];
-    });
-
     let data: any = {}; /// from server node ejs data
     if (typeof DATA !== "undefined") {
       data = DATA;
     }
     console.log(data);
     this.data = data;
-    this.setCurrentTable();
-    this.getAddressDetails();
+    this.route.params.subscribe(params => {
+      this.addr = params['address'];
+      this.setCurrentTable();
+      this.getAddressDetails();
+    });
   }
 
   ngOnInit() {
