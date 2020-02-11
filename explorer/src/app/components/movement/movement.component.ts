@@ -39,10 +39,10 @@ export class MovementComponent implements OnInit {
 
   ngOnInit() {
     let data: any = {}; /// from server node ejs data
-    if (typeof DATA !== "undefined") {
-      data = DATA;
+    if (typeof (<any>window).DATA !== "undefined") {
+      data = (<any>window).DATA;
     }
-    console.log(data);
+    // console.log(data);
     this.data = data;
     this.setCurrentTable();
     this.getTxVinVoutCount();

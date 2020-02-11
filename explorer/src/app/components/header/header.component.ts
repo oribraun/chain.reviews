@@ -23,11 +23,12 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit() {
     let data: any = {}; /// from server node ejs data
-    if (typeof DATA !== "undefined") {
-      data = DATA;
+    // console.log('window.DATA', (<any>window).DATA)
+    if (typeof (<any>window).DATA !== "undefined") {
+      data = (<any>window).DATA;
     }
-    console.log('session data');
-    console.log(data);
+    // console.log('session data');
+    // console.log(data);
     this.data = data;
   }
 

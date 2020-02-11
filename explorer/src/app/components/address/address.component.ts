@@ -38,10 +38,10 @@ export class AddressComponent implements OnInit {
     this.route = route;
     this.router = router;
     let data: any = {}; /// from server node ejs data
-    if (typeof DATA !== "undefined") {
-      data = DATA;
+    if (typeof (<any>window).DATA !== "undefined") {
+      data = (<any>window).DATA;
     }
-    console.log(data);
+    // console.log(data);
     this.data = data;
     this.route.params.subscribe(params => {
       this.addr = params['address'];
