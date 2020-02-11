@@ -46,7 +46,6 @@ export class MovementComponent implements OnInit {
     this.data = data;
     this.setCurrentTable();
     this.getTxVinVoutCount();
-    this.getTxs();
 
   }
 
@@ -140,6 +139,7 @@ export class MovementComponent implements OnInit {
         }
         this.gettingTxVinVoutCount = false;
         this.setPages();
+        this.getTxs();
       },
       (error) => {
         console.log(error);
