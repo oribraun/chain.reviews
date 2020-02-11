@@ -11,12 +11,13 @@ export class MovementComponent implements OnInit {
 
   public data;
   public input = '';
-  public txs: [];
+  public txs: any[];
   public txVinVoutCount: any = 0;
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
   public gettingTxs = false;
   public gettingTxVinVoutCount = false;
+  public showPagination = false;
   public pagination: any = {
     current: 1,
     start: 1,
@@ -24,7 +25,7 @@ export class MovementComponent implements OnInit {
     pages: 0,
     maxPages: 10,
     offset: 0,
-    limit: 10
+    limit: 25
   }
   public flags = {
     "min_amount": 100,
@@ -79,7 +80,7 @@ export class MovementComponent implements OnInit {
     }
   }
   setCurrentTable() {
-    for(var i = 0; i < this.pagination.maxPages; i++) {
+    for(var i = 0; i < this.pagination.limit; i++) {
       this.emptyTable.push( { "timestamp": "", "total": "", "_id": "", "txid": "&nbsp;" });
     }
     this.currentTable = this.emptyTable.slice();
@@ -148,9 +149,13 @@ export class MovementComponent implements OnInit {
   }
   getTxs() {
     this.gettingTxs = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAllTxVinVout/' + this.pagination.limit + '/' + this.pagination.offset;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAllTxVinVout';
     console.log('url', url)
-    this.http.get(url).subscribe(
+    var data = {
+      limit: this.pagination.limit,
+      offset: this.pagination.offset
+    }
+    this.http.post(url, data).subscribe(
       (response: any) => {
         if(!response.err) {
           this.txs = response.data;
@@ -158,6 +163,9 @@ export class MovementComponent implements OnInit {
           for (var i = 0; i < this.txs.length; i++) {
             this.currentTable[i] = this.txs[i];
           }
+        }
+        if(!this.showPagination) {
+          this.showPagination = true;
         }
         this.gettingTxs = false;
       },

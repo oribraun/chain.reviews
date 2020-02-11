@@ -12,10 +12,11 @@ export class BlocksComponent implements OnInit {
 
   public data;
   public input = '';
-  public blocks: [];
+  public blocks: any[];
   public emptyTable: any[] = [];
   public currentTable: any[] = [];
   public gettingBlocks = false;
+  public showPagination = false;
   public pagination: any = {
     current: 1,
     start: 1,
@@ -23,7 +24,7 @@ export class BlocksComponent implements OnInit {
     pages: 0,
     maxPages: 10,
     offset: 0,
-    limit: 10
+    limit: 25
   }
   private http: HttpClient;
   constructor(http: HttpClient) {
@@ -73,7 +74,7 @@ export class BlocksComponent implements OnInit {
     }
   }
   setCurrentTable() {
-    for(var i = 0; i < this.pagination.maxPages; i++) {
+    for(var i = 0; i < this.pagination.limit; i++) {
       this.emptyTable.push( { "blockindex": "&nbsp;", "_id": "", "blockhash": "", "timestamp": "" });
     }
     this.currentTable = this.emptyTable.slice();
@@ -124,9 +125,13 @@ export class BlocksComponent implements OnInit {
 
   getBlocks() {
     this.gettingBlocks = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAllBlocks/' + this.pagination.limit + '/' + this.pagination.offset;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAllBlocks';
     console.log('url', url)
-    this.http.get(url).subscribe(
+    var data = {
+      limit: this.pagination.limit,
+      offset: this.pagination.offset
+    }
+    this.http.post(url, data).subscribe(
       (response: any) => {
         if(!response.err) {
           this.blocks = response.data;
@@ -134,6 +139,9 @@ export class BlocksComponent implements OnInit {
           for (var i = 0; i < this.blocks.length; i++) {
             this.currentTable[i] = this.blocks[i];
           }
+        }
+        if(!this.showPagination) {
+          this.showPagination = true;
         }
         this.gettingBlocks = false;
       },

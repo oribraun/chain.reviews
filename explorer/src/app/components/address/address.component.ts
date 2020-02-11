@@ -18,6 +18,8 @@ export class AddressComponent implements OnInit {
   public addr: string;
   public gettingTxs: boolean = false;
   public gettingAddressDetails: boolean = false;
+  public showPagination: boolean = false;
+  private latestAddressId: string;
   public pagination: any = {
     current: 1,
     start: 1,
@@ -25,7 +27,7 @@ export class AddressComponent implements OnInit {
     pages: 0,
     maxPages: 10,
     offset: 0,
-    limit: 10
+    limit: 25
   }
   public input = '';
   private http: HttpClient;
@@ -52,7 +54,7 @@ export class AddressComponent implements OnInit {
   }
 
   setCurrentTable() {
-    for(var i = 0; i < this.pagination.maxPages; i++) {
+    for(var i = 0; i < this.pagination.limit; i++) {
       this.emptyTable.push( {"txid": "&nbsp;","timestamp": "","amount": "","type": "","blockindex": ""});
     }
     this.currentTable = this.emptyTable.slice();
@@ -96,7 +98,7 @@ export class AddressComponent implements OnInit {
       this.pagination.start++;
       this.pagination.end++;
     }
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.maxPages;
+    this.pagination.offset = (this.pagination.current - 1);
   }
 
   prevPage() {
@@ -109,7 +111,7 @@ export class AddressComponent implements OnInit {
       this.pagination.start--;
       this.pagination.end--;
     }
-    this.pagination.offset = (this.pagination.current - 1) * this.pagination.maxPages;
+    this.pagination.offset = (this.pagination.current - 1);
   }
 
   setPage(page) {
@@ -124,24 +126,37 @@ export class AddressComponent implements OnInit {
     if(this.pagination.current > this.pagination.pages) {
       this.pagination.current = this.pagination.pages;
     }
-    this.pagination.offset = (parseInt(this.pagination.current) - 1) * parseInt(this.pagination.limit);
+    this.pagination.offset = (parseInt(this.pagination.current) - 1);
 
     this.setPages();
     this.getAddressTxList();
   }
 
   getAddressTxList() {
+    console.log('this.latestAddressId', this.latestAddressId);
     this.gettingTxs = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressTxs/' + this.addr + '/' + this.pagination.limit + '/' + this.pagination.offset;
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAddressTxs';
     console.log('url', url)
-    this.http.get(url).subscribe(
+    var data = {
+      address : this.addr,
+      limit : this.pagination.limit,
+      offset : this.pagination.offset,
+    };
+    this.http.post(url, data).subscribe(
       (response: any) => {
         if(!response.err) {
           this.txs = response.data;
+          if(this.txs.length) {
+            this.latestAddressId = this.txs[this.txs.length - 1];
+          }
+          console.log('this.latestAddressId', this.latestAddressId);
           this.currentTable = this.emptyTable.slice();
           for (var i = 0; i < this.txs.length; i++) {
             this.currentTable[i] = this.txs[i];
           }
+        }
+        if(!this.showPagination) {
+          this.showPagination = true;
         }
         this.gettingTxs = false;
       },

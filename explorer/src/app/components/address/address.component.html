@@ -18,34 +18,36 @@
   </div>
   <div>
     <div class="head"><h4>Transactions list</h4></div>
-    <div class="my-table">
-      <div class="header">
-        <div class="row">
-          <div class="col-5-4 col-sm-4-4 col-md-3-6 col-lg-3-4 col-xl-3-2 my-th">Timestamp</div>
-          <div class="col-6-2 col-sm-4-2 col-md-5-6 col-lg-6-8 col-xl-7-3 my-th">Tx ID</div>
-          <div class="d-none d-sm-block col-sm-3-4 col-md-2-8 col-lg-1-8 col-xl-1-5 my-th">Amount</div>
-        </div>
-      </div>
-      <div class="body">
-        <div class="my-tr"*ngFor="let tx of currentTable">
+    <div>
+      <div class="my-table">
+        <div class="header">
           <div class="row">
-            <div class="col-5-4 col-sm-4-4 col-md-3-6 col-lg-3-4 col-xl-3-2 my-td" [innerHtml]="tx.timestamp | prettyTime"></div>
-            <div class="col-6-6 col-sm-4-2 col-md-5-6 col-lg-6-8 col-xl-7-3 my-td"><a [routerLink]="['/tx/' + tx.txid]" [innerHtml]="tx.txid"></a></div>
-            <div class="d-none d-sm-block col-sm-3-4 col-md-2-8 col-lg-1-8 col-xl-1-5 my-td" [ngClass]="{'force-visibility-hidden': !tx.amount}" [innerHtml]="(tx.amount / 100000000).toFixed(8)"></div>
+            <div class="col-5-4 col-sm-4-4 col-md-3-6 col-lg-3-4 col-xl-3-2 my-th">Timestamp</div>
+            <div class="col-6-2 col-sm-4-2 col-md-5-6 col-lg-6-8 col-xl-7-3 my-th">Tx ID</div>
+            <div class="d-none d-sm-block col-sm-3-4 col-md-2-8 col-lg-1-8 col-xl-1-5 my-th">Amount</div>
           </div>
         </div>
-      </div>
-      <div class="d-flex justify-content-center loader" *ngIf="gettingTxs">
-        <div class="d-table h-100">
-          <div class="d-table-cell align-middle">
-            <div class="spinner-grow" role="status">
-              <span class="sr-only">Loading...</span>
+        <div class="body">
+          <div class="my-tr"*ngFor="let tx of txs">
+            <div class="row">
+              <div class="col-5-4 col-sm-4-4 col-md-3-6 col-lg-3-4 col-xl-3-2 my-td" [innerHtml]="tx.timestamp | prettyTime"></div>
+              <div class="col-6-6 col-sm-4-2 col-md-5-6 col-lg-6-8 col-xl-7-3 my-td"><a [routerLink]="['/tx/' + tx.txid]" [innerHtml]="tx.txid"></a></div>
+              <div class="d-none d-sm-block col-sm-3-4 col-md-2-8 col-lg-1-8 col-xl-1-5 my-td" [ngClass]="{'force-visibility-hidden': !tx.amount}" [innerHtml]="(tx.amount / 100000000).toFixed(8)"></div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-center loader" *ngIf="gettingTxs">
+            <div class="d-table h-100">
+              <div class="d-table-cell align-middle">
+                <div class="spinner-grow" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <nav aria-label="Page navigation">
+    <nav aria-label="Page navigation" *ngIf="showPagination && pagination.pages">
       <ul class="pagination justify-content-center">
         <li class="page-item">
           <a class="page-link" aria-label="Previous" (click)="prevPage()">

@@ -49,21 +49,21 @@ router.get('/getStats', (req, res) => {
     });
 });
 
-router.get('/getAllBlocks/:limit/:offset', (req, res) => {
+router.post('/getAllBlocks', (req, res) => {
     // if(!db.isConnected()) {
     //     res.send('no database connected');
     //     return;
     // }
-    if(isNaN(parseInt(req.params['limit']))) {
+    if(isNaN(parseInt(req.body['limit']))) {
         res.send('limit value have to be number');
         return;
     }
-    if(isNaN(parseInt(req.params['offset']))) {
+    if(isNaN(parseInt(req.body['offset']))) {
         res.send('limit value have to be number');
         return;
     }
     const response = helpers.getGeneralResponse();
-    BlockController.getAll2({}, {blockindex: true, blockhash: true, timestamp: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
+    BlockController.getAll2({}, {blockindex: true, blockhash: true, timestamp: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
         if(results) {
             response.data = results;
         } else {
@@ -110,17 +110,17 @@ router.get('/getAllTx/:limit', (req, res) => {
 //         res.send(JSON.stringify(results, null, 2));
 //     })
 // });
-router.get('/getAllTxVinVout/:limit/:offset', (req, res) => {
-    // if(!db.isConnected()) {
-    //     res.send('no database connected');
-    //     return;
-    // }
-    if(isNaN(parseInt(req.params['limit']))) {
+router.post('/getAllTxVinVout', (req, res) => {
+    if(isNaN(parseInt(req.body['limit']))) {
         res.send('limit value have to be number');
         return;
     }
+    if(isNaN(parseInt(req.body['offset']))) {
+        res.send('offset value have to be number');
+        return;
+    }
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getAll2({total: {$gt: 0}}, {timestamp: true, txid: true, total: true, blockindex: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
+    TxVinVoutController.getAll2({total: {$gt: 0}}, {timestamp: true, txid: true, total: true, blockindex: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
         if(results) {
             response.data = results;
         } else {
@@ -202,17 +202,17 @@ router.get('/getAllAddresses/:limit', (req, res) => {
 //         res.send(JSON.stringify({received: received, startDate: startDate, endDate: endDate}, null, 2));
 //     })
 // })
-router.get('/getAddressTxs/:address/:limit/:offset', (req, res) => {
-    if(isNaN(parseInt(req.params['limit']))) {
+router.post('/getAddressTxs', (req, res) => {
+    if(isNaN(parseInt(req.body['limit']))) {
         res.send('limit value have to be number');
         return;
     }
-    if(isNaN(parseInt(req.params['offset']))) {
+    if(isNaN(parseInt(req.body['offset']))) {
         res.send('offset value have to be number');
         return;
     }
     const response = helpers.getGeneralResponse();
-    AddressToUpdateController.getOneJoin(req.params['address'], req.params['limit'], req.params['offset'], function(results) {
+    AddressToUpdateController.getOneJoin(req.body['address'], req.body['limit'], req.body['offset'], function(results) {
         if(results) {
             response.data = results.txs;
         } else {

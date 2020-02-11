@@ -6917,13 +6917,15 @@ export class MockBackendInterceptor implements HttpInterceptor {
 
     function handleRoute() {
       switch (true) {
-        case url.indexOf('/getAllBlocks') > -1 && method === 'GET':
+        case url.indexOf('/getAllBlocks') > -1 && method === 'POST':
           var host = window.location.protocol + '//' + window.location.host + '/';
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
-          var func = array[3];
-          var limit = parseInt(array[4]);
-          var offset = parseInt(array[5]);
+          // var func = array[3];
+          var limit = parseInt(body.limit);
+          var offset = parseInt(body.offset);
+          console.log('limit', limit);
+          console.log('offset', offset);
           return getAllBlocks(wallet, limit, offset);
         case url.indexOf('/getBlockTxsByHash') > -1 && method === 'GET':
           var host = window.location.protocol + '//' + window.location.host + '/';
@@ -6939,21 +6941,21 @@ export class MockBackendInterceptor implements HttpInterceptor {
           var func = array[3];
           var hash = array[4];
           return getTx(wallet, hash);
-        case url.indexOf('/getAddressTxs') > -1 && method === 'GET':
+        case url.indexOf('/getAddressTxs') > -1 && method === 'POST':
           var host = window.location.protocol + '//' + window.location.host + '/';
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
           var func = array[3];
-          var address = array[4];
-          var limit = parseInt(array[5]);
-          var offset = parseInt(array[6]);
+          var address = body.address;
+          var limit = parseInt(body.limit);
+          var offset = parseInt(body.offset);
           return getAddressTxs(wallet, limit, offset);
         case url.indexOf('/getAddressDetails') > -1 && method === 'GET':
           var host = window.location.protocol + '//' + window.location.host + '/';
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
           var func = array[3];
-          var address = array[4];
+          var address: any = array[4];
           return getAddressDetails(wallet, address);
         case url.indexOf('/getRichlist') > -1 && method === 'GET':
           var host = window.location.protocol + '//' + window.location.host + '/';
@@ -6975,12 +6977,12 @@ export class MockBackendInterceptor implements HttpInterceptor {
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
           return getTxVinVoutCount(wallet);
-        case url.indexOf('/getAllTxVinVout') > -1 && method === 'GET':
+        case url.indexOf('/getAllTxVinVout') > -1 && method === 'POST':
           var host = window.location.protocol + '//' + window.location.host + '/';
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
-          var limit = parseInt(array[4]);
-          var offset = parseInt(array[5]);
+          var limit = parseInt(body.limit);
+          var offset = parseInt(body.offset);
           return getAllTxVinVout(wallet, limit, offset);
         case url.indexOf('/masternodesCollateralCount') > -1 && method === 'GET':
           var host = window.location.protocol + '//' + window.location.host + '/';
@@ -7004,8 +7006,9 @@ export class MockBackendInterceptor implements HttpInterceptor {
     }
 
     function getAllBlocks(wallet, limit, offset) {
-      blocks.data = blocks.data.slice(offset*limit, limit + offset*limit);
-      return ok(blocks);
+      let d = JSON.parse(JSON.stringify(blocks));
+      d.data = d.data.slice(offset*limit, limit + offset*limit);
+      return ok(d);
     }
     function getBlock(wallet, hash) {
       return ok(block);
@@ -7014,8 +7017,9 @@ export class MockBackendInterceptor implements HttpInterceptor {
       return ok(tx);
     }
     function getAddressTxs(wallet, limit, offset) {
-      addressTxs.data = addressTxs.data.slice(offset*limit, limit + offset*limit)
-      return ok(addressTxs);
+      let d = JSON.parse(JSON.stringify(addressTxs));
+      d.data = d.data.slice(offset*limit, limit + offset*limit);
+      return ok(d);
     }
     function getAddressDetails(wallet, addr) {
       return ok(addressDetails);
@@ -7030,8 +7034,9 @@ export class MockBackendInterceptor implements HttpInterceptor {
       return ok(search);
     }
     function getAllTxVinVout(wallet, limit, offset) {
-      txVinVout.data = txVinVout.data.slice(offset*limit, limit + offset*limit)
-      return ok(txVinVout);
+      let d = JSON.parse(JSON.stringify(txVinVout));
+      d.data = d.data.slice(offset*limit, limit + offset*limit);
+      return ok(d);
     }
     function getTxVinVoutCount(wallet) {
       return ok(txVinVoutCount);
