@@ -263,10 +263,38 @@ function getAddressDetails(address, cb) {
             "$group": {
                 "_id": "$address",
                 "address": {"$first": "$address"},
+                "sent" : { "$sum":
+                        {$cond:
+                                {if: { $eq: [ "$_id", "coinbase" ] },
+                                    then: "$amount",
+                                    else: {$cond:
+                                            {if: { $eq: [ "$type", "vin" ] },
+                                                then: "$amount",
+                                                else: 0 }} }}
+                },
+                "received" : { "$sum":
+                        {$cond:
+                                {if: { $eq: [ "$_id", "coinbase" ] },
+                                    then: 0,
+                                    else: {$cond:
+                                            {if: { $eq: [ "$type", "vout" ] },
+                                                then: "$amount",
+                                                else: 0 }} }}
+                },
                 "amount" : { "$sum": "$amount" },
                 "count" : { $sum: 1 }
             }
-        }
+        },
+        {
+            "$project": {
+                "_id": "$_id",
+                "address": "$address",
+                "sent": "$sent",
+                "received": "$received",
+                "balance": {"$subtract": ['$received', '$sent']},
+                "count": "$count",
+            }
+        },
     ]).allowDiskUse(true).exec(function(err, results) {
         if(results && results.length) {
             return cb(results[0]);
