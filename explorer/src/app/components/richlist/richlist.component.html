@@ -12,16 +12,16 @@
       <div class="my-table" *ngIf="currentType === 'balance'">
         <div class="header">
           <div class="row">
-            <div class="col-5 col-sm-4-4 col-md-3-2 col-lg-2-2 col-xl-3-4 my-th">Balance ({{data.wallet | uppercase}})</div>
-            <div class="col-7 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-7-6 my-th">Address</div>
+            <div class="col-6 col-sm-4-4 col-md-3-2 col-lg-2-2 col-xl-3-4 my-th">Balance ({{data.wallet | uppercase}})</div>
+            <div class="col-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-7-6 my-th">Address</div>
             <div class="d-none d-sm-block col-sm-1-4 col-md-1-2 col-lg-1 col-xl-1 my-th">%</div>
           </div>
         </div>
         <div class="body">
           <div class="my-tr">
             <div class="row" *ngFor="let obj of richlistBalance">
-              <div class="col-5 col-sm-4-4 col-md-3-2 col-lg-2-2 col-xl-3-4 my-td" [innerHtml]="(obj.balance / 100000000).toFixed(8)"></div>
-              <div class="col-7 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-7-6 my-td" [ngClass]="{'dev-fund': data.devAddress === obj.address}"><a [routerLink]="['/address/' + obj.address]" [innerHtml]="obj.address"></a></div>
+              <div class="col-6 col-sm-4-4 col-md-3-2 col-lg-2-2 col-xl-3-4 my-td" [innerHtml]="(obj.balance / 100000000).toFixed(8)"></div>
+              <div class="col-6 col-sm-6-2 col-md-7-6 col-lg-8-8 col-xl-7-6 my-td" [ngClass]="{'dev-fund': data.devAddress === obj.address}"><a [routerLink]="['/address/' + obj.address]" [innerHtml]="obj.address"></a></div>
               <div class="d-none d-sm-block col-sm-1-4 col-md-1-2 col-lg-1 col-xl-1 my-td" [innerHtml]="((obj.balance / 100000000) / stats.supply * 100).toFixed(2)"></div>
             </div>
           </div>
