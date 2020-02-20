@@ -55,7 +55,7 @@ export class AddressComponent implements OnInit {
 
   setCurrentTable() {
     for(var i = 0; i < this.pagination.limit; i++) {
-      this.emptyTable.push( {"txid": "&nbsp;","timestamp": "","amount": "","type": "","blockindex": ""});
+      this.emptyTable.push( {"txid": "&nbsp;","timestamp": "","sent": "","received": "","balance": "","type": "","blockindex": ""});
     }
     this.currentTable = this.emptyTable.slice();
   }

@@ -41,7 +41,7 @@
         <div class="header">
           <div class="row">
             <div class="col-8 my-th">Address</div>
-            <div class="col-4 my-th" *ngIf="tx.vin.length && tx.vin[0].addresses != 'coinbase'">Amount ({{this.data.wallet}})</div>
+            <div class="col-4 my-th" *ngIf="tx.vin.length && tx.vin[0].addresses != 'coinbase'">Amount ({{data.wallet | uppercase}})</div>
           </div>
         </div>
         <div class="body">
@@ -68,7 +68,7 @@
         <div class="header">
           <div class="row">
             <div class="col-8 my-th">Address</div>
-            <div class="col-4 my-th">Amount ({{this.data.wallet}})</div>
+            <div class="col-4 my-th">Amount ({{data.wallet | uppercase}})</div>
           </div>
         </div>
         <div class="body">

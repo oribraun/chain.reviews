@@ -261,8 +261,9 @@ let addressDetails = {
   "data": {
     "_id": "FCoB1M2CxxN1fAezRAZC31AWtMBZ3zSvyF",
     "address": "FCoB1M2CxxN1fAezRAZC31AWtMBZ3zSvyF",
-    "amount": 135369762037461200,
-    "count": 164409
+    "sent": 8523592000000,
+    "received": 108523592000000,
+    "balance": 100000000000000
   }
 };
 var richlist = {

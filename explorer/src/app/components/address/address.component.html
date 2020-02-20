@@ -10,8 +10,20 @@
       </div>
       <div class="my-tr">
         <div class="row">
-          <div class="col-3-4 my-td">Amount</div>
-          <div class="col-8-6 my-td" [innerHtml]="(addressDetails.amount / 100000000).toFixed(8)"></div>
+          <div class="col-3-4 my-td">Sent</div>
+          <div class="col-8-6 my-td" [innerHtml]="(addressDetails.sent / 100000000).toFixed(8)"></div>
+        </div>
+      </div>
+      <div class="my-tr">
+        <div class="row">
+          <div class="col-3-4 my-td">Received</div>
+          <div class="col-8-6 my-td" [innerHtml]="(addressDetails.received / 100000000).toFixed(8)"></div>
+        </div>
+      </div>
+      <div class="my-tr">
+        <div class="row">
+          <div class="col-3-4 my-td">Balance</div>
+          <div class="col-8-6 my-td" [innerHtml]="(addressDetails.balance / 100000000).toFixed(8)"></div>
         </div>
       </div>
     </div>
@@ -24,7 +36,7 @@
           <div class="row">
             <div class="col-5-4 col-sm-4-4 col-md-3-6 col-lg-3-4 col-xl-3-2 my-th">Timestamp</div>
             <div class="col-6-2 col-sm-4-2 col-md-5-6 col-lg-6-8 col-xl-7-3 my-th">Tx ID</div>
-            <div class="d-none d-sm-block col-sm-3-4 col-md-2-8 col-lg-1-8 col-xl-1-5 my-th">Amount</div>
+            <div class="d-none d-sm-block col-sm-3-4 col-md-2-8 col-lg-1-8 col-xl-1-5 my-th">Amount ({{data.wallet | uppercase}})</div>
           </div>
         </div>
         <div class="body">
