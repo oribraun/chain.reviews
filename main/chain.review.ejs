@@ -3,14 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>Chain Review</title>
-    <base href="">
+    <base href="/">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" href="main/style.css">
 </head>
 <body>
 <div class="container">
+    <nav class="navbar navbar-light">
+        <a class="navbar-brand" href="#">
+            <img src="https://new.capital/exchange/img/new/small_logo.svg" width="30" height="30" class="d-inline-block align-top" alt="">
+            <div class="vertical_divider">
+            </div>
+            Chain Review
+        </a>
+    </nav>
     <div class="my-table">
-        <div class="header">
+        <div class="header d-none d-sm-block">
             <div class="row">
                 <div class="col-sm-2 my-th">Wallet</div>
                 <div class="col-sm-4 my-th">Explorer</div>
@@ -22,14 +30,28 @@
             <% for(var i = 0 ; i < data.length ; i++) { %>
                 <div class="my-tr">
                     <div class="row">
-                        <div class="col-sm-2 my-td"><%= data[i].wallet %></div>
-                        <div class="col-sm-4 my-td">
-                            <a target="_blank" href="<%= data[i].explorer %>"><%= data[i].explorer %></a>
+                        <div class="col-sm-2 my-td">
+                            <span class="label font-weight-bold d-sm-none">Wallet:&nbsp;</span>
+                            <span class=""><%= data[i].wallet %></span>
                         </div>
                         <div class="col-sm-4 my-td">
-                            <a target="_blank" href="<%= data[i].api %>"><%= data[i].api %></a>
+                            <span class="label font-weight-bold d-sm-none">Explorer:&nbsp;</span>
+                            <span class="">
+                                <a target="_blank" href="<%= data[i].explorer %>"><%= data[i].explorer %></a>
+                            </span>
                         </div>
-                        <div class="col-sm-2 my-td"><%= data[i].stats.masternodesCount.total %>/<%= data[i].stats.masternodesCount.enabled %></div>
+                        <div class="col-sm-4 my-td">
+                            <span class="label font-weight-bold d-sm-none">Api:&nbsp;</span>
+                            <span class="">
+                                <a target="_blank" href="<%= data[i].api %>"><%= data[i].api %></a>
+                            </span>
+                        </div>
+                        <div class="col-sm-2 my-td">
+                            <span class="label font-weight-bold d-sm-none">Masternodes:&nbsp;</span>
+                            <span class="">
+                                <%= data[i].stats.masternodesCount.total %>/<%= data[i].stats.masternodesCount.enabled %>
+                            </span>
+                        </div>
                     </div>
                 </div>
             <% } %>

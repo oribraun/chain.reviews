@@ -388,6 +388,15 @@ var obj = {
             }
         }
         return Respose();
+    },
+    ucfirst: function (text) {
+        return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    },
+    ucAllfirstLetters: function(text) {
+        return text.toLowerCase().split(' ').map(function(word) { return word.charAt(0).toUpperCase() + word.slice(1)}).join(' ');
+    },
+    uppercase: function(text) {
+        return text.toUpperCase();
     }
 }
 

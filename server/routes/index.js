@@ -3,6 +3,7 @@ const app = express();
 const api = require('./api');
 const public_api = require('./public-api');
 const explorer = require('./explorer');
+const helpers = require('./../helpers');
 const path = require('path');
 
 const db = require('./../database/db');
@@ -27,7 +28,7 @@ app.get('/', function(req, res) {
         StatsController.getOne(wallet, function(stats) {
             console.log('stats', stats)
             array.push({
-                wallet: wallet,
+                wallet: helpers.ucfirst(wallet),
                 explorer: fullUrl + '/explorer/' + wallet,
                 api: fullUrl + '/public-api/db/' + wallet,
                 stats: stats

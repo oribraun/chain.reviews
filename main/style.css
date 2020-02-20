@@ -1,6 +1,7 @@
 html {
   height: 100%;
   overflow-y: scroll;
+  --border-color: #ccc;
 }
 html body {
   background-color: #f3f3f3;
@@ -70,5 +71,15 @@ html body {
 }
 .force-visibility-hidden {
   visibility: hidden !important;
+}
+.vertical_divider {
+  height: 24px;
+  width: 1px;
+  margin-left: 24px;
+  margin-right: 16px;
+  margin-top: 4px;
+  background-color: var(--border-color);
+  display: inline-block;
+  vertical-align: top;
 }
 /*# sourceMappingURL=style.css.map */
