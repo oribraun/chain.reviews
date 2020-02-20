@@ -11,6 +11,12 @@ var adminSettings = {
     // db.createUser({user:"admin", pwd:"KtG#v$pJf4DCEbk5GGZV", roles:[{role:"root", db:"admin"}]})
 }
 
+var mainDbSettings = {
+    user: "masternodeuser",
+    pwd: "d1$R#147Moqiu10o2F^c",
+    roles:[{role:"root", db:"admin"}],
+}
+
 const options = {
     socketTimeoutMS: 30000,
     keepAlive: true,
