@@ -3,12 +3,48 @@ const app = express();
 const api = require('./api');
 const public_api = require('./public-api');
 const explorer = require('./explorer');
+const path = require('path');
 
 const db = require('./../database/db');
+var StatsController = require('./../database/controllers/stats_controller');
 const settings = require('./../wallets/all_settings');
 
 app.get('/', function(req, res) {
-    res.send('nodejs server is working')
+    var array = [];
+    var wallets = [];
+    for (var wallet in settings) {
+        wallets.push(wallet);
+    }
+    var fullUrl = req.protocol + '://' + req.get('host');
+    addingWalletsStats(wallets);
+    function sendFile() {
+        res.render(path.resolve(__dirname + "/../../main/chain.review.ejs"), {
+            data: array,
+        });
+    }
+    function addStats(wallet,cb) {
+        db.setCurrentConnection(wallet);
+        StatsController.getOne(wallet, function(stats) {
+            console.log('stats', stats)
+            array.push({
+                wallet: wallet,
+                explorer: fullUrl + '/explorer/' + wallet,
+                api: fullUrl + '/public-api/db/' + wallet,
+                stats: stats
+            })
+            cb();
+        });
+    }
+    function addingWalletsStats(wallets) {
+        if(!wallets.length) {
+            sendFile();
+        } else {
+            addStats(wallets[0], function () {
+                wallets.shift();
+                addingWalletsStats(wallets);
+            })
+        }
+    }
 });
 
 // app.use("/:wallet/api", function(req, res, next) {

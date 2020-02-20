@@ -25,6 +25,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.engine("html", ejs.renderFile);
 app.use("/exp",express.static(__dirname + "/../explorer/dist"));
+app.use("/main",express.static(__dirname + "/../main"));
 app.set('view engine', 'ejs');
 
 const routes = require('./routes');

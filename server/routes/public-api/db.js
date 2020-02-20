@@ -6,6 +6,7 @@ const settings = require('./../../wallets/all_settings');
 const wallet_commands = require('../../wallet_commands');
 const helpers = require('../../helpers');
 
+
 var TxController = require('./../../database/controllers/tx_controller');
 var BlockController = require('./../../database/controllers/block_controller');
 var TxVinVoutController = require('./../../database/controllers/tx_vin_vout_controller');
@@ -18,9 +19,31 @@ var PeersController = require('./../../database/controllers/peers_controller');
 
 // var wallet = process.argv[2];
 
-// router.get('/', (req, res) => {
-//     res.json({item: res.locals.wallet + ' db api'});
-// });
+router.get('/', (req, res) => {
+    var string = "";
+    var wallet = res.locals.wallet;
+    var currentRoute;
+    var txid = settings[wallet].example_txid;
+    var hash = settings[wallet].example_hash;
+    var dev_address = settings[wallet].dev_address;
+    string += '<h2>' + wallet + ' api</h2>' + '<br>';
+    for(var i in router.stack) {
+        if(router.stack[i] && router.stack[i].route) {
+            currentRoute = ('/public-api/db/' + wallet + router.stack[i].route.path
+                .replace(':hash', hash)
+                .replace(':number', 1)
+                .replace(':address', dev_address)
+                .replace(':coin', wallet)
+                .replace(':limit', 10)
+                .replace(':offset', 0)
+                .replace(':txid', txid));
+            string += "<a href='" + currentRoute + "' target='_blank'>" + currentRoute + "</a>";
+            string += '<br>';
+        }
+    }
+    res.header("Content-Type",'text/html');
+    res.send(string);
+});
 //
 // router.get('/getAllBlocks/:limit', (req, res) => {
 //     // if(!db.isConnected()) {
@@ -155,6 +178,34 @@ router.get('/getAddress/:address', (req, res) => {
         // db.disconnect();
     })
 })
+
+// router.get('/getAddressTxs/:address/:limit/:offset', (req, res) => {
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     if(isNaN(parseInt(req.params['offset']))) {
+//         res.send('offset value have to be number');
+//         return;
+//     }
+//     const response = helpers.getGeneralResponse();
+//     AddressToUpdateController.getOneJoinTest(req.params['address'], req.params['limit'], req.params['offset'], function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no tx found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//         // db.disconnect();
+//     })
+// })
+
+// router.get('/getAllDuplicate', (req, res) => {
+//   AddressToUpdateController.getAllDuplicate(function(results) {
+//       res.send(JSON.stringify(results, null, 2));
+//   })
+// })
 
 module.exports = router;
 
