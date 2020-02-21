@@ -59,9 +59,9 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(address, cb) {
-    Peers[db.getCurrentConnection()].findOne({address: address}, function(err, stats) {
-        if(stats) {
-            return cb(stats);
+    Peers[db.getCurrentConnection()].findOne({address: address}, function(err, peer) {
+        if(peer) {
+            return cb(peer);
         } else {
             return cb(null);
         }
@@ -69,8 +69,8 @@ function getOne(address, cb) {
 }
 
 function deleteOne(address, cb) {
-    Peers[db.getCurrentConnection()].deleteOne({address: address}, function(err, tx) {
-        if(tx) {
+    Peers[db.getCurrentConnection()].deleteOne({address: address}, function(err, peer) {
+        if(peer) {
             return cb();
         } else {
             return cb(null);

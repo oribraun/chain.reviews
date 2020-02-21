@@ -53,6 +53,7 @@ for (var wallet in settings) {
                 .replace(':address', dev_address)
                 .replace(':coin', wallet)
                 .replace(':limit', 10)
+                .replace(':symbol', wallet.replace('dogecash', 'dogec').toUpperCase() + '_' + 'BTC')
                 .replace(':offset', 0)
                 .replace(':txid', txid));
             addLinkToString(currentRoute);

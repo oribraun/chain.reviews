@@ -13,6 +13,7 @@ for (var wallet in settings) {
     string += "  * * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_split.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
     string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_peers.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
     string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_masternodes.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
+    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_market.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
     string += "\n\n";
 
 }

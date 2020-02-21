@@ -3,7 +3,7 @@ var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
-    sort[sortBy] = order;
+    sort[sortBy] = order == 'asc' ? 1 : -1;;
     Masternode[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
@@ -113,6 +113,39 @@ function estimatedDocumentCount(cb) {
     });
 }
 
+function getCollateralCount(cb) {
+    var aggregate = [];
+    aggregate.push({
+        "$match": {
+            "collateral": {
+                "$exists": true,
+                "$ne": null
+            }
+        }
+    });
+    aggregate.push({$group: {
+        _id: "$collateral",
+        collateral: {$first: "$collateral"},
+        count: { $sum: 1 },
+    }});
+    aggregate.push({$project : {
+        _id : 0 ,
+        collateral : 1 ,
+        count : 1,
+        originalMasternodes : {"$divide": ['$collateral', 1000000]},
+        total : {"$multiply": ['$count', {"$divide": ['$collateral', 1000000]}]}
+    }});
+    aggregate.push({$sort: {collateral: 1}});
+    Masternode[db.getCurrentConnection()].aggregate(aggregate).exec( function(err, masternodes) {
+        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        if(masternodes) {
+            return cb(masternodes);
+        } else {
+            return cb();
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -120,3 +153,4 @@ module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.count = count;
 module.exports.estimatedDocumentCount = estimatedDocumentCount;
+module.exports.getCollateralCount = getCollateralCount;

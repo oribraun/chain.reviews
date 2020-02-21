@@ -9,6 +9,8 @@ const numCPUs = require('os').cpus().length;
 const db = require('./database/db');
 const settings = require('./wallets/all_settings');
 
+var newCapitalMarket = require('./database/markets/new.capital');
+
 var wallet = process.argv[2];
 var type = process.argv[3];
 var hash_number = process.argv[4];
@@ -30,7 +32,8 @@ var commands_require_db = [
     'updatepeers',
 
     'updatestats',
-    'updatrichlist',
+    'updaterichlist',
+    'updatemarket',
 ]
 if(settings[wallet]) {
     if(commands_require_db.indexOf(type) > -1) {
@@ -59,6 +62,8 @@ if(settings[wallet]) {
         var AddressToUpdateController = require('./database/controllers/address_to_update_controller');
         var TxVinVoutController = require('./database/controllers/tx_vin_vout_controller');
         var PeerController = require('./database/controllers/peers_controller');
+        var MarketController = require('./database/controllers/markets_controller');
+        var CoinMarketCapController = require('./database/controllers/coin_market_cap_controller');
 
     }
 } else {
@@ -2547,8 +2552,12 @@ if (wallet) {
             updateStats();
             break;
         }
-        case 'updatrichlist': {
+        case 'updaterichlist': {
             endReindexNew();
+            break;
+        }
+        case 'updatemarket': {
+            updateMarket(wallet);
             break;
         }
         case 'reindexwallet': {
@@ -2958,6 +2967,103 @@ function get_supply(type) {
     return promise;
 };
 
+function updateMarket(wallet) {
+    newCapitalMarket.getExchangeInfo().then(function(data) {
+        var symbols = data.symbols;
+        var volume = data['24h_volume'];
+        var usd_price = data.usd_price;
+        var symbolsToUpdate = [];
+        for(var i in symbols) {
+            var symbol = symbols[i].symbol;
+            var baseAsset = symbols[i].baseAsset; // from coin
+            var baseAssetName = symbols[i].baseAssetName; // from coin real name
+            var quoteAsset = symbols[i].quoteAsset; // to coin
+            var quoteAssetName = symbols[i].quoteAssetName; // to coin real name
+            if(wallet.toLowerCase() === baseAsset.toLowerCase() ||
+                wallet.toLowerCase() === baseAssetName.toLowerCase() ||
+                wallet.toLowerCase() === quoteAsset.toLowerCase() ||
+                wallet.toLowerCase() === quoteAssetName.toLowerCase()) {
+                var splitSymbol = symbol.split('_')
+                symbolsToUpdate.push({from: splitSymbol[0], to: splitSymbol[1]});
+            }
+        }
+        var finishUpdateMarketCap = false;
+        var finishUpdateMarket = false;
+        function updateCoinMarketCap(i) {
+            newCapitalMarket.getTicker(symbolsToUpdate[i].from, symbolsToUpdate[i].to).then(function (data) {
+                CoinMarketCapController.updateOne(data, function (err) {
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        console.log('market cap update success ', data.symbol)
+                    }
+                    i++;
+                    if(i < symbolsToUpdate.length) {
+                        updateCoinMarketCap(i);
+                    } else {
+                        finishUpdateMarketCap = true;
+                        finishUpdateMarkets();
+                    }
+                });
+                // console.log('data', data);
+            }).catch(function (err) {
+                console.log('err', err)
+            })
+        }
+
+        function updateMarket(i) {
+            newCapitalMarket.getTrades(symbolsToUpdate[i].from, symbolsToUpdate[i].to).then(function (history) {
+                newCapitalMarket.getDepth(symbolsToUpdate[i].from, symbolsToUpdate[i].to).then(function (asksAndBids) {
+                    var market = {
+                        symbol: symbolsToUpdate[i].from + '_' + symbolsToUpdate[i].to,
+                        summary: {
+                            '24h_volume': volume,
+                            usd_price: usd_price,
+                        },
+                        bids: asksAndBids.bids,
+                        asks: asksAndBids.asks,
+                        history: history,
+                    }
+                    MarketController.updateOne(market, function (err) {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            console.log('market update success ', market.symbol)
+                        }
+                        i++;
+                        if (i < symbolsToUpdate.length) {
+                            updateMarket(i);
+                        } else {
+                            finishUpdateMarket = true;
+                            finishUpdateMarkets();
+                        }
+                    });
+                })
+                // console.log('data', data);
+            }).catch(function (err) {
+                console.log('err', err)
+            })
+        }
+
+        function finishUpdateMarkets() {
+            if(finishUpdateMarketCap && finishUpdateMarket) {
+                db.multipleDisconnect()
+            }
+        }
+        if(symbolsToUpdate.length) {
+            updateCoinMarketCap(0);
+            updateMarket(0);
+        } else {
+            finishUpdateMarketCap = true;
+            finishUpdateMarket = true;
+            finishUpdateMarkets()
+        }
+        // console.log(symbolsToUpdate)
+        // console.log('data', data);
+    }).catch(function(err) {
+        console.log('err', err)
+    });
+}
 function forceProcess(onYes, onNo) {
     console.log('would you like to force reindex');
     console.log('Y/N');

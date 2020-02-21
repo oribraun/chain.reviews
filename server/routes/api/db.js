@@ -15,6 +15,8 @@ var StatsController = require('./../../database/controllers/stats_controller');
 var RichlistController = require('./../../database/controllers/richlist_controller');
 var MasternodeController = require('./../../database/controllers/masternode_controller');
 var PeersController = require('./../../database/controllers/peers_controller');
+var MarketController = require('./../../database/controllers/markets_controller');
+var CoinMarketCapController = require('./../../database/controllers/coin_market_cap_controller');
 
 // var wallet = process.argv[2];
 
@@ -620,6 +622,19 @@ router.get('/getMasternodeCount', (req, res) => {
     })
 });
 
+router.get('/masternodesCollateralCount', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    MasternodeController.getCollateralCount(function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no masternodes found'
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+
 router.get('/getAllPeers/:limit', (req, res) => {
     if(isNaN(parseInt(req.params['limit']))) {
         res.send('limit value have to be number');
@@ -693,6 +708,39 @@ router.get('/search/:hash', (req, res) => {
         response.data = result;
         res.send(JSON.stringify(response, null, 2));
     }
+});
+
+router.get('/getAvailableMarkets', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    MarketController.getAllJoin({},'symbol', 'desc', 0, 0, function(markets) {
+        if(markets) {
+            var results = [];
+            for(var i in markets) {
+                results.push({
+                    symbol: markets[i].symbol,
+                    summary: markets[i].summary,
+                })
+            }
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no market found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    });
+});
+
+router.get('/getMarket/:symbol', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    MarketController.getAllJoin({symbol: req.params['symbol']},'symbol', 'desc', 0, 0, function(markets) {
+        if(markets && markets.length) {
+            response.data = markets[0];
+        } else {
+            response.err = 1;
+            response.errMessage = 'no market found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    });
 });
 
 // router.get('/search/:hash', (req, res) => {

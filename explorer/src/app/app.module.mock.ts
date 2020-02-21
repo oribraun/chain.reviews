@@ -20,6 +20,7 @@ import { MovementComponent } from './components/movement/movement.component';
 import { ApiComponent } from './components/api/api.component';
 import { PrettyDaysHoursMinutesPipe } from './pipes/prettyDaysHoursMinutes/pretty-days-hours-minutes.pipe';
 import { OrderByPipe } from './pipes/orderBy/order-by.pipe';
+import { MarketComponent } from './components/market/market.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +38,8 @@ import { OrderByPipe } from './pipes/orderBy/order-by.pipe';
     MovementComponent,
     ApiComponent,
     PrettyDaysHoursMinutesPipe,
-    OrderByPipe
+    OrderByPipe,
+    MarketComponent
   ],
   imports: [
     BrowserModule,

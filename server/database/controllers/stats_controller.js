@@ -4,9 +4,9 @@ var db = require('./../db');
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Stats[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
-        if(tx) {
-            return cb(tx);
+    Stats[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, stats) {
+        if(stats) {
+            return cb(stats);
         } else {
             return cb(null);
         }
@@ -78,8 +78,8 @@ function getOne(coin, cb) {
 }
 
 function deleteOne(coin, cb) {
-    Stats[db.getCurrentConnection()].deleteOne({coin: coin}, function(err, tx) {
-        if(tx) {
+    Stats[db.getCurrentConnection()].deleteOne({coin: coin}, function(err, stats) {
+        if(stats) {
             return cb();
         } else {
             return cb(null);

@@ -13,6 +13,7 @@ var StatsController = require('./../../database/controllers/stats_controller');
 var RichlistController = require('./../../database/controllers/richlist_controller');
 var MasternodeController = require('./../../database/controllers/masternode_controller');
 var PeersController = require('./../../database/controllers/peers_controller');
+var MarketsController = require('./../../database/controllers/markets_controller');
 
 router.get('/*', (req, res) => {
     // console.log('req.url', req.url)
@@ -21,15 +22,18 @@ router.get('/*', (req, res) => {
     // BlockController.getAll2({}, {blockindex: true, blockhash: true, txid: true},'blockindex', 'desc', 10, 0, function(results) {
     StatsController.getOne(res.locals.wallet, function(stats) {
         BlockController.estimatedDocumentCount(function(total) {
-            var data = {
-                wallet: res.locals.wallet,
-                devAddress: settings[res.locals.wallet].dev_address,
-                stats: stats,
-                total: total
-            };
-            console.log(data);
-            res.render(path.resolve(__dirname + "/../../../explorer/dist/index.html"), {
-                data: JSON.stringify(data),
+            MarketsController.getAll('symbol', 'desc', 0, function(markets) {
+                var data = {
+                    wallet: res.locals.wallet,
+                    devAddress: settings[res.locals.wallet].dev_address,
+                    stats: stats,
+                    total: total,
+                    markets: markets.map(function(obj) { return {symbol: obj.symbol, summary: obj.summary}})
+                };
+                console.log(data);
+                res.render(path.resolve(__dirname + "/../../../explorer/dist/index.html"), {
+                    data: JSON.stringify(data),
+                });
             });
         })
         // });

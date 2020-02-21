@@ -8,6 +8,7 @@ import {RichlistComponent} from "./components/richlist/richlist.component";
 import {MasternodesComponent} from "./components/masternodes/masternodes.component";
 import {MovementComponent} from "./components/movement/movement.component";
 import {ApiComponent} from "./components/api/api.component";
+import {MarketComponent} from "./components/market/market.component";
 
 
 const routes: Routes = [
@@ -19,6 +20,8 @@ const routes: Routes = [
   { path: 'masternodes', component: MasternodesComponent },
   { path: 'movement', component: MovementComponent },
   { path: 'api', component: ApiComponent },
+  { path: 'market', component: MarketComponent },
+  { path: 'market/:symbol', component: MarketComponent },
   // { path: 'login', component: LoginComponent },
 ];
 
