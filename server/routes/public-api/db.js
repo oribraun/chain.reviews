@@ -16,6 +16,7 @@ var StatsController = require('./../../database/controllers/stats_controller');
 var RichlistController = require('./../../database/controllers/richlist_controller');
 var MasternodeController = require('./../../database/controllers/masternode_controller');
 var PeersController = require('./../../database/controllers/peers_controller');
+var MarketController = require('./../../database/controllers/markets_controller');
 
 // var wallet = process.argv[2];
 
@@ -36,6 +37,7 @@ router.get('/', (req, res) => {
                 .replace(':coin', wallet)
                 .replace(':limit', 10)
                 .replace(':offset', 0)
+                .replace(':symbol', wallet.replace('dogecash', 'dogec').toUpperCase() + '_BTC')
                 .replace(':txid', txid));
             string += "<a href='" + currentRoute + "' target='_blank'>" + currentRoute + "</a>";
             string += '<br>';
@@ -207,5 +209,37 @@ router.get('/getAddress/:address', (req, res) => {
 //   })
 // })
 
+router.get('/getAvailableMarkets', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    MarketController.getAllJoin({},'symbol', 'desc', 0, 0, function(markets) {
+        if(markets) {
+            var results = [];
+            for(var i in markets) {
+                results.push({
+                    symbol: markets[i].symbol,
+                    summary: markets[i].summary,
+                })
+            }
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no market found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    });
+});
+
+router.get('/getMarket/:symbol', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    MarketController.getAllJoin({symbol: req.params['symbol']},'symbol', 'desc', 0, 0, function(markets) {
+        if(markets && markets.length) {
+            response.data = markets[0];
+        } else {
+            response.err = 1;
+            response.errMessage = 'no market found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    });
+});
 module.exports = router;
 
