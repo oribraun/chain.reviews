@@ -6996,7 +6996,7 @@ export class MockBackendInterceptor implements HttpInterceptor {
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
           return getMarket(wallet);
-        case url.indexOf('/getAvaliableMarkets') > -1 && method === 'GET':
+        case url.indexOf('/getAvailableMarkets') > -1 && method === 'GET':
           var host = window.location.protocol + '//' + window.location.host + '/';
           var array = url.replace(host, '').split('/');
           var wallet = array[2];
