@@ -26,7 +26,9 @@ export class ApiComponent implements OnInit {
       {url:window.location.origin + "/public-api/db/" + data.wallet + "/getnetworkhashps", desc:"Returns the current network hashrate. (hash/s)"},
       {url:window.location.origin + "/public-api/db/" + data.wallet + "/getmoneysupply", desc:"Returns current money supply"},
       {url:window.location.origin + "/public-api/db/" + data.wallet + "/getdistribution", desc:"Returns wealth distribution stats"},
-      {url:window.location.origin + "/public-api/db/" + data.wallet + "/getAddress/DLBKUG2dwJyXCF9FaTG55W2fjEjypZqVRZ", desc:"Returns information for given address"}
+      {url:window.location.origin + "/public-api/db/" + data.wallet + "/getAddress/DLBKUG2dwJyXCF9FaTG55W2fjEjypZqVRZ", desc:"Returns information for given address"},
+      {url:window.location.origin + "/public-api/db/" + data.wallet + "/getAvailableMarkets", desc:"Returns available market's information"},
+      {url:window.location.origin + "/public-api/db/" + data.wallet + "/getMarket/" + data.wallet.replace('dogecash', 'dogec').toUpperCase() + "_BTC", desc:"Returns market information"}
     ]
   }
 
