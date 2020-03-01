@@ -14,7 +14,7 @@ export class MarketComponent implements OnInit {
   public currentSymbol: string = '';
   public market: any;
   public avaliableMarkets: any;
-  public gettingAvaliableMarkets: boolean = false;
+  public gettingAvailableMarkets: boolean = false;
   public gettingMarket: boolean = false;
 
   private http: HttpClient;
@@ -43,7 +43,7 @@ export class MarketComponent implements OnInit {
   }
 
   getAvaliableMarkets() {
-    this.gettingAvaliableMarkets = true;
+    this.gettingAvailableMarkets = true;
     let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAvailableMarkets';
     this.http.get(url).subscribe(
       (response: any) => {
@@ -59,11 +59,11 @@ export class MarketComponent implements OnInit {
         } else {
           this.router.navigateByUrl('/');
         }
-        this.gettingAvaliableMarkets = false;
+        this.gettingAvailableMarkets = false;
       },
       (error) => {
         console.log(error);
-        this.gettingAvaliableMarkets = false;
+        this.gettingAvailableMarkets = false;
       }
     )
   }
