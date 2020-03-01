@@ -44,7 +44,7 @@ export class MarketComponent implements OnInit {
 
   getAvaliableMarkets() {
     this.gettingAvaliableMarkets = true;
-    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAvaliableMarkets';
+    let url = window.location.origin + '/api/db/' + this.data.wallet + '/getAvailableMarkets';
     this.http.get(url).subscribe(
       (response: any) => {
         if(!response.err) {
