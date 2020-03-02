@@ -22,7 +22,7 @@
             <div class="row">
                 <div class="col-sm-2 my-th">Wallet</div>
                 <div class="col-sm-4 my-th">Explorer</div>
-                <div class="col-sm-4 my-th">Api</div>
+                <div class="col-sm-4 my-th">Last Block</div>
                 <div class="col-sm-2 my-th">Masternodes</div>
             </div>
         </div>
@@ -41,9 +41,9 @@
                             </span>
                         </div>
                         <div class="col-sm-4 my-td">
-                            <span class="label font-weight-bold d-sm-none">Api:&nbsp;</span>
+                            <span class="label font-weight-bold d-sm-none">Last Block:&nbsp;</span>
                             <span class="">
-                                <a target="_blank" href="<%= data[i].api %>"><%= data[i].api %></a>
+                                <%= data[i].stats.last_block %>
                             </span>
                         </div>
                         <div class="col-sm-2 my-td">
