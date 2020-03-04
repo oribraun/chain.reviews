@@ -34,7 +34,7 @@
       </div>
     </div>
   </div>
-  <div class="row" *ngIf="tx.vin.length || tx.vout.length">
+  <div class="row" *ngIf="tx.vout.length">
     <div class="col-sm-6">
       <div class="head"><h4>Input Addresses</h4></div>
       <div class="my-table">
@@ -84,7 +84,7 @@
     </div>
   </div>
 </div>
-<div class="row" *ngIf="!tx.vin.length && !tx.vout.length">
+<div class="row" *ngIf="!tx.vout.length">
   <div class="col-sm-12">
     <div class="my-table">
       <div class="body">
