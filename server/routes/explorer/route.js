@@ -26,6 +26,8 @@ router.get('/*', (req, res) => {
                 var data = {
                     wallet: res.locals.wallet,
                     devAddress: settings[res.locals.wallet].dev_address,
+                    blockHash: settings[res.locals.wallet].example_hash,
+                    txHash: settings[res.locals.wallet].example_txid,
                     stats: stats,
                     total: total,
                     markets: markets.map(function(obj) { return {symbol: obj.symbol, summary: obj.summary}})
