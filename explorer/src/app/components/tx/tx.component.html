@@ -34,7 +34,7 @@
       </div>
     </div>
   </div>
-  <div class="row">
+  <div class="row" *ngIf="tx.vin.length || tx.vout.length">
     <div class="col-sm-6">
       <div class="head"><h4>Input Addresses</h4></div>
       <div class="my-table">
@@ -61,6 +61,7 @@
           </div>
         </div>
       </div>
+<!--      NONSTANDARD TX-->
     </div>
     <div class="col-sm-6">
       <div class="head"><h4>Recipients</h4></div>
@@ -77,6 +78,19 @@
               <div class="col-8 my-td"><a [routerLink]="['/address/' + vout.addresses]">{{vout.addresses}}</a></div>
               <div class="col-4 my-td bg-success text-white">{{(vout.amount / 100000000).toFixed(8)}}</div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row" *ngIf="!tx.vin.length && !tx.vout.length">
+  <div class="col-sm-12">
+    <div class="my-table">
+      <div class="body">
+        <div class="my-tr">
+          <div class="row">
+            <div class="col-12 my-th my-td text-center bg-info text-white">NONSTANDARD TX</div>
           </div>
         </div>
       </div>
