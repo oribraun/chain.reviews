@@ -170,17 +170,37 @@ router.get('/getdistribution', (req, res) => {
     });
 });
 
+// router.get('/getAddress/:address', (req, res) => {
+//     AddressToUpdateController.getOneJoin(req.params['address'], 100, 0, function(address) {
+//         if(address) {
+//             res.send(JSON.stringify(address, null, 2));
+//         } else {
+//             res.send('no address found');
+//         }
+//         // db.disconnect();
+//     })
+// })
+
 router.get('/getAddress/:address', (req, res) => {
-    AddressToUpdateController.getOneJoin(req.params['address'], 100, 0, function(address) {
-        if(address) {
-            res.send(JSON.stringify(address, null, 2));
+    AddressToUpdateController.getAddressDetailsWithLastestTxs(req.params['address'], function(addressDetails) {
+        if(addressDetails) {
+            res.send(JSON.stringify(addressDetails, null, 2));
         } else {
             res.send('no address found');
         }
-        // db.disconnect();
-    })
+    });
 })
 
+// router.get('/getAddressTxs/:address', (req, res) => {
+//     AddressToUpdateController.getAddressTxsPublic(req.params['address'], 100, function(results) {
+//         if(results) {
+//             res.send(JSON.stringify(results, null, 2));
+//         } else {
+//             res.send('no address found');
+//         }
+//         // db.disconnect();
+//     })
+// })
 // router.get('/getAddressTxs/:address/:limit/:offset', (req, res) => {
 //     if(isNaN(parseInt(req.params['limit']))) {
 //         res.send('limit value have to be number');

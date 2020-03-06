@@ -214,7 +214,7 @@ router.post('/getAddressTxs', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    AddressToUpdateController.getOneJoin(req.body['address'], req.body['limit'], req.body['offset'], function(results) {
+    AddressToUpdateController.getAddressTxs(req.body['address'], req.body['limit'], req.body['offset'], function(results) {
         if(results) {
             response.data = results.txs;
         } else {

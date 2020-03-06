@@ -136,16 +136,43 @@ function getOneJoin(address, limit, offset, cb) {
     aggregate.push({
         "$group": {
             "_id": "$address",
-            "txs" : { "$push": {"_id": "$_id", txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount", type: "$type", blockindex: "$blockindex"} },
+            // "txs" : { "$push": {"_id": "$_id", txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount", type: "$type", blockindex: "$blockindex"} },
+            "txs" : { "$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"} },
             // "received" : { "$first": "$received" },
             // "a_id" : { "$first": "$a_id" },
             // "txid": "4028d18fa7674318ca3b2f9aaf4594125346ffb8b42e2371ca41d0e5ab99c834",
             // "txid_timestamp": "1546794007",
-            "amount": {$sum: "$amount"},
-            // "type": "vout",
-            // "blockindex": 5,
-            "createdAt" : { "$first": "$createdAt" },
-            "updatedAt" : { "$first": "$updatedAt" },
+            // "sent" : { "$sum":
+            //         {$cond:
+            //                 {if: { $eq: [ "$_id", "coinbase" ] },
+            //                     then: "$amount",
+            //                     else: {$cond:
+            //                             {if: { $eq: [ "$type", "vin" ] },
+            //                                 then: "$amount",
+            //                                 else: 0 }} }}
+            // },
+            // "received" : { "$sum":
+            //         {$cond:
+            //                 {if: { $eq: [ "$_id", "coinbase" ] },
+            //                     then: 0,
+            //                     else: {$cond:
+            //                             {if: { $eq: [ "$type", "vout" ] },
+            //                                 then: "$amount",
+            //                                 else: 0 }} }}
+            // },
+            // // "type": "vout",
+            // // "blockindex": 5,
+            // "createdAt" : { "$first": "$createdAt" },
+            // "updatedAt" : { "$first": "$updatedAt" },
+        }
+    });
+    aggregate.push({
+        "$project": {
+            "_id": "$_id",
+            "txs": "$txs",
+            // "sent": "$sent",
+            // "received": "$received",
+            // "balance": {"$subtract": ['$received', '$sent']},
         }
     });
     AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
@@ -157,6 +184,120 @@ function getOneJoin(address, limit, offset, cb) {
     });
 }
 
+function getAddressTxs(address, limit, offset, cb) {
+    var aggregate = [];
+    var objID = mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1");
+    aggregate.push({ $match : { address : address } });
+    // aggregate.push({ $match: { $and: [ { address: address }, { _id: { $gt: "5e3eb7afca9bdb0e2adaf1c1" } } ] } });
+    // aggregate.push({$sort:{blockindex:-1}});
+    // aggregate.push({$sort:{blockindex:-1}});
+    if(parseInt(offset)) {
+        aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
+    }
+    if(parseInt(limit)) {
+        aggregate.push({$limit: parseInt(limit)});
+    }
+    // aggregate.push({ $match : { _id : mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1") } });
+    // aggregate.push({ $match : { "_id" : { "$gt": objID} } });
+    aggregate.push({
+        "$unwind": {
+            "path": "$_id",
+            "preserveNullAndEmptyArrays": true
+        }
+    });
+    // aggregate.push({$gt: ["_id", "5e3eb7afca9bdb0e2adaf1c1"]});
+    aggregate.push({
+        "$group": {
+            "_id": "$address",
+            "txs" : { "$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"} },
+        }
+    });
+    aggregate.push({
+        "$project": {
+            "_id": "$_id",
+            // "txs": { "$slice": [ {$reverseArray: "$txs" }, (parseInt(offset) * parseInt(limit)),  parseInt(limit) ] },
+            "txs": "$txs",
+        }
+    });
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
+        console.log('err', err)
+        if(address && address.length) {
+            return cb(address[0]);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
+function getAddressTxsPublic(address, limit, cb) {
+    var aggregate = [];
+    var objID = mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1");
+    aggregate.push({ $match : { address : address } });
+    // aggregate.push({ $match: { $and: [ { address: address }, { _id: { $gt: "5e3eb7afca9bdb0e2adaf1c1" } } ] } });
+    // aggregate.push({$sort:{blockindex:-1}});
+    // aggregate.push({$sort:{blockindex:-1}});
+    // aggregate.push({ $match : { _id : mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1") } });
+    // aggregate.push({ $match : { "_id" : { "$gt": objID} } });
+    aggregate.push({
+        "$unwind": {
+            "path": "$_id",
+            "preserveNullAndEmptyArrays": true
+        }
+    });
+    // aggregate.push({$gt: ["_id", "5e3eb7afca9bdb0e2adaf1c1"]});
+    aggregate.push({
+        "$group": {
+            "_id": "$address",
+            "txs" : { "$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"} },
+        }
+    });
+    aggregate.push({
+        "$project": {
+            "_id": "$_id",
+            "txs": { "$slice": [ "$txs", -parseInt(limit) ] },
+        }
+    });
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
+        console.log('err', err)
+        if(address && address.length) {
+            return cb(address[0]);
+        } else {
+            return cb(null);
+        }
+    });
+}
+function getOneConcat(address, cb) {
+    AddressToUpdate[db.getCurrentConnection()].find({address: address}).sort({blockindex: -1}).exec( function(err, address) {
+        if(address && address.length) {
+            var addr = address[0];
+            var sent = 0;
+            var received = 0;
+            var txs = [];
+            for(var i in address) {
+                if(address[i].address === 'coinbase') {
+                    sent += address[i].amount;
+                }
+                else if(address[i].type === 'vin') {
+                    sent += address[i].amount;
+                }
+                else if(address[i].type === 'vout') {
+                    received += address[i].amount;
+                }
+                // txs.push({txid: address[i].txid, type: address[i].type})
+            }
+            var data = {
+                address: address[i].address,
+                sent: sent,
+                received: received,
+                balance: received - sent,
+                last_txs: txs,
+            }
+            return cb(data);
+        } else {
+            return cb();
+        }
+    });
+}
 function getRichlist(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order == 'desc' ? -1 : 1;
@@ -292,6 +433,74 @@ function getAddressDetails(address, cb) {
                 "sent": "$sent",
                 "received": "$received",
                 "balance": {"$subtract": ['$received', '$sent']},
+                "count": "$count",
+            }
+        },
+    ]).allowDiskUse(true).exec(function(err, results) {
+        if(results && results.length) {
+            return cb(results[0]);
+        } else {
+            return cb(err);
+        }
+    });
+    // AddressToUpdate[db.getCurrentConnection()].find({address : {$eq : address}}, {amount: true}).exec( function (err, results) {
+    //     if(err) {
+    //         cb()
+    //     } else {
+    //         cb(results);
+    //     }
+    // });
+}
+
+function getAddressDetailsWithLastestTxs(address, cb) {
+    AddressToUpdate[db.getCurrentConnection()].aggregate([
+        { $match : { address : address } },
+        // {$sort:{createdAt:-1}},
+        {
+            "$unwind": {
+                "path": "$_id",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$group": {
+                "_id": "$address",
+                "address": {"$first": "$address"},
+                "last_txs" : { "$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"} },
+                "sent" : { "$sum":
+                        {$cond:
+                                {if: { $eq: [ "$_id", "coinbase" ] },
+                                    then: "$amount",
+                                    else: {$cond:
+                                            {if: { $eq: [ "$type", "vin" ] },
+                                                then: "$amount",
+                                                else: 0 }} }}
+                },
+                "received" : { "$sum":
+                        {$cond:
+                                {if: { $eq: [ "$_id", "coinbase" ] },
+                                    then: 0,
+                                    else: {$cond:
+                                            {if: { $eq: [ "$type", "vout" ] },
+                                                then: "$amount",
+                                                else: 0 }} }}
+                },
+                "amount" : { "$sum": "$amount" },
+                "count" : { $sum: 1 }
+            }
+        },
+        {
+            "$project": {
+                "_id": "$_id",
+                "address": "$address",
+                "sent": "$sent",
+                "received": "$received",
+                "balance": {"$subtract": ['$received', '$sent']},
+                "last_txs": { "$slice": [ "$last_txs", -100, 100 ] },
+                // "last_txs": { "$slice": [ "$last_txs", 100 ] },
+                // "last_txs": { "$slice": [ {$reverseArray: "$last_txs"}, 100 ] },
+                // "last_txs": {$reverseArray: { "$slice": [ {$reverseArray: "$last_txs"}, 100 ] }},
+                // "last_txs": { $reverseArray:{ "$slice": [ "$last_txs", 100 ] } },
                 "count": "$count",
             }
         },
@@ -543,7 +752,11 @@ module.exports.getAllFotTx = getAllFotTx;
 module.exports.countUniqueTx = countUniqueTx;
 module.exports.countTx = countTx;
 module.exports.getAddressDetails = getAddressDetails;
+module.exports.getAddressDetailsWithLastestTxs = getAddressDetailsWithLastestTxs;
 module.exports.getCoinbaseSupply = getCoinbaseSupply;
 module.exports.getBalanceSupply = getBalanceSupply;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getOneJoinTest = getOneJoinTest;
+module.exports.getOneConcat = getOneConcat;
+module.exports.getAddressTxs = getAddressTxs;
+module.exports.getAddressTxsPublic = getAddressTxsPublic;
