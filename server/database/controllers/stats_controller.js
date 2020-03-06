@@ -174,7 +174,9 @@ function updateWalletStats(obj, cb) { // update or create
             stats.hashrate = obj.hashrate;
             stats.blockcount = obj.blockcount;
             stats.connections = obj.connections;
-            stats.masternodesCount = obj.masternodesCount;
+            if(obj.masternodesCount) {
+                stats.masternodesCount = obj.masternodesCount;
+            }
             stats.supply = obj.supply;
             stats.save(function(err) {
                 if (err) {

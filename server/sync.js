@@ -2466,10 +2466,38 @@ if (wallet) {
                                 if (i < masternodes.length - 1) {
                                     updateMasternode(++i);
                                 } else {
-                                    // console.log('masternodes updated');
-                                    db.multipleDisconnect();
-                                    deleteFile('mn');
-                                    process.exit();
+                                    StatsController.getOne(settings[wallet].coin, function(stats){
+                                        if(stats) {
+                                            console.log('updating masternode count');
+                                            wallet_commands.getMasternodeCount(wallet).then(function (masterNodesCount) {
+                                                // console.log('masternodes updated');
+                                                stats.masternodesCount = JSON.parse(masterNodesCount);
+                                                StatsController.updateWalletStats(stats, function (err) {
+                                                    if (err) {
+                                                        console.log(err)
+                                                    }
+                                                    console.log('finish updating masternode count');
+                                                    db.multipleDisconnect();
+                                                    deleteFile('mn');
+                                                    process.exit();
+                                                });
+                                            }).catch(function (err) {
+                                                console.log(err)
+                                                if (err && err.toString().indexOf("couldn't connect to server") > -1) {
+                                                    console.log('\n*******************************************************************');
+                                                    console.log('******wallet disconnected please make sure wallet has started******');
+                                                    console.log('*******************************************************************\n');
+                                                }
+                                                db.multipleDisconnect();
+                                                deleteFile('mn');
+                                                process.exit();
+                                            })
+                                        } else {
+                                            db.multipleDisconnect();
+                                            deleteFile('mn');
+                                            process.exit();
+                                        }
+                                    })
                                 }
                             })
                         }
@@ -2549,11 +2577,12 @@ if (wallet) {
             break;
         }
         case 'updatestats': {
+            var startTime = new Date();
             updateStats();
             break;
         }
         case 'updaterichlist': {
-            endReindexNew();
+            updateRichlist();
             break;
         }
         case 'updatemarket': {
@@ -2736,23 +2765,24 @@ function endReindex() {
 }
 
 function endReindexNew() {
-    RichlistController.getOne(settings[wallet].coin, function(richlist) {
-        console.log('updating richlist');
-        AddressToUpdateController.getRichlistFaster('received', 'desc', 100, function(received){
-            AddressToUpdateController.getRichlistFaster('balance', 'desc', 100, function(balance){
-                if(received && received.length) {
-                    richlist.received = received.map(function (o) {return {received: o.received, a_id: o._id}});
-                }
-                if(balance && balance.length) {
-                    richlist.balance = balance.map(function(o){ return {balance: o.balance, a_id: o._id}});
-                }
-                RichlistController.updateOne(richlist, function(err) {
-                    console.log('finish updating richlist');
-                    updateStats();
-                })
-            })
-        })
-    })
+    updateStats();
+    // RichlistController.getOne(settings[wallet].coin, function(richlist) {
+    //     console.log('updating richlist');
+    //     AddressToUpdateController.getRichlistFaster('received', 'desc', 100, function(received){
+    //         AddressToUpdateController.getRichlistFaster('balance', 'desc', 100, function(balance){
+    //             if(received && received.length) {
+    //                 richlist.received = received.map(function (o) {return {received: o.received, a_id: o._id}});
+    //             }
+    //             if(balance && balance.length) {
+    //                 richlist.balance = balance.map(function(o){ return {balance: o.balance, a_id: o._id}});
+    //             }
+    //             RichlistController.updateOne(richlist, function(err) {
+    //                 console.log('finish updating richlist');
+    //                 updateStats();
+    //             })
+    //         })
+    //     })
+    // })
 }
 
 function updateStats() {
@@ -2763,9 +2793,9 @@ function updateStats() {
         if(latestTx.length) {
             wallet_commands.getInfo(wallet).then(function(info) {
                 info = JSON.parse(info);
-                console.log('updating masternode count');
-                wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
-                    console.log('finish updating masternode count');
+                // console.log('updating masternode count');
+                // wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
+                //     console.log('finish updating masternode count');
                     wallet_commands.getNetworkHashps(wallet).then(function(networkhashps) {
                         var hashrate = (networkhashps / 1000000000).toFixed(4);
                         wallet_commands.getConnectionCount(wallet).then(function(connections) {
@@ -2776,7 +2806,7 @@ function updateStats() {
                                         difficulty: info.difficulty,
                                         moneysupply: info.moneysupply,
                                         hashrate: hashrate,
-                                        masternodesCount: JSON.parse(masterNodesCount),
+                                        // masternodesCount: JSON.parse(masterNodesCount),
                                         connections: parseInt(connections),
                                         blockcount: parseInt(blockcount),
                                         last_block: latestTx[0].blockindex,
@@ -2828,17 +2858,17 @@ function updateStats() {
                             process.exit(1);
                         }
                     })
-                }).catch(function(err) {
-                    console.log(err)
-                    if(err && err.toString().indexOf("couldn't connect to server") > -1) {
-                        console.log('\n*******************************************************************');
-                        console.log('******wallet disconnected please make sure wallet has started******');
-                        console.log('*******************************************************************\n');
-                        deleteFile();
-                        db.multipleDisconnect();
-                        process.exit(1);
-                    }
-                })
+                // }).catch(function(err) {
+                //     console.log(err)
+                //     if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                //         console.log('\n*******************************************************************');
+                //         console.log('******wallet disconnected please make sure wallet has started******');
+                //         console.log('*******************************************************************\n');
+                //         deleteFile();
+                //         db.multipleDisconnect();
+                //         process.exit(1);
+                //     }
+                // })
             }).catch(function(err) {
                 console.log(err)
                 if(err && err.toString().indexOf("couldn't connect to server") > -1) {
@@ -2857,6 +2887,27 @@ function updateStats() {
             process.exit();
         }
 
+    })
+}
+
+function updateRichlist() {
+    RichlistController.getOne(settings[wallet].coin, function(richlist) {
+        console.log('updating richlist');
+        AddressToUpdateController.getRichlistFaster('received', 'desc', 100, function(received){
+            AddressToUpdateController.getRichlistFaster('balance', 'desc', 100, function(balance){
+                if(received && received.length) {
+                    richlist.received = received.map(function (o) {return {received: o.received, a_id: o._id}});
+                }
+                if(balance && balance.length) {
+                    richlist.balance = balance.map(function(o){ return {balance: o.balance, a_id: o._id}});
+                }
+                RichlistController.updateOne(richlist, function(err) {
+                    console.log('finish updating richlist');
+                    db.multipleDisconnect();
+                    process.exit();
+                })
+            })
+        })
     })
 }
 

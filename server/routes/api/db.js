@@ -542,18 +542,31 @@ router.get('/getTxDetails/:txid', (req, res) => {
     const response = helpers.getGeneralResponse();
     TxController.getTxBlockByTxid(req.params['txid'], function(tx) {
         if(tx) {
-            wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {
-                TxVinVoutController.getTxBlockByTxid(req.params['txid'], function (txVinVout) {
+            TxVinVoutController.getTxBlockByTxid(req.params['txid'], function (txVinVout) {
+                wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {
                     tx.height = txVinVout.blockindex;
                     tx.vin = txVinVout.vin;
                     tx.vout = txVinVout.vout;
                     response.data = tx;
                     res.send(JSON.stringify(response, null, 2));
-                })
-            }).catch(function(err) {
-                response.err = 1;
-                response.errMessage = err;
-                res.send(JSON.stringify(response, null, 2));
+                }).catch(function(err) {
+                    // response.err = 1;
+                    // response.errMessage = err;
+                    // res.send(JSON.stringify(response, null, 2));
+                    wallet_commands.getBlock(res.locals.wallet, tx.blockhash).then(function (block) {
+                        var b = JSON.parse(block);
+                        var data = {};
+                        data.txid = txVinVout.txid;
+                        data.blockhash = tx.blockhash;
+                        data.height = txVinVout.blockindex;
+                        data.vin = txVinVout.vin;
+                        data.vout = txVinVout.vout;
+                        data.confirmations = b.confirmations;
+                        data.time = txVinVout.timestamp;
+                        response.data = data;
+                        res.send(JSON.stringify(response, null, 2));
+                    });
+                });
             });
         } else {
             response.err = 1;
