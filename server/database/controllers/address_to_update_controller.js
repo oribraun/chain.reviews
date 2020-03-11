@@ -185,47 +185,76 @@ function getOneJoin(address, limit, offset, cb) {
 }
 
 function getAddressTxs(address, limit, offset, cb) {
-    var aggregate = [];
-    var objID = mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1");
-    aggregate.push({ $match : { address : address } });
-    // aggregate.push({ $match: { $and: [ { address: address }, { _id: { $gt: "5e3eb7afca9bdb0e2adaf1c1" } } ] } });
-    // aggregate.push({$sort:{blockindex:-1}});
-    // aggregate.push({$sort:{blockindex:-1}});
-    if(parseInt(offset)) {
-        aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
-    }
-    if(parseInt(limit)) {
-        aggregate.push({$limit: parseInt(limit)});
-    }
-    // aggregate.push({ $match : { _id : mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1") } });
-    // aggregate.push({ $match : { "_id" : { "$gt": objID} } });
-    aggregate.push({
-        "$unwind": {
-            "path": "$_id",
-            "preserveNullAndEmptyArrays": true
-        }
-    });
-    // aggregate.push({$gt: ["_id", "5e3eb7afca9bdb0e2adaf1c1"]});
-    aggregate.push({
-        "$group": {
-            "_id": "$address",
-            "txs" : { "$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"} },
-        }
-    });
-    aggregate.push({
-        "$project": {
-            "_id": "$_id",
-            // "txs": { "$slice": [ {$reverseArray: "$txs" }, (parseInt(offset) * parseInt(limit)),  parseInt(limit) ] },
-            "txs": "$txs",
-        }
-    });
-    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
-        console.log('err', err)
-        if(address && address.length) {
-            return cb(address[0]);
+    countTx(address, function(count) {
+        var aggregate = [];
+        var objID = mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1");
+        aggregate.push({$match: {address: address}});
+        // aggregate.push({ $match: { $and: [ { address: address }, { _id: { $gt: "5e3eb7afca9bdb0e2adaf1c1" } } ] } });
+        // aggregate.push({$sort:{blockindex:-1}});
+        // aggregate.push({$sort: {blockindex: -1}});
+        offset = parseInt(offset);
+        limit = parseInt(limit);
+        var skip;
+        if(offset * limit > count / 2) {
+            // will get add addresses without sorting
+            skip = count - parseInt(offset) * parseInt(limit) - parseInt(limit);
+            if(skip < 0) {
+                limit = parseInt(limit) + skip;
+                skip = 0;
+            }
         } else {
-            return cb(null);
+            // will get add addresses with sorting
+            aggregate.push({$sort: {blockindex: -1}});
+            skip = parseInt(offset) * parseInt(limit);
         }
+
+        if (parseInt(skip) ) {
+            aggregate.push({$skip: parseInt(skip)});
+        }
+        if (parseInt(limit)) {
+            aggregate.push({$limit: parseInt(limit)});
+        }
+        // aggregate.push({ $match : { _id : mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1") } });
+        // aggregate.push({ $match : { "_id" : { "$gt": objID} } });
+        aggregate.push({
+            "$unwind": {
+                "path": "$_id",
+                "preserveNullAndEmptyArrays": true
+            }
+        });
+        // aggregate.push({$gt: ["_id", "5e3eb7afca9bdb0e2adaf1c1"]});
+        aggregate.push({
+            "$group": {
+                "_id": "$address",
+                "txs": {"$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"}},
+            }
+        });
+        if(offset * limit > count / 2) {
+            aggregate.push({
+                "$project": {
+                    "_id": "$_id",
+                    // "txs": { "$slice": [ {$reverseArray: "$txs" }, (parseInt(offset) * parseInt(limit)),  parseInt(limit) ] },
+                    "txs": {$reverseArray: "$txs"},
+                    // "txs": {$reverseArray: { "$slice": [ "$txs", skip,  limit ] } },
+                    // "txs": "$txs",
+                }
+            });
+        } else {
+            aggregate.push({
+                "$project": {
+                    "_id": "$_id",
+                    "txs": "$txs",
+                }
+            });
+        }
+        AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function (err, address) {
+            console.log('err', err)
+            if (address && address.length) {
+                return cb(address[0]);
+            } else {
+                return cb(null);
+            }
+        });
     });
 }
 
