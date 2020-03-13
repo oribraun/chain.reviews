@@ -60,7 +60,7 @@
         <div class="body">
           <div class="my-tr">
             <div class="row" *ngFor="let bid of market.bids">
-              <div class="col-7 col-sm-8 col-md-9 col-lg-10 col-xl-10 my-td" [innerHtml]="(bid[0] / 100000000).toFixed(8)"></div>
+              <div class="col-7 col-sm-8 col-md-9 col-lg-10 col-xl-10 my-td" [innerHtml]="(bid[0] / 10000000).toFixed(8)"></div>
               <div class="col-5 col-sm-4 col-md-3 col-lg-2 col-xl-2 my-td" [innerHtml]="bid[1]"></div>
             </div>
           </div>
