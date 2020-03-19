@@ -113,6 +113,19 @@ var model = {
             });
         });
         return promise;
+    },
+    getCoinsData: function() {
+        var url = bash + 'coins_data.json';
+        var promise = new Promise(function(resolve, reject) {
+            request({uri: url, json: true}, function (error, response, body) {
+                if(error) {
+                    reject(error);
+                } else {
+                    resolve(body);
+                }
+            });
+        });
+        return promise;
     }
 }
 
