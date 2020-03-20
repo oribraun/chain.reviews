@@ -63,6 +63,22 @@ http.listen(port, function() {
 //     process.exit();
 // });
 var addToHeader = function (req, res, next) {
+    var err = null;
+    try {
+        decodeURIComponent(req.path);
+    } catch (e) {
+        err = e;
+    }
+    if(err) {
+        var baseUrl = req.connection.encrypted ? 'https://' : 'http://';
+        baseUrl += req.get('Host');
+        var index = baseUrl.indexOf('#');
+        if (index > 0) {
+            baseUrl = baseUrl.substring(0, index);
+        }
+        return res.redirect([baseUrl + '#'].join(''));
+        // res.send(404);
+    }
     // res.header('Content-Type', 'application/json');
     // console.log("add to header called ... " + req.url + " origin - " + req.headers.origin);
     // // res.header("charset", "utf-8")
