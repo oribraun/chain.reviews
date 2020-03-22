@@ -13,6 +13,7 @@ var StatsSchema = new Schema({
   connections: { type: Number, default: 0 },
   masternodesCount: { type: Object, default: {} },
   last_price: { type: Number, default: 0 },
+  version: { type: String, default: "" },
 }, {timestamps: true});
 var connections = db.getConnections();
 var obj = {};

@@ -2811,6 +2811,7 @@ function updateStats() {
                                         blockcount: parseInt(blockcount),
                                         last_block: latestTx[0].blockindex,
                                         supply: supply,
+                                        version: info.version,
                                         // last_price: stats.last_price,
                                     };
                                     console.log(stats)
