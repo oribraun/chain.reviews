@@ -32,22 +32,22 @@ for (var wallet in settings) {
     var txid = settings[wallet].example_txid;
     var hash = settings[wallet].example_hash;
     var dev_address = settings[wallet].dev_address;
-    // var currentRoute;
-    // string += '<h1>' + wallet + '</h1>' + '<br>';
-    // for(var i in walletRoute.stack) {
-    //     if(walletRoute.stack[i] && walletRoute.stack[i].route) {
-    //         currentRoute = ('/public-api/wallet/' + wallet + walletRoute.stack[i].route.path
-    //             .replace(':hash', hash)
-    //             .replace(':number', 0)
-    //             .replace(':txid', txid));
-    //         addLinkToString(currentRoute);
-    //     }
-    // }
-    // string += '<br>';
-    string += '<h2>' + wallet + ' api</h2>' + '<br>';
+    var currentRoute;
+    string += '<h1>' + wallet + '</h1>' + '<br>';
+    for(var i in walletRoute.stack) {
+        if(walletRoute.stack[i] && walletRoute.stack[i].route) {
+            currentRoute = ('/api/wallet/' + wallet + walletRoute.stack[i].route.path
+                .replace(':hash', hash)
+                .replace(':number', 1)
+                .replace(':txid', txid));
+            addLinkToString(currentRoute);
+        }
+    }
+    string += '<br>';
+    string += '<h2>' + wallet + ' database</h2>' + '<br>';
     for(var i in dbRoute.stack) {
         if(dbRoute.stack[i] && dbRoute.stack[i].route) {
-            currentRoute = ('/public-api/db/' + wallet + dbRoute.stack[i].route.path
+            currentRoute = ('/api/db/' + wallet + dbRoute.stack[i].route.path
                 .replace(':hash', hash)
                 .replace(':number', 1)
                 .replace(':address', dev_address)
