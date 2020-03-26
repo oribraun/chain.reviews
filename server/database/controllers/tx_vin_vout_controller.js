@@ -185,6 +185,83 @@ function getAllDuplicate(cb) {
     })
 }
 
+function getTransactionsChart(cb) {
+    // var sort = {};
+    // sort[sortBy] = order == 'asc' ? 1 : -1;
+    TxVinVout[db.getCurrentConnection()].aggregate([
+        {$project: {
+                "_id": "_id",
+                "total": "$total",
+                "date": {
+                    $dateToString: {
+                        date: {
+                            "$add": [
+                                new Date(0),
+                                { "$multiply": [1000, "$timestamp"] }
+                            ]
+                        },
+                        format: "%Y-%m-%d"
+                    }
+                },
+                "year": {
+                    "$year": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": [1000, "$timestamp"]}
+                        ]
+                    }
+                },
+                "month": {
+                    "$month": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": [1000, "$timestamp"]}
+                        ]
+                    }
+                },
+                "day": {
+                    "$dayOfMonth": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": [1000, "$timestamp"]}
+                        ]
+                    }
+                },
+                "timestamp": "$timestamp"
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "year": "$year",
+                    "month": "$month",
+                    "day": "$day"
+                },
+                "date": {$first: "$date"},
+                "timestamp": {$first: "$timestamp"},
+                "count" : { "$sum" : 1 },
+                "totalAmountADay" : { "$sum" : "$total" }
+            }
+        },
+        {$sort:{timestamp:-1}},
+        {
+            $project: {
+                "_id": 0,
+                "date": "$date",
+                "count": "$count",
+                "totalAmountADay": "$totalAmountADay",
+            }
+        }
+    ]).exec( function(err, txs) {
+        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        if(txs) {
+            return cb(txs);
+        } else {
+            return cb();
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.updateOne = updateOne;
@@ -200,3 +277,4 @@ module.exports.countWhereTotal = countWhereTotal;
 module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getAll2 = getAll2;
 module.exports.getAllDuplicate = getAllDuplicate;
+module.exports.getTransactionsChart = getTransactionsChart;

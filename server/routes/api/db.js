@@ -229,38 +229,64 @@ router.get('/getAddress/:address', (req, res) => {
 //   })
 // })
 
-router.get('/getAvailableMarkets', (req, res) => {
-    const response = helpers.getGeneralResponse();
-    MarketController.getAllJoin({},'symbol', 'desc', 0, 0, function(markets) {
-        if(markets) {
-            var results = [];
-            for(var i in markets) {
-                results.push({
-                    symbol: markets[i].symbol,
-                    summary: markets[i].summary,
-                })
-            }
-            response.data = results;
-        } else {
-            response.err = 1;
-            response.errMessage = 'no market found';
-        }
-        res.send(JSON.stringify(response, null, 2));
-    });
-});
+// router.get('/getAvailableMarkets', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     MarketController.getAllJoin({},'symbol', 'desc', 0, 0, function(markets) {
+//         if(markets) {
+//             var results = [];
+//             for(var i in markets) {
+//                 results.push({
+//                     symbol: markets[i].symbol,
+//                     summary: markets[i].summary,
+//                 })
+//             }
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no market found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     });
+// });
+//
+// router.get('/getMarket/:symbol', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     MarketController.getAllJoin({symbol: req.params['symbol']},'symbol', 'desc', 0, 0, function(markets) {
+//         if(markets && markets.length) {
+//             response.data = markets[0];
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no market found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     });
+// });
+//
+// router.get('/getTransactionsChart', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     TxVinVoutController.getTransactionsChart(function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no txs found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// });
 
-router.get('/getMarket/:symbol', (req, res) => {
-    const response = helpers.getGeneralResponse();
-    MarketController.getAllJoin({symbol: req.params['symbol']},'symbol', 'desc', 0, 0, function(markets) {
-        if(markets && markets.length) {
-            response.data = markets[0];
-        } else {
-            response.err = 1;
-            response.errMessage = 'no market found';
-        }
-        res.send(JSON.stringify(response, null, 2));
-    });
-});
+// router.get('/getMarketsSummary', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     MarketController.getAllSummary('symbol', 'desc', 0, 0, function(markets) {
+//         if(markets && markets.length) {
+//             response.data = markets;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no market found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     });
+// });
 
 // router.get('/getMasternodesMap', function(req, res) {
 //     const response = helpers.getGeneralResponse();
