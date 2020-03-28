@@ -3067,6 +3067,7 @@ function updateMarket(wallet) {
             newCapitalMarket.getTrades(symbolsToUpdate[i].from, symbolsToUpdate[i].to).then(function (history) {
                 newCapitalMarket.getDepth(symbolsToUpdate[i].from, symbolsToUpdate[i].to).then(function (asksAndBids) {
                     var market = {
+                        market_name: 'New Capital',
                         symbol: symbolsToUpdate[i].from + '_' + symbolsToUpdate[i].to,
                         summary: {
                             '24h_volume': volume,

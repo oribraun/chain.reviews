@@ -4,6 +4,7 @@ var db = require('./../db');
 
 var MarketsSchema = new Schema({
   symbol: { type: String, unique: true },
+  market_name: { type: String, index: true },
   summary: { type: Object, default: {} },
   chartdata: { type: Array, default: [] },
   bids: { type: Array, default: [] },

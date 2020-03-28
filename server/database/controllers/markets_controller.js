@@ -21,6 +21,7 @@ function updateOne(obj, cb) { // update or create
         }
         if(market) {
             market.symbol = obj.symbol,
+            market.market_name = obj.market_name,
             market.summary = obj.summary,
             market.chartdata = obj.chartdata,
             market.bids = obj.bids,
@@ -38,6 +39,7 @@ function updateOne(obj, cb) { // update or create
             // console.log('new')
             var newMarket = new Markets[db.getCurrentConnection()]({
                 symbol: obj.symbol,
+                market_name: obj.market_name,
                 summary: obj.summary,
                 chartdata: obj.chartdata,
                 bids: obj.bids,
@@ -173,6 +175,7 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
     }
     aggregate.push({
         "$project": {
+            "market_name": 1,
             "symbol": 1,
             "summary": 1,
             "chartdata": { "$ifNull" : [ "$chartdata", [ ] ] },
@@ -180,7 +183,7 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
             "asks": { "$ifNull" : [ "$asks", [ ] ] },
             "history": { "$ifNull" : [ "$history", [ ] ] },
         }
-    },)
+    });
     aggregate.push({
         "$lookup": {
             "from": CoinMarketCap[db.getCurrentConnection()].collection.name,
@@ -193,16 +196,17 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
             "as": "market_cap"
             // where vin.vout = vout[0].n
         }
-    })
+    });
     aggregate.push({
         "$unwind": {
             "path": "$market_cap",
             "preserveNullAndEmptyArrays": true
         }
-    })
+    });
     aggregate.push({
         "$project": {
             "symbol": 1,
+            "market_name": 1,
             "price": "$market_cap.lastPrice",
             "volume": "$market_cap.volume",
             "buys" : "$bids",
@@ -214,7 +218,8 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
             // "asks": { "$ifNull" : [ "$asks", [ ] ] },
             // "history": { "$ifNull" : [ "$history", [ ] ] },
         }
-    },)
+    });
+    aggregate.push({$sort:{'market_name': 1}});
     Markets[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, markets) {
         if(markets) {
             var data = [];
@@ -222,15 +227,16 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
             for(var i in markets) {
                 var obj = {};
                 obj.symbol = markets[i].symbol;
+                obj.market_name = markets[i].market_name;
                 obj.price = markets[i].price;
                 obj.volume = markets[i].volume;
                 obj.buyLiquidity = 0;
                 obj.sellLiquidity = 0;
                 for(var j in markets[i].buys) {
-                    obj.buyLiquidity += parseFloat(markets[i].buys[j][0])
+                    obj.buyLiquidity += parseFloat(markets[i].buys[j][1])
                 }
                 for(var j in markets[i].sells) {
-                    obj.sellLiquidity += parseFloat(markets[i].sells[j][0])
+                    obj.sellLiquidity += parseFloat(markets[i].sells[j][1])
                 }
                 data.push(obj);
             }
@@ -263,6 +269,8 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                     data[i]['price' + priceSymbol] = currentData.price;
                     data[i]['priceBtc'] = prices[i].reduce( (a,b) => a * b );
                     data[i]['priceUsd'] = data[i]['priceBtc'] * btcUsdPrice;
+                    data[i]['buyLiquidityBtc'] = data[i]['priceBtc'] * data[i]['buyLiquidity'];
+                    data[i]['sellLiquidityBtc'] = data[i]['priceBtc'] * data[i]['sellLiquidity'];
                 }
                 console.log('data', data);
             }
