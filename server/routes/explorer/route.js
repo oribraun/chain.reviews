@@ -33,7 +33,7 @@ router.get('/*', (req, res) => {
                     markets: markets.map(function(obj) { return {symbol: obj.symbol, summary: obj.summary}})
                 };
                 console.log(data);
-                res.render(path.resolve(__dirname + "/../../../explorer/dist/index.html"), {
+                res.render(path.resolve(__dirname + "/../../../chain.reviews.clients/explorer/dist/index.html"), {
                     data: JSON.stringify(data),
                 });
             });
