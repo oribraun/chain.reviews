@@ -1,5 +1,6 @@
 var mongoose = require('mongoose')
   , Schema = mongoose.Schema;
+var db = require('./../db');
 
 var PeersSchema = new Schema({
   createdAt: { type: Date, expires: 86400, default: Date.now()},
@@ -11,4 +12,9 @@ var PeersSchema = new Schema({
   connectiontime: { type: String, default: "" }
 });
 
-module.exports = mongoose.model('Peers', PeersSchema);
+var connections = db.getConnections();
+var obj = {};
+for(var i in connections) {
+  obj[i] = connections[i].model('Peers', PeersSchema);
+}
+module.exports = obj;

@@ -1,10 +1,10 @@
 {
-    "coin": "fix",
-    "cli": "/usr/local/bin/fix-cli",
-    "daemon": "/usr/local/bin/fixd",
-    "example_txid": "30d701a30486a3e1791f1a29a7ac452a7adf72e7a3bef98235f9bf935fb34827",
-    "example_hash": "000000428366d3a156c38c5061d74317d201781f539460aeeeaae1091de6e4cc",
-    "dev_address": "FCoB1M2CxxN1fAezRAZC31AWtMBZ3zSvyF",
+    "coin": "stream",
+    "cli": "/usr/local/bin/streamitcoin-cli",
+    "daemon": "/usr/local/bin/streamitcoind",
+    "example_txid": "6da635a5e0a2c84ffa6c38bbf8d14d4e06ac5200208016cae6902058693565ec",
+    "example_hash": "0000007a908705930fee484830350f346293488ac6f6fa76d2c28eef904dd383",
+    "dev_address": "SfCRZrMoAVuvUcjdZxvbfKtWTwvPWDgwSC",
     "commands": {
         "startwallet": "-daemon",
         "stopwallet": "stop",
@@ -25,9 +25,9 @@
         "getmininginfo": "getmininginfo"
     },
     "dbSettings": {
-        "user": "masternodefixuser",
-        "password": "b9wh42mB$jLfi(#nYVMc",
-        "database": "fixdb",
+        "user": "masternodestreamuser",
+        "password": "EyY2anT!Fud*Pb4JvBB9",
+        "database": "streamdb",
         "address" : "localhost",
         "port" : 27017
     }

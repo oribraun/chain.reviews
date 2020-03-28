@@ -1,9 +1,10 @@
 var Masternode = require('../models/masternode');
+var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
-    sort[sortBy] = order;
-    Masternode.find({}).sort(sort).limit(limit).exec( function(err, tx) {
+    sort[sortBy] = order == 'asc' ? 1 : -1;;
+    Masternode[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -13,7 +14,7 @@ function getAll(sortBy, order, limit, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Masternode.findOne({addr: obj.addr}, function(err, masternode) {
+    Masternode[db.getCurrentConnection()].findOne({addr: obj.addr}, function(err, masternode) {
         if(err) {
             return cb(err);
         }
@@ -40,7 +41,7 @@ function updateOne(obj, cb) { // update or create
             })
         } else { // create new
             // console.log('new')
-            var newMasternode = new Masternode({
+            var newMasternode = new Masternode[db.getCurrentConnection()]({
                 rank: obj.rank,
                 network: obj.network,
                 txhash: obj.txhash,
@@ -67,7 +68,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(addr, cb) {
-    Masternode.findOne({addr: addr}, function(err, tx) {
+    Masternode[db.getCurrentConnection()].findOne({addr: addr}, function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -77,7 +78,7 @@ function getOne(addr, cb) {
 }
 
 function deleteOne(addr, cb) {
-    Masternode.deleteOne({addr: addr}, function(err, tx) {
+    Masternode[db.getCurrentConnection()].deleteOne({addr: addr}, function(err, tx) {
         if(tx) {
             return cb();
         } else {
@@ -87,9 +88,62 @@ function deleteOne(addr, cb) {
 }
 
 function deleteAll(cb) {
-    Masternode.deleteMany({},function(err, numberRemoved){
+    Masternode[db.getCurrentConnection()].deleteMany({},function(err, numberRemoved){
         return cb(numberRemoved)
     })
+}
+
+function count(cb) {
+    Masternode[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
+function estimatedDocumentCount(cb) {
+    Masternode[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
+function getCollateralCount(cb) {
+    var aggregate = [];
+    aggregate.push({
+        "$match": {
+            "collateral": {
+                "$exists": true,
+                "$ne": null
+            }
+        }
+    });
+    aggregate.push({$group: {
+        _id: "$collateral",
+        collateral: {$first: "$collateral"},
+        count: { $sum: 1 },
+    }});
+    aggregate.push({$project : {
+        _id : 0 ,
+        collateral : 1 ,
+        count : 1,
+        originalMasternodes : {"$divide": ['$collateral', 1000000]},
+        total : {"$multiply": ['$count', {"$divide": ['$collateral', 1000000]}]}
+    }});
+    aggregate.push({$sort: {collateral: 1}});
+    Masternode[db.getCurrentConnection()].aggregate(aggregate).exec( function(err, masternodes) {
+        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        if(masternodes) {
+            return cb(masternodes);
+        } else {
+            return cb();
+        }
+    });
 }
 
 module.exports.getAll = getAll;
@@ -97,3 +151,6 @@ module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
+module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;
+module.exports.getCollateralCount = getCollateralCount;

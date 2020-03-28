@@ -1,13 +1,22 @@
 var mongoose = require('mongoose')
   , Schema = mongoose.Schema;
- 
+var db = require('./../db');
+
 var MarketsSchema = new Schema({
-  market: { type: String },
+  symbol: { type: String, unique: true },
+  market_name: { type: String, index: true },
   summary: { type: Object, default: {} },
   chartdata: { type: Array, default: [] },
-  buys: { type: Array, default: [] },
-  sells: { type: Array, default: [] },
+  bids: { type: Array, default: [] },
+  asks: { type: Array, default: [] },
   history: { type: Array, default: [] },
 });
 
-module.exports = mongoose.model('Markets', MarketsSchema);
+var connections = db.getConnections();
+var obj = {};
+for(var i in connections) {
+  obj[i] = connections[i].model('Markets', MarketsSchema);
+}
+
+module.exports = obj;
+// module.exports = mongoose.model('Markets', MarketsSchema);

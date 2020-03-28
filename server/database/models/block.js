@@ -3,16 +3,13 @@ var mongoose = require('mongoose')
 var db = require('./../db');
 
 var TxSchema = new Schema({
-  txid: { type: String, lowercase: true, unique: true, index: true},
-  vin: { type: Array, default: [] },
-  vout: { type: Array, default: [] },
+  blockhash: { type: String, index: true, unique: true },
   timestamp: { type: Number, default: 0 },
-  blockhash: { type: String, index: true },
-  blockindex: {type: Number, default: 0, index: true},
+  blockindex: {type: Number, default: 0, index: true, unique: true},
 }, {id: false, timestamps: true});
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {
-  obj[i] = connections[i].model('Tx', TxSchema);
+  obj[i] = connections[i].model('Block', TxSchema);
 }
 module.exports = obj;

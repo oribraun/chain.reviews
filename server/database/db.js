@@ -11,6 +11,21 @@ var adminSettings = {
     // db.createUser({user:"admin", pwd:"KtG#v$pJf4DCEbk5GGZV", roles:[{role:"root", db:"admin"}]})
 }
 
+var mainDbSettings = {
+    user: "masternodeuser",
+    pwd: "d1$R#147Moqiu10o2F^c",
+    roles:[{role:"root", db:"admin"}],
+}
+
+const options = {
+    socketTimeoutMS: 30000,
+    keepAlive: true,
+    reconnectTries: 30000,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true
+};
+
 var isConnected = false;
 var connections = {};
 var currentConnection;
@@ -36,10 +51,39 @@ var db = {
         });
         const db = mongoose.connection;
         db.on("error", () => {
-            console.log("> error occurred from the database");
+            console.log("> error occurred from the database", dbSettings.database);
         });
         db.once("open", () => {
-            console.log("> successfully opened the database");
+            console.log("> successfully opened the database", dbSettings.database);
+        });
+    },
+    connect2: function(wallet, dbSettings, onError) {
+        var dbString = 'mongodb://' + dbSettings.user;
+        dbString = dbString + ':' + dbSettings.password;
+        dbString = dbString + '@' + dbSettings.address;
+        dbString = dbString + ':' + dbSettings.port;
+        dbString = dbString + '/' + dbSettings.database;
+        // console.log(dbString)
+        mongoose.connect(dbString,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, function(err, database) {
+            if (err) {
+                console.log(err)
+                console.log('Unable to connect to database: %s', dbString);
+                console.log('Aborting');
+                onError();
+                // process.exit(1);
+
+            }
+            isConnected = true;
+            // console.log('Successfully connected to ' + wallet);
+            // return cb();
+        });
+        const conn = mongoose.connection;
+        connections[wallet] = conn;
+        conn.on("error", () => {
+            console.log("> error occurred from the database");
+        });
+        conn.once("open", () => {
+            console.log("> successfully opened the database " + wallet);
         });
     },
     disconnect: function() {
@@ -54,7 +98,7 @@ var db = {
             dbString = dbString + ':' + obj[i].dbSettings.port;
             dbString = dbString + '/' + obj[i].dbSettings.database;
             // console.log(dbString)
-            var conn  = mongoose.createConnection(dbString, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true},function(err) {
+            var conn  = mongoose.createConnection(dbString, options,function(err) {
                 // console.log('err', err)
             });
             // connections[i] = mongoose.connection;
@@ -92,18 +136,24 @@ var db = {
             //     })
             // }
             // test(i);
-            connections[i].on("error", () => {
-                console.log('db._readyState error', conn._readyState)
-                console.log("> error occurred from the database");
-            });
-            connections[i].once("open", () => {
-                console.log('db._readyState', conn._readyState)
-                console.log("> successfully opened the database");
-            });
+            function on(c) {
+                c.on("error", (e) => {
+                    console.log('db._readyState error', c._readyState)
+                    console.log("> error occurred from the database", e);
+                });
+                c.once("open", () => {
+                    console.log('db._readyState', c._readyState)
+                    console.log("> successfully opened the database", c.name);
+                });
+            }
+            on(connections[i]);
         }
     },
+    getConnections: function() {
+        return connections;
+    },
     setCurrentConnection: function(key) {
-        currentConnection = connections[key];
+        currentConnection = key;
     },
     getCurrentConnection: function() {
         return currentConnection;
@@ -111,6 +161,7 @@ var db = {
     multipleDisconnect: function() {
         for(var i in connections) {
             connections[i].close();
+            console.log('Successfully disconnected to ' + i);
         }
     },
     createDb: function(dbSettings) {
@@ -178,9 +229,9 @@ var db = {
             // })
             // db.createUser(
             //     {
-            //         user: "masternodetwinsuser",
-            //         pwd: "b9wh42mB$jLfi(#nYVMc",
-            //         roles: [ { role: "dbOwner", db: "twinsdb" } ]
+            //         user: "masternodestreamuser",
+            //         pwd: "EyY2anT!Fud*Pb4JvBB9",
+            //         roles: [ { role: "dbOwner", db: "streamdb" } ]
             //     }
             // )
         });

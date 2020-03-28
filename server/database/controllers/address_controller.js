@@ -1,10 +1,12 @@
 var Address = require('../models/address');
+var TxVinVout = require('../models/txVinVout');
 const helpers = require('../../helpers');
+var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Address.find({}).sort(sort).limit(limit).exec( function(err, tx) {
+    Address[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -14,7 +16,7 @@ function getAll(sortBy, order, limit, cb) {
 }
 
 function updateOne(obj, cb) { // update or create
-    Address.findOne({a_id: obj.hash}, function(err, address) {
+    Address[db.getCurrentConnection()].findOne({a_id: obj.a_id}, function(err, address) {
         if(err) {
             return cb(err);
         }
@@ -23,7 +25,7 @@ function updateOne(obj, cb) { // update or create
             address.received = obj.received;
             address.sent = obj.sent;
             address.balance = obj.balance;
-            address.updateOne(function (err, tx) {
+            address.save(function (err, tx) {
                 if (err) {
                     return cb(err);
                 } else {
@@ -31,7 +33,8 @@ function updateOne(obj, cb) { // update or create
                 }
             });
         } else { // create new
-            var newAddress = new Address({
+            var newAddress = new Address[db.getCurrentConnection()]({
+                a_id: obj.a_id,
                 txs: obj.txs,
                 received: obj.received,
                 sent: obj.sent,
@@ -50,7 +53,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(hash, cb) {
-    Address.findOne({a_id: hash}, function(err, address) {
+    Address[db.getCurrentConnection()].findOne({a_id: hash}, function(err, address) {
         if(address) {
             return cb(address);
         } else {
@@ -60,7 +63,7 @@ function getOne(hash, cb) {
 }
 
 function deleteOne(a_id, cb) {
-    Address.deleteOne({a_id: a_id}, function(err, tx) {
+    Address[db.getCurrentConnection()].deleteOne({a_id: a_id}, function(err, tx) {
         if(tx) {
             return cb();
         } else {
@@ -70,7 +73,7 @@ function deleteOne(a_id, cb) {
 }
 
 function deleteAll(cb) {
-    Address.deleteMany({},function(err, numberRemoved){
+    Address[db.getCurrentConnection()].deleteMany({},function(err, numberRemoved){
         return cb(numberRemoved)
     })
 }
@@ -79,11 +82,11 @@ function updateAddress(hash, txid, amount, type, cb) {
     // Check if address exists
     getOne(hash, function(address) {
         if (address) {
-            console.log('exist')
             // if coinbase (new coins PoW), update sent only and return cb.
             if ( hash == 'coinbase' ) {
                 address.sent = address.sent + amount
                 address.balance = 0;
+                // console.log('exist coinbase', address.sent)
                 address.save(function(err) {
                     if (err) {
                         return cb(err);
@@ -94,7 +97,7 @@ function updateAddress(hash, txid, amount, type, cb) {
                 })
             } else {
                 // ensure tx doesnt already exist in address.txs
-                helpers.is_unique(address.txs, txid).then(function(unique, index){
+                helpers.is_unique(address.txs, txid).then(function(obj){
                     var tx_array = address.txs;
                     var received = address.received;
                     var sent = address.sent;
@@ -103,12 +106,12 @@ function updateAddress(hash, txid, amount, type, cb) {
                     } else {
                         received = received + amount;
                     }
-                    if (unique == true) {
+                    if (obj.unique == true) {
                         tx_array.push({addresses: txid, type: type});
                         // if ( tx_array.length > settings.txcount ) {
                         //   tx_array.shift();
                         // }
-                        Address.updateOne({a_id:hash}, {
+                        Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                             txs: tx_array,
                             received: received,
                             sent: sent,
@@ -117,10 +120,10 @@ function updateAddress(hash, txid, amount, type, cb) {
                             return cb();
                         });
                     } else {
-                        if (type == tx_array[index].type) {
+                        if (type == tx_array[obj.index].type) {
                             return cb(); //duplicate
                         } else {
-                            Address.updateOne({a_id:hash}, {
+                            Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                                 txs: tx_array,
                                 received: received,
                                 sent: sent,
@@ -133,17 +136,18 @@ function updateAddress(hash, txid, amount, type, cb) {
                 })
             }
         } else {
-            console.log('new')
             //new address
             if (type == 'vin') {
-                var newAddress = new Address({
+                // console.log('new vin', amount);
+                var newAddress = new Address[db.getCurrentConnection()]({
                     a_id: hash,
                     txs: [ {addresses: txid, type: 'vin'} ],
                     sent: amount,
                     balance: amount,
                 });
             } else {
-                var newAddress = new Address({
+                // console.log('new vout', amount);
+                var newAddress = new Address[db.getCurrentConnection()]({
                     a_id: hash,
                     txs: [ {addresses: txid, type: 'vout'} ],
                     received: amount,
@@ -164,10 +168,112 @@ function updateAddress(hash, txid, amount, type, cb) {
     });
 }
 
+function bulkUpdateAddress(hash, txid, amount, type, cb) {
+    // Check if address exists
+    getOne(hash, function(address) {
+        if (address) {
+            // if coinbase (new coins PoW), update sent only and return cb.
+            if ( hash == 'coinbase' ) {
+                address.sent = address.sent + amount
+                address.balance = 0;
+                console.log('exist coinbase', address.sent)
+                address.save(function(err) {
+                    if (err) {
+                        return cb(err);
+                    } else {
+                        //console.log('txid: ');
+                        return cb();
+                    }
+                })
+            } else {
+                // ensure tx doesnt already exist in address.txs
+                helpers.is_unique(address.txs, txid).then(function(obj){
+                    var tx_array = address.txs;
+                    var received = address.received;
+                    var sent = address.sent;
+                    if (type == 'vin') {
+                        sent = sent + amount;
+                    } else {
+                        received = received + amount;
+                    }
+                    if (obj.unique == true) {
+                        tx_array.push({addresses: txid, type: type});
+                        // if ( tx_array.length > settings.txcount ) {
+                        //   tx_array.shift();
+                        // }
+                        Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
+                            txs: tx_array,
+                            received: received,
+                            sent: sent,
+                            balance: received - sent
+                        }, function() {
+                            return cb();
+                        });
+                    } else {
+                        if (type == tx_array[obj.index].type) {
+                            return cb(); //duplicate
+                        } else {
+                            Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
+                                txs: tx_array,
+                                received: received,
+                                sent: sent,
+                                balance: received - sent
+                            }, function() {
+                                return cb();
+                            });
+                        }
+                    }
+                })
+            }
+        } else {
+            //new address
+            if (type == 'vin') {
+                console.log('new vin', amount);
+                try {
+                    var newAddress = new Address[db.getCurrentConnection()]({
+                        a_id: hash,
+                        txs: [{addresses: txid, type: 'vin'}],
+                        sent: amount,
+                        balance: amount,
+                    });
+                } catch(e) {
+                    // TODO bulk update
+                    console.log(e);
+                    // bulkUpdateAddress(hash, txid, amount, type, cb);
+                }
+            } else {
+                console.log('new vout', amount);
+                try {
+                    var newAddress = new Address[db.getCurrentConnection()]({
+                        a_id: hash,
+                        txs: [{addresses: txid, type: 'vout'}],
+                        received: amount,
+                        balance: amount,
+                    });
+                } catch(e) {
+                    // TODO bulk update
+                    console.log(e);
+                    // bulkUpdateAddress(hash, txid, amount, type, cb);
+                }
+            }
+
+            newAddress.save(function(err) {
+                if (err) {
+                    return cb(err);
+                } else {
+                    //console.log('address saved: %s', hash);
+                    //console.log(newAddress);
+                    return cb();
+                }
+            });
+        }
+    });
+}
+
 function getRichlist(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Address.find({}).sort(sort).limit(limit).exec(function(err, addresses){
+    Address[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec(function(err, addresses){
         if(err) {
             return cb(err);
         }
@@ -176,7 +282,7 @@ function getRichlist(sortBy, order, limit, cb) {
 }
 
 function update(coin, options, cb) {
-    Address.updateOne({coin: coin}, options, function(err) {
+    Address[db.getCurrentConnection()].updateOne({coin: coin}, options, function(err) {
         if(err) {
             return cb(err);
         }
@@ -188,7 +294,7 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
     if (address) {
         // if coinbase (new coins PoW), update sent only and return cb.
         if ( hash == 'coinbase' ) {
-            Address.updateOne({a_id:hash}, {
+            Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                 sent: address.sent + amount,
                 balance: 0,
             }, function() {
@@ -196,7 +302,7 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
             });
         } else {
             // ensure tx doesnt already exist in address.txs
-            helpers.is_unique(address.txs, txid).then(function(unique, index){
+            helpers.is_unique(address.txs, txid).then(function(obj){
                 var tx_array = address.txs;
                 var received = address.received;
                 var sent = address.sent;
@@ -205,12 +311,12 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
                 } else {
                     received = received + amount;
                 }
-                if (unique == true) {
+                if (obj.unique == true) {
                     tx_array.push({addresses: txid, type: type});
                     // if ( tx_array.length > settings.txcount ) {
                     //   tx_array.shift();
                     // }
-                    Address.updateOne({a_id:hash}, {
+                    Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                         txs: tx_array,
                         received: received,
                         sent: sent,
@@ -219,10 +325,10 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
                         return cb();
                     });
                 } else {
-                    if (type == tx_array[index].type) {
+                    if (type == tx_array[obj.index].type) {
                         return cb(); //duplicate
                     } else {
-                        Address.updateOne({a_id:hash}, {
+                        Address[db.getCurrentConnection()].updateOne({a_id:hash}, {
                             txs: tx_array,
                             received: received,
                             sent: sent,
@@ -239,14 +345,14 @@ function updateAddress1(address, hash, txid, amount, type, cb) {
 function createAddress1(hash, txid, amount, type, cb) {
     //new address
     if (type == 'vin') {
-        var newAddress = new Address({
+        var newAddress = new Address[db.getCurrentConnection()]({
             a_id: hash,
             txs: [ {addresses: txid, type: 'vin'} ],
             sent: amount,
             balance: amount,
         });
     } else {
-        var newAddress = new Address({
+        var newAddress = new Address[db.getCurrentConnection()]({
             a_id: hash,
             txs: [ {addresses: txid, type: 'vout'} ],
             received: amount,
@@ -265,6 +371,97 @@ function createAddress1(hash, txid, amount, type, cb) {
     });
 }
 
+function count(cb) {
+    Address[db.getCurrentConnection()].countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
+function estimatedDocumentCount(cb) {
+    Address[db.getCurrentConnection()].estimatedDocumentCount({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
+function getOneWithTx(hash, cb) {
+    Address[db.getCurrentConnection()].aggregate([
+        { $match : { a_id : hash } },
+        {
+            "$unwind": {
+                "path": "$txs",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$lookup": {
+                "from": TxVinVout[db.getCurrentConnection()].collection.name,
+                "localField": "txs.addresses",
+                "foreignField": "txid",
+                // "pipeline":[
+                // {"$unwind":"$vout"},
+                // {"$match":{"$expr":{"$eq":["$$vin.vout","$vout.n"]}}}
+                // ],
+                "as": "txs.tx"
+                // where vin.vout = vout[0].n
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$txs",
+                "preserveNullAndEmptyArrays": true
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id",
+                "txs" : { "$push": {txid: "$txs.addresses", type: "$txs.type", vin: "$txs.tx.vin", vout: "$txs.tx.vout", timestamp: "$txs.tx.timestamp"} },
+                "received" : { "$first": "$received" },
+                "a_id" : { "$first": "$a_id" },
+                "sent" : { "$first": "$sent" },
+                "balance" : { "$first": "$balance" },
+            }
+        }
+    ]).allowDiskUse(true).exec(function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
+function getAllFotTx(txid, cb) {
+    Address[db.getCurrentConnection()].find({txid: txid}).exec( function(err, addresses) {
+        if(addresses) {
+            return cb(addresses);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
+function getAllDuplicate(cb) {
+    Address[db.getCurrentConnection()].aggregate([
+        {
+            $group : {
+                "_id": "$blockhash",
+                "count": {$sum: 1}
+            }
+        },
+        {"$match": {"_id" :{ "$ne" : null } , "count" : {"$gt": 1} } },
+    ]).exec(function(err, results) {
+        cb(results);
+    })
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -273,6 +470,11 @@ module.exports.deleteAll = deleteAll;
 module.exports.updateAddress = updateAddress;
 module.exports.getRichlist = getRichlist;
 module.exports.update = update;
+module.exports.count = count;
+module.exports.estimatedDocumentCount = estimatedDocumentCount;
 
 module.exports.updateAddress1 = updateAddress1;
 module.exports.createAddress1 = createAddress1;
+module.exports.getOneWithTx = getOneWithTx;
+module.exports.getAllFotTx = getAllFotTx;
+module.exports.getAllDuplicate = getAllDuplicate;
