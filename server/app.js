@@ -24,8 +24,8 @@ db.setCurrentConnection('fix');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.engine("html", ejs.renderFile);
-app.use("/exp",express.static(__dirname + "/../chain.reviews.clients/explorer/dist"));
-app.use("/main",express.static(__dirname + "/../chain.reviews.clients/main"));
+app.use("/exp",express.static(__dirname + "/../chain.review.clients/explorer/dist"));
+app.use("/main",express.static(__dirname + "/../chain.review.clients/main"));
 app.set('view engine', 'ejs');
 
 const routes = require('./routes');
