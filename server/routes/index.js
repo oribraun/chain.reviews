@@ -19,7 +19,7 @@ app.get('/', function(req, res) {
     var fullUrl = req.protocol + '://' + req.get('host');
     addingWalletsStats(wallets);
     function sendFile() {
-        res.render(path.resolve(__dirname + "/../../main/chain.review.ejs"), {
+        res.render(path.resolve(__dirname + "/../../chain.review.clients/main/chain.review.ejs"), {
             data: array,
         });
     }
