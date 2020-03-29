@@ -66,11 +66,12 @@ var allowOnlyForExplorer = function (req, res, next) {
     var allowedOrigins = [
         "http://139.59.131.210/explorer",
         "https://139.59.131.210/explorer",
-        "http://134.122.85.174/explorer",
         "http://dev.masternode.review/explorer",
         "https://dev.masternode.review/explorer",
         "http://chain.review/explorer",
-        "https://chain.review/explorer"
+        "https://chain.review/explorer",
+        "http://134.122.85.174/explorer", // dev site
+        "http://dev-ori.chain.review/explorer",  // dev site
     ];
     var referer = req.headers.referer;
     var allowed = false;

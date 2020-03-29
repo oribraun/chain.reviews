@@ -407,5 +407,18 @@ router.get('/getAddress/:address', (req, res) => {
 //         }
 //     })
 // })
+
+router.get('/getMarketsSummary', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    MarketController.getAllSummary('symbol', 'desc', 0, 0, function(markets) {
+        if(markets && markets.length) {
+            response.data = markets;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no market found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    });
+});
 module.exports = router;
 

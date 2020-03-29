@@ -10,11 +10,11 @@ for (var wallet in settings) {
     //   * * * * *  sleep  0 && /usr/bin/node /var/www/html/server/cronJobs/update_split.js fix >> /var/www/html/logs/fixCronUpdate.log 2>&1
     // */5 * * * *  sleep  0 && /usr/bin/node /var/www/html/server/cronJobs/update_peers.js fix >> /var/www/html/logs/fixCronUpdate.log 2>&1
     // */5 * * * *  sleep  0 && /usr/bin/node /var/www/html/server/cronJobs/update_masternodes.js fix >> /var/www/html/logs/fixCronUpdate.log 2>&1
-    string += "  * * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_split.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
-    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_peers.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
-    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_masternodes.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
-    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_richlist.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
-    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/server/cronJobs/update_market.js " + wallet + " >> /var/www/html/logs/"+ wallet + "CronUpdate.log 2>&1\n";
+    string += "  * * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_split.js " + wallet + " >> /var/www/html/chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
+    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_peers.js " + wallet + " >> /var/www/html/chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
+    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_masternodes.js " + wallet + " >> /var/www//chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
+    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_richlist.js " + wallet + " >> /var/www/html/chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
+    string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_market.js " + wallet + " >> /var/www/html/chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
     string += "\n\n";
 
 }
