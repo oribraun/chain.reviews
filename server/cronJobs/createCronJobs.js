@@ -15,6 +15,7 @@ for (var wallet in settings) {
     string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_masternodes.js " + wallet + " >> /var/www//chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
     string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_richlist.js " + wallet + " >> /var/www/html/chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
     string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_market.js " + wallet + " >> /var/www/html/chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
+    string += "  * * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_tx_chart.js " + wallet + " >> /var/www/html/chain.review/logs/"+ wallet + "CronUpdate.log 2>&1\n";
     string += "\n\n";
 
 }

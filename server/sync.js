@@ -34,6 +34,7 @@ var commands_require_db = [
     'updatestats',
     'updaterichlist',
     'updatemarket',
+    'updatetxbyday',
 ]
 if(settings[wallet]) {
     if(commands_require_db.indexOf(type) > -1) {
@@ -64,6 +65,7 @@ if(settings[wallet]) {
         var PeerController = require('./database/controllers/peers_controller');
         var MarketController = require('./database/controllers/markets_controller');
         var CoinMarketCapController = require('./database/controllers/coin_market_cap_controller');
+        var TxByDayController = require('./database/controllers/tx_by_day_controller');
 
     }
 } else {
@@ -2589,6 +2591,17 @@ if (wallet) {
             updateMarket(wallet);
             break;
         }
+        case 'updatetxbyday': {
+            if(fileExist('txByDay')) {
+                console.log('peers update is in progress');
+                db.multipleDisconnect();
+                process.exit(1)
+                return;
+            }
+            createFile('txByDay');
+            updateTxByDay(wallet);
+            break;
+        }
         case 'reindexwallet': {
             wallet_commands.stopWallet(wallet).then(function(res){
                 console.log(res)
@@ -3116,6 +3129,52 @@ function updateMarket(wallet) {
     }).catch(function(err) {
         console.log('err', err)
     });
+}
+
+function updateTxByDay(wallet) {
+    TxByDayController.getAll('d', 'desc', 2, function(data) {
+        if(data.length) {
+            var lastDate = data[0].d
+            if(data.length > 1) {
+                lastDate = data[1].d
+            }
+            console.log('data',lastDate);
+            updateTxByDay(lastDate);
+        } else {
+            console.log('no data yet');
+            updateTxByDay("");
+            // db.multipleDisconnect()
+        }
+    })
+
+    function updateTxByDay(dateString) {
+        TxVinVoutController.getTransactionsChart(dateString, function(txByDays) {
+            if(txByDays.length) {
+                updateTxByDayOneByOne(txByDays);
+            } else {
+                console.log('no tx found');
+                deleteFile('txByDay');
+                db.multipleDisconnect();
+            }
+        })
+    }
+
+    function updateTxByDayOneByOne(txByDays) {
+        console.log(txByDays[0])
+        TxByDayController.updateOne(txByDays[0], function(err) {
+            if(err) {
+                console.log('err', err);
+            } else {
+                txByDays = txByDays.slice(1);
+                if(txByDays.length) {
+                    updateTxByDayOneByOne(txByDays)
+                } else {
+                    deleteFile('txByDay');
+                    db.multipleDisconnect();
+                }
+            }
+        })
+    }
 }
 function forceProcess(onYes, onNo) {
     console.log('would you like to force reindex');

@@ -185,19 +185,46 @@ function getAllDuplicate(cb) {
     })
 }
 
-function getTransactionsChart(cb) {
+function getTransactionsChart2(date, cb) {
     // var sort = {};
     // sort[sortBy] = order == 'asc' ? 1 : -1;
+    // TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}, timestamp: {$gt: 1585515306}}).sort({blockindex:-1}).exec( function(err, tx) {
+    //     if(tx) {
+    //         return cb(tx.length);
+    //     } else {
+    //         return cb();
+    //     }
+    // });
     TxVinVout[db.getCurrentConnection()].aggregate([
+        {$match: {total: {$gt: 0}}},
         {$project: {
                 "_id": "_id",
                 "total": "$total",
+                "blockindex": "$blockindex",
+                "date1": {
+                    $dateToParts: { date: {
+                            "$add": [
+                                new Date(new Date(0).getTime() + new Date().getTimezoneOffset()*60*1000),
+                                {"$multiply": ["$timestamp", 1000]}
+                            ]
+                        }
+                    }
+                },
+                "date2": {
+                    $dateToParts: { date: {
+                            "$add": [
+                                new Date(0), // GTM+2
+                                {"$multiply": ["$timestamp", 1000]}
+                            ]
+                        }
+                    }
+                },
                 "date": {
                     $dateToString: {
                         date: {
                             "$add": [
-                                new Date(0),
-                                { "$multiply": [1000, "$timestamp"] }
+                                new Date(0), // GTM+2
+                                {"$multiply": ["$timestamp", 1000]}
                             ]
                         },
                         format: "%Y-%m-%d"
@@ -207,7 +234,7 @@ function getTransactionsChart(cb) {
                     "$year": {
                         "$add": [
                             new Date(0),
-                            {"$multiply": [1000, "$timestamp"]}
+                            {"$multiply": ["$timestamp", 1000]}
                         ]
                     }
                 },
@@ -215,7 +242,7 @@ function getTransactionsChart(cb) {
                     "$month": {
                         "$add": [
                             new Date(0),
-                            {"$multiply": [1000, "$timestamp"]}
+                            {"$multiply": ["$timestamp", 1000]}
                         ]
                     }
                 },
@@ -223,37 +250,155 @@ function getTransactionsChart(cb) {
                     "$dayOfMonth": {
                         "$add": [
                             new Date(0),
-                            {"$multiply": [1000, "$timestamp"]}
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                },
+                "week": {
+                    "$isoWeek": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": ["$timestamp", 1000]}
                         ]
                     }
                 },
                 "timestamp": "$timestamp"
-            }
-        },
-        {
-            "$group": {
+            }},
+        {$match: {year: {$gt: 1970}}},
+        {$group: {
                 "_id": {
                     "year": "$year",
                     "month": "$month",
                     "day": "$day"
+                    // "week": "$week"
                 },
+                "week": {$first: "$week"},
                 "date": {$first: "$date"},
                 "timestamp": {$first: "$timestamp"},
                 "count" : { "$sum" : 1 },
                 "totalAmountADay" : { "$sum" : "$total" }
-            }
-        },
+            }},
         {$sort:{timestamp:-1}},
-        {
-            $project: {
+        // // {$limit: 1},
+        {$project: {
                 "_id": 0,
                 "date": "$date",
+                "week": "$week",
                 "count": "$count",
                 "totalAmountADay": "$totalAmountADay",
-            }
-        }
-    ]).exec( function(err, txs) {
+            }}
+    ]).allowDiskUse(true).exec( function(err, txs) {
         // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        console.log('err', err)
+        if(txs) {
+            return cb(txs);
+        } else {
+            return cb();
+        }
+    });
+}
+
+function getTransactionsChart(date, cb) {
+    var aggregate = [];
+    aggregate.push({$match: {total: {$gt: 0}}});
+    if(date) {
+        var timestamp = new Date(date).getTime() / 1000;
+        aggregate.push({$match: {timestamp: {$gte: timestamp }}});
+    }
+    aggregate.push({$project: {
+            "_id": "_id",
+            "total": "$total",
+            "blockindex": "$blockindex",
+            "date1": {
+                $dateToParts: { date: {
+                        "$add": [
+                            new Date(new Date(0).getTime() + new Date().getTimezoneOffset()*60*1000),
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                }
+            },
+            "date2": {
+                $dateToParts: { date: {
+                        "$add": [
+                            new Date(0), // GTM+2
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                }
+            },
+            "date": {
+                $dateToString: {
+                    date: {
+                        "$add": [
+                            new Date(0), // GTM+2
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    },
+                    format: "%Y-%m-%d"
+                }
+            },
+            "year": {
+                "$year": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$timestamp", 1000]}
+                    ]
+                }
+            },
+            "month": {
+                "$month": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$timestamp", 1000]}
+                    ]
+                }
+            },
+            "day": {
+                "$dayOfMonth": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$timestamp", 1000]}
+                    ]
+                }
+            },
+            "week": {
+                "$isoWeek": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$timestamp", 1000]}
+                    ]
+                }
+            },
+            "timestamp": "$timestamp"
+        }});
+    aggregate.push({$match: {year: {$gt: 1970}}});
+    aggregate.push({$group: {
+            "_id": {
+                "year": "$year",
+                "month": "$month",
+                "day": "$day"
+                // "week": "$week"
+            },
+            "week": {$first: "$week"},
+            "date": {$first: "$date"},
+            "timestamp": {$first: "$timestamp"},
+            "count" : { "$sum" : 1 },
+            "totalAmountADay" : { "$sum" : "$total" }
+        }});
+    aggregate.push({$sort:{timestamp:1}});
+    aggregate.push({$project: {
+            "_id": 0,
+            "date": "$date",
+            "week": "$week",
+            "count": "$count",
+            "totalAmountADay": "$totalAmountADay",
+        }});
+    TxVinVout[db.getCurrentConnection()].aggregate(
+        aggregate
+    ).allowDiskUse(true).exec( function(err, txs) {
+        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        console.log('err', err)
         if(txs) {
             return cb(txs);
         } else {

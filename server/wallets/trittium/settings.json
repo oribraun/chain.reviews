@@ -1,0 +1,34 @@
+{
+    "coin": "trittium",
+    "cli": "/usr/local/bin/trittium-cli",
+    "daemon": "/usr/local/bin/trittiumd",
+    "example_txid": "70090a65008415200c3419e91cf4ba2751213e3406c653d804d2521afb4ee0f4",
+    "example_hash": "00000f478561c8bd30a8d6cb66c2d9ba03bc62fb2130a75f3fc954a7a613d166",
+    "dev_address": "TD64LbCuDLVCTcTQBMLNQgmxXJYGCFMKu2",
+    "commands": {
+        "startwallet": "-daemon",
+        "stopwallet": "stop",
+        "reindexWallet": "-daemon -txindex=1 -reindex=1",
+        "rescanWallet": "-daemon -txindex=1 -rescan=1",
+        "getblock": "getblock",
+        "getblockhash": "getblockhash",
+        "getallmasternodes": "listmasternodes",
+        "getrawtransaction": "getrawtransaction",
+        "getblockcount": "getblockcount",
+        "getconnectioncount": "getconnectioncount",
+        "getinfo": "getinfo",
+        "gettxoutsetinfo": "gettxoutsetinfo",
+        "getpeerinfo": "getpeerinfo",
+        "getmasternodecount": "getmasternodecount",
+        "getdifficulty": "getdifficulty",
+        "getnetworkhashps": "getnetworkhashps",
+        "getmininginfo": "getmininginfo"
+    },
+    "dbSettings": {
+        "user": "masternodetrittiumuser",
+        "password": "H)8xmlTCat&ec5xY~82m",
+        "database": "trittiumdb",
+        "address": "localhost",
+        "port": 27017
+    }
+}

@@ -71,7 +71,7 @@ var allowOnlyForExplorer = function (req, res, next) {
         "http://chain.review/explorer",
         "https://chain.review/explorer",
         "http://134.122.85.174/explorer", // dev site
-        "http://dev-ori.chain.review/explorer",  // dev site
+        "https://sandbox.chain.review/explorer",  // dev site
     ];
     var referer = req.headers.referer;
     var allowed = false;

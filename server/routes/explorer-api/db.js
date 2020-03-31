@@ -17,6 +17,7 @@ var MasternodeController = require('./../../database/controllers/masternode_cont
 var PeersController = require('./../../database/controllers/peers_controller');
 var MarketController = require('./../../database/controllers/markets_controller');
 var CoinMarketCapController = require('./../../database/controllers/coin_market_cap_controller');
+var TxByDayController = require('./../../database/controllers/tx_by_day_controller');
 
 // var wallet = process.argv[2];
 
@@ -800,7 +801,7 @@ router.get('/getMarket/:symbol', (req, res) => {
 
 router.post('/getTransactionsChart', (req, res) => {
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getTransactionsChart(function(results) {
+    TxByDayController.getAllForChart("d", -1, 0, function(results) {
         if(results) {
             response.data = results;
         } else {

@@ -17,6 +17,7 @@ var RichlistController = require('./../../database/controllers/richlist_controll
 var MasternodeController = require('./../../database/controllers/masternode_controller');
 var PeersController = require('./../../database/controllers/peers_controller');
 var MarketController = require('./../../database/controllers/markets_controller');
+var TxByDayController = require('./../../database/controllers/tx_by_day_controller');
 
 // var wallet = process.argv[2];
 
@@ -408,17 +409,17 @@ router.get('/getAddress/:address', (req, res) => {
 //     })
 // })
 
-router.get('/getMarketsSummary', (req, res) => {
-    const response = helpers.getGeneralResponse();
-    MarketController.getAllSummary('symbol', 'desc', 0, 0, function(markets) {
-        if(markets && markets.length) {
-            response.data = markets;
-        } else {
-            response.err = 1;
-            response.errMessage = 'no market found';
-        }
-        res.send(JSON.stringify(response, null, 2));
-    });
-});
+// router.get('/getTransactionsChart', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     TxByDayController.getAllForChart("d", -1, 0, function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no txs found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// });
 module.exports = router;
 
