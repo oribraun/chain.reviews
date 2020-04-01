@@ -152,7 +152,7 @@ function estimatedDocumentCount(cb) {
 }
 
 function countWhereTotal(cb) {
-    TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}}).count({}, function (err, count) {
+    TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}}).countDocuments({}, function (err, count) {
         if(err) {
             cb()
         } else {

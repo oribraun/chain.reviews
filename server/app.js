@@ -116,10 +116,10 @@ app.use('/', addToHeader, routes);
 //     console.log('error getting blocks', err);
 // })
 
-wallet_commands.getBlockHash('fix', 0).then(function(masternodes) {
-    console.log('masternodes', masternodes);
-}).catch(function(err) {
-    console.log('error getting masternodes', err);
-})
+// wallet_commands.getBlockHash('fix', 0).then(function(masternodes) {
+//     console.log('masternodes', masternodes);
+// }).catch(function(err) {
+//     console.log('error getting masternodes', err);
+// })
 
 
