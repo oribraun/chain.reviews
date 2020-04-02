@@ -438,16 +438,6 @@ function getOneWithTx(hash, cb) {
     });
 }
 
-function getAllFotTx(txid, cb) {
-    Address[db.getCurrentConnection()].find({txid: txid}).exec( function(err, addresses) {
-        if(addresses) {
-            return cb(addresses);
-        } else {
-            return cb(null);
-        }
-    });
-}
-
 function getAllDuplicate(cb) {
     Address[db.getCurrentConnection()].aggregate([
         {
@@ -476,5 +466,4 @@ module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.updateAddress1 = updateAddress1;
 module.exports.createAddress1 = createAddress1;
 module.exports.getOneWithTx = getOneWithTx;
-module.exports.getAllFotTx = getAllFotTx;
 module.exports.getAllDuplicate = getAllDuplicate;

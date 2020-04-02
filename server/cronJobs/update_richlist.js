@@ -10,7 +10,7 @@ if(!wallet) {
     console.log('no wallet found');
     return;
 }
-var proc = spawn('/usr/bin/node', ['/var/www/html/server/sync.js', wallet, 'updaterichlist'], {execFileOpts, options}, function done(err, stdout, stderr) {
+var proc = spawn('/usr/bin/node', ['/var/www/html/chain.review/server/sync.js', wallet, 'updaterichlist'], {execFileOpts, options}, function done(err, stdout, stderr) {
     if (err) {
         console.error('Error:', err.stack);
         // reject(err.stack);

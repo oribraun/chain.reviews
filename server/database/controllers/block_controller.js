@@ -27,7 +27,7 @@ function getAll1(sortBy, order, limit, offset, cb) {
 
 function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     var sort = {};
-    sort[sortBy] = order;
+    sort[sortBy] = order == 'asc' ? 1 : -1;
     Block[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);

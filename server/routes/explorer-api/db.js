@@ -17,6 +17,7 @@ var MasternodeController = require('./../../database/controllers/masternode_cont
 var PeersController = require('./../../database/controllers/peers_controller');
 var MarketController = require('./../../database/controllers/markets_controller');
 var CoinMarketCapController = require('./../../database/controllers/coin_market_cap_controller');
+var TxByDayController = require('./../../database/controllers/tx_by_day_controller');
 
 // var wallet = process.argv[2];
 
@@ -226,9 +227,9 @@ router.post('/getAddressTxs', (req, res) => {
     })
 })
 
-router.get('/getAddressDetails/:address', (req, res) => {
+router.post('/getAddressDetails', (req, res) => {
     const response = helpers.getGeneralResponse();
-    AddressToUpdateController.getAddressDetails(req.params['address'], function(results) {
+    AddressToUpdateController.getAddressDetails(req.body['address'], function(results) {
         if(results) {
             response.data = results;
         } else {
@@ -238,6 +239,19 @@ router.get('/getAddressDetails/:address', (req, res) => {
         res.send(JSON.stringify(response, null, 2));
     });
 })
+
+router.post('/getAddressTxChart/:address', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    AddressToUpdateController.getAddressTxChart(req.body['address'], '', function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no address found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    });
+});
 
 router.get('/getRichlistBalance', (req, res) => {
     // if(!db.isConnected()) {
@@ -800,7 +814,7 @@ router.get('/getMarket/:symbol', (req, res) => {
 
 router.post('/getTransactionsChart', (req, res) => {
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getTransactionsChart(function(results) {
+    TxByDayController.getAllForChart("d", -1, 0, function(results) {
         if(results) {
             response.data = results;
         } else {

@@ -226,17 +226,22 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
             var btcUsdPrice = markets[0].summary.usd_price.BTC;
             for(var i in markets) {
                 var obj = {};
+                const coins = markets[i].symbol.split('_');
                 obj.symbol = markets[i].symbol;
                 obj.market_name = markets[i].market_name;
                 obj.price = markets[i].price;
                 obj.volume = markets[i].volume;
-                obj.buyLiquidity = 0;
-                obj.sellLiquidity = 0;
+                obj.amountBuyLiquidity = 0;
+                obj.amountSellLiquidity = 0;
+                obj.totalBuyLiquidity = 0;
+                obj.totalSellLiquidity = 0;
                 for(var j in markets[i].buys) {
-                    obj.buyLiquidity += parseFloat(markets[i].buys[j][1])
+                    obj.amountBuyLiquidity += parseFloat(markets[i].buys[j][1]);
+                    obj.totalBuyLiquidity += parseFloat(markets[i].buys[j][1]) * parseFloat(markets[i].buys[j][0]);
                 }
                 for(var j in markets[i].sells) {
-                    obj.sellLiquidity += parseFloat(markets[i].sells[j][1])
+                    obj.amountSellLiquidity += parseFloat(markets[i].sells[j][1]);
+                    obj.totalSellLiquidity += parseFloat(markets[i].sells[j][1]) * parseFloat(markets[i].sells[j][0]);
                 }
                 data.push(obj);
             }
@@ -248,9 +253,10 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                 data.push(tempData);
             }
             var map = data.map((obj) => (obj.symbol));
-            console.log(map)
+            console.log(map);
             var indexs = [];
-            var prices = [];
+            var leftCoinPrices = [];
+            var rightCoinPrices = [];
             function findAllOptions() {
                 for(var i = 0; i < map.length; i++) {
                     //for(var j = 0; j < arr.length; j++) {
@@ -262,15 +268,22 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                     //}
                 }
                 console.log('indexs',indexs)
-                console.log('prices',prices);
-                for(var i = 0; i < prices.length; i++) {
+                console.log('leftCoinPrices',leftCoinPrices);
+                console.log('rightCoinPrices',rightCoinPrices);
+                for(var i = 0; i < leftCoinPrices.length; i++) {
                     var currentData = data[i];
-                    var priceSymbol = currentData.symbol.split('_')[1]
-                    data[i]['price' + priceSymbol] = currentData.price;
-                    data[i]['priceBtc'] = prices[i].reduce( (a,b) => a * b );
-                    data[i]['priceUsd'] = data[i]['priceBtc'] * btcUsdPrice;
-                    data[i]['buyLiquidityBtc'] = data[i]['priceBtc'] * data[i]['buyLiquidity'];
-                    data[i]['sellLiquidityBtc'] = data[i]['priceBtc'] * data[i]['sellLiquidity'];
+                    var coins = currentData.symbol.split('_')
+                    data[i]['price' + coins[1]] = currentData.price;
+                    data[i].leftCoin = coins[0];
+                    data[i].rightCoin = coins[1];
+                    data[i]['leftCoinPriceBtc'] = leftCoinPrices[i].reduce( (a,b) => a * b );
+                    data[i]['rightCoinPriceBtc'] = rightCoinPrices[i].reduce( (a,b) => a * b );
+                    data[i]['leftCoinPriceUsd'] = data[i]['leftCoinPriceBtc'] * btcUsdPrice;
+                    data[i]['rightCoinPriceUsd'] = data[i]['rightCoinPriceBtc'] * btcUsdPrice;
+                    data[i]['amountBuyLiquidityBtc'] = data[i]['leftCoinPriceBtc'] * data[i]['amountBuyLiquidity'];
+                    data[i]['amountSellLiquidityBtc'] = data[i]['leftCoinPriceBtc'] * data[i]['amountSellLiquidity'];
+                    data[i]['totalBuyLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['totalBuyLiquidity'];
+                    data[i]['totalSellLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['totalSellLiquidity'];
                 }
                 console.log('data', data);
             }
@@ -297,12 +310,16 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                     //findAllOptionsRecursive(i, ++j, copyOpt);
                 } else {
                     if(map[opt[opt.length - 1]].indexOf('_BTC') > -1) {
+                        var right_inner_prices = inner_prices.slice();
+                        right_inner_prices[0] = 1;
                         if(indexs[opt[0]]) {
                             indexs[opt[0]] = opt;
-                            prices[opt[0]] = inner_prices;
+                            leftCoinPrices[opt[0]] = inner_prices;
+                            rightCoinPrices[opt[0]] = right_inner_prices;
                         } else {
                             indexs.push(opt);
-                            prices.push(inner_prices);
+                            leftCoinPrices.push(inner_prices);
+                            rightCoinPrices.push(right_inner_prices);
                         }
                     }
                 }
