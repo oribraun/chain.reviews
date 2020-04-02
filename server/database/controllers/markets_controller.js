@@ -231,17 +231,17 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                 obj.market_name = markets[i].market_name;
                 obj.price = markets[i].price;
                 obj.volume = markets[i].volume;
-                obj.buyLiquidity = 0;
-                obj.sellLiquidity = 0;
-                obj.realBuyLiquidity = 0;
-                obj.realSellLiquidity = 0;
+                obj.amountBuyLiquidity = 0;
+                obj.amountSellLiquidity = 0;
+                obj.totalBuyLiquidity = 0;
+                obj.totalSellLiquidity = 0;
                 for(var j in markets[i].buys) {
-                    obj.buyLiquidity += parseFloat(markets[i].buys[j][1]);
-                    obj.realBuyLiquidity += parseFloat(markets[i].buys[j][1]) * parseFloat(markets[i].buys[j][0]);
+                    obj.amountBuyLiquidity += parseFloat(markets[i].buys[j][1]);
+                    obj.totalBuyLiquidity += parseFloat(markets[i].buys[j][1]) * parseFloat(markets[i].buys[j][0]);
                 }
                 for(var j in markets[i].sells) {
-                    obj.sellLiquidity += parseFloat(markets[i].sells[j][1]);
-                    obj.realSellLiquidity += parseFloat(markets[i].sells[j][1]) * parseFloat(markets[i].sells[j][0]);
+                    obj.amountSellLiquidity += parseFloat(markets[i].sells[j][1]);
+                    obj.totalSellLiquidity += parseFloat(markets[i].sells[j][1]) * parseFloat(markets[i].sells[j][0]);
                 }
                 data.push(obj);
             }
@@ -280,10 +280,10 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                     data[i]['rightCoinPriceBtc'] = rightCoinPrices[i].reduce( (a,b) => a * b );
                     data[i]['leftCoinPriceUsd'] = data[i]['leftCoinPriceBtc'] * btcUsdPrice;
                     data[i]['rightCoinPriceUsd'] = data[i]['rightCoinPriceBtc'] * btcUsdPrice;
-                    data[i]['buyLiquidityBtc'] = data[i]['leftCoinPriceBtc'] * data[i]['buyLiquidity'];
-                    data[i]['sellLiquidityBtc'] = data[i]['leftCoinPriceBtc'] * data[i]['sellLiquidity'];
-                    data[i]['realBuyLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['realBuyLiquidity'];
-                    data[i]['realSellLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['realSellLiquidity'];
+                    data[i]['amountBuyLiquidityBtc'] = data[i]['leftCoinPriceBtc'] * data[i]['amountBuyLiquidity'];
+                    data[i]['amountSellLiquidityBtc'] = data[i]['leftCoinPriceBtc'] * data[i]['amountSellLiquidity'];
+                    data[i]['totalBuyLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['totalBuyLiquidity'];
+                    data[i]['totalSellLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['totalSellLiquidity'];
                 }
                 console.log('data', data);
             }
