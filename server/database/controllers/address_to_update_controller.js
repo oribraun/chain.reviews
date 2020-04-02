@@ -15,6 +15,18 @@ function getAll(sortBy, order, limit, cb) {
     });
 }
 
+function getAll2(where, fields, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    sort[sortBy] = order == 'asc' ? 1 : -1;
+    AddressToUpdate[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb();
+        }
+    });
+}
+
 function updateOne(obj, cb) { // update or create
     AddressToUpdate[db.getCurrentConnection()].findOne({_id: obj._id}, function(err, address) {
         if(err) {
@@ -28,6 +40,8 @@ function updateOne(obj, cb) { // update or create
             address.type = obj.type;
             address.blockindex = obj.blockindex;
             address.save(function (err, tx) {
+                console.log('err', err)
+                console.log('tx', tx)
                 if (err) {
                     return cb(err);
                 } else {
@@ -620,7 +634,7 @@ function getRichlistFaster(sortBy, order, limit, cb) {
     });
 }
 
-function getAllFotTx(txid, cb) {
+function getAllTx(txid, cb) {
     AddressToUpdate[db.getCurrentConnection()].find({txid: txid}).exec( function(err, addresses) {
         if(addresses) {
             return cb(addresses);
@@ -765,6 +779,125 @@ function getOneJoinTest(address, limit, offset, cb) {
         }
     });
 }
+
+function getAddressTxChart(address, date, cb) {
+    var aggregate = [];
+    aggregate.push({$match: {amount: {$gt: 0}}});
+    aggregate.push({$match: {address: address}});
+    if(date) {
+        var timestamp = new Date(date).getTime() / 1000;
+        aggregate.push({$match: {txid_timestamp: {$gte: timestamp }}});
+    }
+    aggregate.push({$project: {
+            "_id": "_id",
+            "amount": "$amount",
+            "type": "$type",
+            "date": {
+                $dateToString: {
+                    date: {
+                        "$add": [
+                            new Date(0), // GTM+2
+                            {"$multiply": ["$txid_timestamp", 1000]}
+                        ]
+                    },
+                    format: "%Y-%m-%d"
+                }
+            },
+            "year": {
+                "$year": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$txid_timestamp", 1000]}
+                    ]
+                }
+            },
+            "month": {
+                "$month": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$txid_timestamp", 1000]}
+                    ]
+                }
+            },
+            "day": {
+                "$dayOfMonth": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$txid_timestamp", 1000]}
+                    ]
+                }
+            },
+            "week": {
+                "$isoWeek": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$txid_timestamp", 1000]}
+                    ]
+                }
+            },
+            "txid_timestamp": "$txid_timestamp"
+        }});
+    aggregate.push({$group: {
+            "_id": {
+                "year": "$year",
+                "month": "$month",
+                "day": "$day"
+                // "week": "$week"
+            },
+            "week": {$first: "$week"},
+            "date": {$first: "$date"},
+            "txid_timestamp": {$first: "$txid_timestamp"},
+            "count" : { "$sum" : 1 },
+            "totalAmountADay" : { "$sum" : "$amount" },
+            "totalSentADay" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: "$amount",
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vin" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+            "totalReceivedADay" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: 0,
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vout" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+        }});
+    aggregate.push({$sort:{txid_timestamp:1}});
+    aggregate.push({$project: {
+            "_id": 0,
+            "date": "$date",
+            "week": "$week",
+            "count": "$count",
+            "totalAmountADay": "$totalAmountADay",
+            "totalSentADay": "$totalSentADay",
+            "totalReceivedADay": "$totalReceivedADay",
+        }});
+    AddressToUpdate[db.getCurrentConnection()].aggregate(
+        aggregate
+    ).allowDiskUse(true).exec( function(err, results) {
+        if(results) {
+            return cb(results);
+        } else {
+            return cb(err);
+        }
+    });
+}
+
+function save(obj, cb) { // update or create
+    AddressToUpdate[db.getCurrentConnection()].updateOne({_id: obj._id},{$set: {txid_timestamp: obj.txid_timestamp}}, function(err){
+        if(err) {
+            cb(err)
+        } else {
+            cb();
+        }
+    })
+}
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -778,7 +911,7 @@ module.exports.getRichlist = getRichlist;
 module.exports.countUnique = countUnique;
 module.exports.deleteAllWhereGte = deleteAllWhereGte;
 module.exports.getRichlistFaster = getRichlistFaster;
-module.exports.getAllFotTx = getAllFotTx;
+module.exports.getAllTx = getAllTx;
 module.exports.countUniqueTx = countUniqueTx;
 module.exports.countTx = countTx;
 module.exports.getAddressDetails = getAddressDetails;
@@ -790,3 +923,6 @@ module.exports.getOneJoinTest = getOneJoinTest;
 module.exports.getOneConcat = getOneConcat;
 module.exports.getAddressTxs = getAddressTxs;
 module.exports.getAddressTxsPublic = getAddressTxsPublic;
+module.exports.getAddressTxChart = getAddressTxChart;
+module.exports.getAll2 = getAll2;
+module.exports.save = save;

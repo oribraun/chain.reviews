@@ -27,7 +27,7 @@ function getAll1(sortBy, order, limit, offset, cb) {
 
 function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     var sort = {};
-    sort[sortBy] = order;
+    sort[sortBy] = order == 'asc' ? 1 : -1;
     TxVinVout[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
@@ -397,8 +397,6 @@ function getTransactionsChart(date, cb) {
     TxVinVout[db.getCurrentConnection()].aggregate(
         aggregate
     ).allowDiskUse(true).exec( function(err, txs) {
-        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
-        console.log('err', err)
         if(txs) {
             return cb(txs);
         } else {
