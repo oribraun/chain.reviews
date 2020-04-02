@@ -84,6 +84,7 @@ var path = __dirname + '/../' + wallet + 'InProgress.pid';
 var mn_path = __dirname + '/../' + wallet + 'MasternodesInProgress.pid';
 var peers_path = __dirname + '/../' + wallet + 'PeersInProgress.pid';
 var address_path = __dirname + '/../' + wallet + 'AddressInProgress.pid';
+var tx_by_day_path = __dirname + '/../' + wallet + 'TxByDayInProgress.pid';
 function fileExist(type) {
     // console.log(path)
     var p = path;
@@ -93,6 +94,8 @@ function fileExist(type) {
         p = peers_path;
     } else if(type && type == 'address') {
         p = address_path;
+    } else if(type && type == 'txByDay') {
+        p = tx_by_day_path;
     }
     return fs.existsSync(p);
 }
@@ -104,6 +107,8 @@ function createFile(type) {
         p = peers_path;
     } else if(type && type == 'address') {
         p = address_path;
+    } else if(type && type == 'txByDay') {
+        p = tx_by_day_path;
     }
     fs.writeFileSync(p, process.pid);
 }
@@ -115,6 +120,8 @@ function readFile(type) {
         p = peers_path;
     } else if(type && type == 'address') {
         p = address_path;
+    } else if(type && type == 'txByDay') {
+        p = tx_by_day_path;
     }
     return fs.readFileSync(p);
 }
