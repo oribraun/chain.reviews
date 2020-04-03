@@ -1793,14 +1793,14 @@ if (wallet) {
                 var limit = 50000;
                 var countAddresses = 0;
                 var offset = 0;
-                var cpuCount = numCPUs;
+                var cpuCount = 1;
                 var clusterQ = [];
                 var gettingNextAddressInProgress = false;
                 var exit_count = 0;
                 var mongoTimeout = false;
                 gettingNextAddressInProgress = true;
                 var startAddressLinerAll = function() {
-                    var currentBlockIndex = 0;
+                    var currentBlockIndex = 0; // 595079 blockindex for main chain.review
                     AddressToUpdateController.estimatedDocumentCount(function(count) {
                         console.log('count', count)
                         gettingNextAddresses(limit, offset, currentBlockIndex).then(function (res) {
@@ -1819,7 +1819,7 @@ if (wallet) {
                                                 if (currentAddresses.length === limit - limit / 10) {
                                                     if (!gettingNextAddressInProgress) {
                                                         gettingNextAddressInProgress = true;
-                                                        offset++;
+                                                        // offset++;
                                                         gettingNextAddresses(limit, offset, currentBlockIndex).then(function (res) {
                                                             // console.log('res.length', res.length)
                                                             if (res && res.length) {
@@ -3232,6 +3232,7 @@ var getAddresses = function(limit, offset, blockindex) {
         if(blockindex) {
             where = {blockindex : {$gte : blockindex}};
         }
+        where.txid_timestamp = {$type: 2};
         AddressToUpdateController.getAll2(where, fields,'blockindex', 'asc', limit, offset, function(results) {
             // if(startCount < 1) {
             //     startCount++;
@@ -3239,6 +3240,7 @@ var getAddresses = function(limit, offset, blockindex) {
             // } else {
             //     resolve([]);
             // }
+            console.log('results.length', results.length);
             resolve(results);
         });
     });
