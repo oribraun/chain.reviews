@@ -3019,6 +3019,7 @@ function updateStats() {
                                         last_block: latestTx[0].blockindex,
                                         supply: supply,
                                         version: info.version,
+                                        protocol: info.protocolversion,
                                         // last_price: stats.last_price,
                                     };
                                     console.log(stats)

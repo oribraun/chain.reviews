@@ -240,7 +240,7 @@ router.post('/getAddressDetails', (req, res) => {
     });
 })
 
-router.post('/getAddressTxChart/:address', (req, res) => {
+router.post('/getAddressTxChart', (req, res) => {
     const response = helpers.getGeneralResponse();
     AddressToUpdateController.getAddressTxChart(req.body['address'], '', function(results) {
         if(results) {
