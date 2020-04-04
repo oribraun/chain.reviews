@@ -558,6 +558,7 @@ router.get('/getTxDetails/:txid', (req, res) => {
         if(tx) {
             TxVinVoutController.getTxBlockByTxid(req.params['txid'], function (txVinVout) {
                 wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {
+                    tx = JSON.parse(tx);
                     tx.height = txVinVout.blockindex;
                     tx.vin = txVinVout.vin;
                     tx.vout = txVinVout.vout;

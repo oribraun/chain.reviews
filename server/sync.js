@@ -666,7 +666,7 @@ if (wallet) {
                             BlockController.updateOne(newBlock, function(err) {});
                             var updateBlockTx = function(i, current_block) {
                                 wallet_commands.getRawTransaction(wallet, current_block.tx[i]).then(function (obj) {
-
+                                    obj = JSON.parse(obj)
                                     var newTx = new Tx({
                                         txid: obj.txid,
                                         vin: obj.vin,
@@ -1417,7 +1417,7 @@ if (wallet) {
                             BlockController.updateOne(newBlock, function(err) {});
                             var updateBlockTx = function(i, current_block) {
                                 wallet_commands.getRawTransaction(wallet, current_block.tx[i]).then(function (obj) {
-
+                                    obj = JSON.parse(obj);
                                     var newTx = new Tx({
                                         txid: obj.txid,
                                         vin: obj.vin,
@@ -2099,7 +2099,7 @@ if (wallet) {
                             BlockController.updateOne(newBlock, function(err) {});
                             var updateBlockTx = function(i, current_block) {
                                 wallet_commands.getRawTransaction(wallet, current_block.tx[i]).then(function (obj) {
-
+                                    obj = JSON.parse(obj);
                                     var newTx = new Tx({
                                         txid: obj.txid,
                                         vin: obj.vin,
