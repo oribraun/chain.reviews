@@ -84,44 +84,44 @@ var path = __dirname + '/../' + wallet + 'InProgress.pid';
 var mn_path = __dirname + '/../' + wallet + 'MasternodesInProgress.pid';
 var peers_path = __dirname + '/../' + wallet + 'PeersInProgress.pid';
 var address_path = __dirname + '/../' + wallet + 'AddressInProgress.pid';
-var tx_by_day_path = __dirname + '/../' + wallet + 'TxByDayInProgress.pid';
+var txByDay_path = __dirname + '/../' + wallet + 'TxByDayInProgress.pid';
 function fileExist(type) {
     // console.log(path)
     var p = path;
-    if(type && type == 'mn') {
+    if(type && type === 'mn') {
         p = mn_path;
-    } else if(type && type == 'peers') {
+    } else if(type && type === 'peers') {
         p = peers_path;
-    } else if(type && type == 'address') {
+    } else if(type && type === 'address') {
         p = address_path;
-    } else if(type && type == 'txByDay') {
-        p = tx_by_day_path;
+    } else if(type && type === 'txByDay') {
+        p = txByDay_path;
     }
     return fs.existsSync(p);
 }
 function createFile(type) {
     var p = path;
-    if(type && type == 'mn') {
+    if(type && type === 'mn') {
         p = mn_path;
-    } else if(type && type == 'peers') {
+    } else if(type && type === 'peers') {
         p = peers_path;
-    } else if(type && type == 'address') {
+    } else if(type && type === 'address') {
         p = address_path;
-    } else if(type && type == 'txByDay') {
-        p = tx_by_day_path;
+    } else if(type && type === 'txByDay') {
+        p = txByDay_path;
     }
     fs.writeFileSync(p, process.pid);
 }
 function readFile(type) {
     var p = path;
-    if(type && type == 'mn') {
+    if(type && type === 'mn') {
         p = mn_path;
-    } else if(type && type == 'peers') {
+    } else if(type && type === 'peers') {
         p = peers_path;
-    } else if(type && type == 'address') {
+    } else if(type && type === 'address') {
         p = address_path;
-    } else if(type && type == 'txByDay') {
-        p = tx_by_day_path;
+    } else if(type && type === 'txByDay') {
+        p = txByDay_path;
     }
     return fs.readFileSync(p);
 }
@@ -135,12 +135,14 @@ function killPidFromFile() {
 }
 function deleteFile(type) {
     var p = path;
-    if(type && type == 'mn') {
+    if(type && type === 'mn') {
         p = mn_path;
-    } else if(type && type == 'peers') {
+    } else if(type && type === 'peers') {
         p = peers_path;
-    } else if(type && type == 'address') {
+    } else if(type && type === 'address') {
         p = address_path;
+    } else if(type && type === 'txByDay') {
+        p = txByDay_path;
     }
     console.log('trying to delete - ', p)
     if(fileExist(type)) {
