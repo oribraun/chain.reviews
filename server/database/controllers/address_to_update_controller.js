@@ -241,7 +241,7 @@ function getAddressTxs(address, limit, offset, cb) {
         aggregate.push({
             "$group": {
                 "_id": "$address",
-                "txs": {"$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"}},
+                "txs": {"$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount", type: "$type"}},
             }
         });
         // if(offset * limit > count / 2) {
