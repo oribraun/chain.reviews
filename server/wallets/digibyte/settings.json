@@ -1,0 +1,34 @@
+{
+    "coin": "digibyte",
+    "cli": "http://134.122.89.4:3000/api/digibyte/",
+    "daemon": "http://134.122.89.4:3000/api/digibyte/",
+    "example_txid": "txid for route examples",
+    "example_hash": "hash for route examples",
+    "dev_address": "address for route examples",
+    "commands": {
+        "startwallet": "startWallet",
+        "stopwallet": "stopWallet",
+        "reindexWallet": "reindexWallet",
+        "rescanWallet": "rescanWallet",
+        "getblock": "getBlock",
+        "getblockhash": "getBlockhash",
+        "getallmasternodes": "listMasternodes",
+        "getrawtransaction": "getRawTransaction",
+        "getblockcount": "getBlockCount",
+        "getconnectioncount": "getConnectionCount",
+        "getinfo": "getInfo",
+        "gettxoutsetinfo": "getTxoutsetInfo",
+        "getpeerinfo": "getPeerInfo",
+        "getmasternodecount": "getMasternodeCount",
+        "getdifficulty": "getDifficulty",
+        "getnetworkhashps": "getNetworkHashps",
+        "getmininginfo": "getMiningInfo"
+    },
+    "dbSettings": {
+        "user": "masternodedigibyteuser",
+        "password": "RTEAu9ajYzCXX^u+)&3z",
+        "database": "digibytedb",
+        "address": "localhost",
+        "port": 27017
+    }
+}
