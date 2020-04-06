@@ -531,23 +531,35 @@ router.get('/getBlockWithTxsByHash/:hash', (req, res) => {
 
 router.get('/getBlockTxsByHash/:hash', (req, res) => {
     const response = helpers.getGeneralResponse();
-    BlockController.getBlockByHash(req.params['hash'], function(block) {
-        if(block) {
+    BlockController.getBlockByHash(req.params['hash'], function(dbBlock) {
+        if(dbBlock) {
             wallet_commands.getBlock(res.locals.wallet, req.params['hash']).then(function (block) {
-                TxController.getAllTxWithVinVoutByHash(req.params['hash'], 'blockindex', 'desc', function (txs) {
-                    var data = {block: JSON.parse(block), txs: txs}
-                    response.data = data;
-                    res.send(JSON.stringify(response, null, 2));
-                })
+                block = JSON.parse(block);
+                send(block.confirmations);
             }).catch(function(err) {
-                response.err = 1;
-                response.errMessage = err;
-                res.send(JSON.stringify(response, null, 2));
+                // response.err = 1;
+                // response.errMessage = err;
+                // res.send(JSON.stringify(response, null, 2));
+                send(-1);
             });
         } else {
             response.err = 1;
             response.errMessage = 'no block found';
             res.send(JSON.stringify(response, null, 2));
+        }
+        function send(confirmations) {
+            TxController.getAllTxWithVinVoutByHash(req.params['hash'], 'blockindex', 'desc', function (txs) {
+                var block = {
+                    hash: dbBlock.blockhash,
+                    confirmations: confirmations,
+                    height: dbBlock.blockindex,
+                    time: dbBlock.timestamp,
+                    tx: txs
+                }
+                var data = {block: block, txs: txs, dbBlock: dbBlock}
+                response.data = data;
+                res.send(JSON.stringify(response, null, 2));
+            })
         }
     })
 });
@@ -557,29 +569,37 @@ router.get('/getTxDetails/:txid', (req, res) => {
     TxController.getTxBlockByTxid(req.params['txid'], function(tx) {
         if(tx) {
             TxVinVoutController.getTxBlockByTxid(req.params['txid'], function (txVinVout) {
-                wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {
-                    tx = JSON.parse(tx);
-                    tx.height = txVinVout.blockindex;
-                    tx.vin = txVinVout.vin;
-                    tx.vout = txVinVout.vout;
-                    response.data = tx;
-                    res.send(JSON.stringify(response, null, 2));
-                }).catch(function(err) {
-                    // response.err = 1;
-                    // response.errMessage = err;
-                    // res.send(JSON.stringify(response, null, 2));
-                    wallet_commands.getBlock(res.locals.wallet, tx.blockhash).then(function (block) {
-                        var b = JSON.parse(block);
-                        var data = {};
-                        data.txid = txVinVout.txid;
-                        data.blockhash = tx.blockhash;
-                        data.height = txVinVout.blockindex;
-                        data.vin = txVinVout.vin;
-                        data.vout = txVinVout.vout;
-                        data.confirmations = b.confirmations;
-                        data.time = txVinVout.timestamp;
-                        response.data = data;
+                BlockController.getOne(txVinVout.blockindex, function (block) {
+                    var results = {
+                        blockhash: block.blockhash,
+                        txid: txVinVout.txid,
+                        height: txVinVout.blockindex,
+                        vin: txVinVout.vin,
+                        vout: txVinVout.vout,
+                        time: txVinVout.timestamp,
+                        confirmations: -1
+                    }
+                    wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {
+                        tx = JSON.parse(tx);
+                        results.confirmations = tx.confirmations;
+                        response.data = results;
                         res.send(JSON.stringify(response, null, 2));
+                    }).catch(function (err) {
+                        // response.err = 1;
+                        // response.errMessage = err;
+                        // res.send(JSON.stringify(response, null, 2));
+                        wallet_commands.getBlock(res.locals.wallet, block.blockhash).then(function (block) {
+                            var b = JSON.parse(block);
+                            results.confirmations = b.confirmations;
+                            response.data = results;
+                            res.send(JSON.stringify(response, null, 2));
+                        }).catch(function (err) {
+                            // response.err = 1;
+                            // response.errMessage = 'no block found';
+                            // res.send(JSON.stringify(response, null, 2));
+                            response.data = results;
+                            res.send(JSON.stringify(response, null, 2));
+                        });
                     });
                 });
             });
