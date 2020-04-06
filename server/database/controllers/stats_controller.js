@@ -179,6 +179,7 @@ function updateWalletStats(obj, cb) { // update or create
             }
             stats.supply = obj.supply;
             stats.version = obj.version;
+            stats.protocol = obj.protocol;
             stats.save(function(err) {
                 if (err) {
                     return cb(err);
@@ -200,6 +201,7 @@ function updateWalletStats(obj, cb) { // update or create
                 masternodesCount: obj.masternodesCount,
                 supply: obj.supply,
                 version: obj.version,
+                protocol: obj.protocol,
             });
 
             newStats.save(function(err) {

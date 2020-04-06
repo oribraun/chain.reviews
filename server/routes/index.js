@@ -14,7 +14,9 @@ app.get('/', function(req, res) {
     var array = [];
     var wallets = [];
     for (var wallet in settings) {
-        wallets.push(wallet);
+        if(wallet !== 'bitcoin' && wallet !== 'digibyte') {
+            wallets.push(wallet);
+        }
     }
     var fullUrl = req.protocol + '://' + req.get('host');
     addingWalletsStats(wallets);

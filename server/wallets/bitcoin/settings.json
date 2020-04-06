@@ -1,0 +1,34 @@
+{
+    "coin": "bitcoin",
+    "cli": "http://142.93.102.231:3000/api/bitcoin/",
+    "daemon": "http://142.93.102.231:3000/api/bitcoin/",
+    "example_txid": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",
+    "example_hash": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
+    "dev_address": "address for route examples",
+    "commands": {
+        "startwallet": "startWallet",
+        "stopwallet": "stopWallet",
+        "reindexWallet": "reindexWallet",
+        "rescanWallet": "rescanWallet",
+        "getblock": "getBlock",
+        "getblockhash": "getBlockhash",
+        "getallmasternodes": "listMasternodes",
+        "getrawtransaction": "getRawTransaction",
+        "getblockcount": "getBlockCount",
+        "getconnectioncount": "getConnectionCount",
+        "getinfo": "getInfo",
+        "gettxoutsetinfo": "getTxoutsetInfo",
+        "getpeerinfo": "getPeerInfo",
+        "getmasternodecount": "getMasternodeCount",
+        "getdifficulty": "getDifficulty",
+        "getnetworkhashps": "getNetworkHashps",
+        "getmininginfo": "getMiningInfo"
+    },
+    "dbSettings": {
+        "user": "masternodebitcoinuser",
+        "password": "xlhcHvdi+iP9hzuZ)yh7",
+        "database": "bitcoindb",
+        "address": "localhost",
+        "port": 27017
+    }
+}

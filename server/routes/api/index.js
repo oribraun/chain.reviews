@@ -4,16 +4,16 @@ const settings = require('./../../wallets/all_settings');
 const db = require('./../../database/db');
 
 const walletRoute = require('./wallet');
-router.use('/wallet/:wallet',function(req, res, next){
-    if(!settings[req.params['wallet']]) {
-        res.send('wallet not found');
-        return;
-    }
-    res.header("Content-Type",'application/json');
-    res.locals.wallet = req.params['wallet'];
-    db.setCurrentConnection(req.params['wallet']);
-    next();
-}, walletRoute);
+// router.use('/wallet/:wallet',function(req, res, next){
+//     if(!settings[req.params['wallet']]) {
+//         res.send('wallet not found');
+//         return;
+//     }
+//     res.header("Content-Type",'application/json');
+//     res.locals.wallet = req.params['wallet'];
+//     db.setCurrentConnection(req.params['wallet']);
+//     next();
+// }, walletRoute);
 
 const dbRoute = require('./db');
 router.use('/db/:wallet',function(req, res, next){

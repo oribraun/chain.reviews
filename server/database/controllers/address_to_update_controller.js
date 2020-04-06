@@ -241,7 +241,7 @@ function getAddressTxs(address, limit, offset, cb) {
         aggregate.push({
             "$group": {
                 "_id": "$address",
-                "txs": {"$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"}},
+                "txs": {"$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount", type: "$type"}},
             }
         });
         // if(offset * limit > count / 2) {
@@ -781,6 +781,9 @@ function getOneJoinTest(address, limit, offset, cb) {
 }
 
 function getAddressTxChart(address, date, cb) {
+    // this.countTx(address, (count) => {
+    //     cb(count);
+    // })
     var aggregate = [];
     aggregate.push({$match: {amount: {$gt: 0}}});
     aggregate.push({$match: {address: address}});
@@ -789,7 +792,7 @@ function getAddressTxChart(address, date, cb) {
         aggregate.push({$match: {txid_timestamp: {$gte: timestamp }}});
     }
     aggregate.push({$project: {
-            "_id": "_id",
+            "_id": "$_id",
             "amount": "$amount",
             "type": "$type",
             "date": {
@@ -835,7 +838,9 @@ function getAddressTxChart(address, date, cb) {
                     ]
                 }
             },
-            "txid_timestamp": "$txid_timestamp"
+            "txid_timestamp": "$txid_timestamp",
+            // "txid_timestamp2": mongoose.Types.ObjectId("$_id").getTimestamp(),
+            // "txid_timestamp3": mongoose.Types.ObjectId("_id").getTimestamp()
         }});
     aggregate.push({$group: {
             "_id": {

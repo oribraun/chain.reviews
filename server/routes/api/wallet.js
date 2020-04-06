@@ -52,6 +52,7 @@ router.get('/getRawTransaction/:txid', (req, res) => {
     wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function(results) {
         // console.log('masternodes', masternodes);
         // res.send(results);
+        results = JSON.parse(results);
         res.send(JSON.stringify(results, null, 2));
         // res.json(results);
     }).catch(function(err) {

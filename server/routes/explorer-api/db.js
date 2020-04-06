@@ -123,7 +123,7 @@ router.post('/getAllTxVinVout', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getAll2({total: {$gt: 0}}, {timestamp: true, txid: true, total: true, blockindex: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    TxVinVoutController.getAll2({total: {$gt: 0}}, {_id: false, timestamp: true, txid: true, total: true, blockindex: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
         if(results) {
             response.data = results;
         } else {
@@ -240,7 +240,7 @@ router.post('/getAddressDetails', (req, res) => {
     });
 })
 
-router.post('/getAddressTxChart/:address', (req, res) => {
+router.post('/getAddressTxChart', (req, res) => {
     const response = helpers.getGeneralResponse();
     AddressToUpdateController.getAddressTxChart(req.body['address'], '', function(results) {
         if(results) {
@@ -558,6 +558,7 @@ router.get('/getTxDetails/:txid', (req, res) => {
         if(tx) {
             TxVinVoutController.getTxBlockByTxid(req.params['txid'], function (txVinVout) {
                 wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {
+                    tx = JSON.parse(tx);
                     tx.height = txVinVout.blockindex;
                     tx.vin = txVinVout.vin;
                     tx.vout = txVinVout.vout;
