@@ -1,4 +1,5 @@
 const spawn = require('child_process').spawn;
+const request = require('request');
 const helpers = require('./helpers');
 const settings = require('./wallets/all_settings');
 
@@ -84,6 +85,7 @@ var copy = function() {
     });
     return promise;
 }
+
 var startWallet = function(wallet) {
     var results = "";
     var promise = new Promise(function(resolve, reject) {
@@ -281,7 +283,6 @@ var stopWallet = function(wallet) {
         }
         getFromWallet(wallet_cli, commands).then(
             (results) => {
-                //TODO make sure return type int
                 resolve(results);
             },
             (error) => {
@@ -301,15 +302,37 @@ var getBlockCount = function(wallet) {
         if(!settings[wallet]) {
             reject('this wallet do not exist in our system');
         }
-        getFromWallet(wallet_cli, commands).then(
-            (results) => {
-                //TODO make sure return type int
-                resolve(results);
-            },
-            (error) => {
-                reject(error);
-            }
-        )
+        if(wallet_cli.indexOf('http') > -1) {
+            getFromUrl(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type int
+                    try {
+                        results = parseInt(results);
+                        resolve(results);
+                    } catch (e) {
+                        reject(e);
+                    }
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        } else {
+            getFromWallet(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type int
+                    try {
+                        results = parseInt(results);
+                        resolve(results);
+                    } catch (e) {
+                        reject(e);
+                    }
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        }
     });
     return promise;
 }
@@ -324,47 +347,59 @@ var getBlock = function(wallet, hash) {
         if(!settings[wallet]) {
             reject('this wallet do not exist in our system');
         }
-        getFromWallet(wallet_cli, commands).then(
-            (results) => {
-                //TODO make sure return type block
-                // {
-                //     hash: '000000428366d3a156c38c5061d74317d201781f539460aeeeaae1091de6e4cc',
-                //         confirmations: 215348,
-                //     size: 298,
-                //     height: 0,
-                //     version: 1,
-                //     merkleroot: '17d377a8a6d988698164f5fc9ffa8d5d03d0d1187e3a0ed886c239b3eae4be2f',
-                //     acc_checkpoint: '0000000000000000000000000000000000000000000000000000000000000000',
-                //     tx: [
-                //     '17d377a8a6d988698164f5fc9ffa8d5d03d0d1187e3a0ed886c239b3eae4be2f'
-                // ],
-                //     time: 1559224740,
-                //     mediantime: 1559224740,
-                //     nonce: 3617423,
-                //     bits: '1e0ffff0',
-                //     difficulty: 0.000244140625,
-                //     chainwork: '0000000000000000000000000000000000000000000000000000000000100010',
-                //     nextblockhash: '00000cc8e391a6cbd8212446e1f730ebda98e1d2cdc5ef5efa86d0b385c6228e',
-                //     moneysupply: 0,
-                //     zFIXsupply: {
-                //     '1': 0,
-                //         '5': 0,
-                //         '10': 0,
-                //         '50': 0,
-                //         '100': 0,
-                //         '500': 0,
-                //         '1000': 0,
-                //         '5000': 0,
-                //         total: 0
-                //     }
-                // }
+        if(wallet_cli.indexOf('http') > -1) {
+            getFromUrl(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type object
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        } else {
+            getFromWallet(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type block
+                    // {
+                    //     hash: '000000428366d3a156c38c5061d74317d201781f539460aeeeaae1091de6e4cc',
+                    //         confirmations: 215348,
+                    //     size: 298,
+                    //     height: 0,
+                    //     version: 1,
+                    //     merkleroot: '17d377a8a6d988698164f5fc9ffa8d5d03d0d1187e3a0ed886c239b3eae4be2f',
+                    //     acc_checkpoint: '0000000000000000000000000000000000000000000000000000000000000000',
+                    //     tx: [
+                    //     '17d377a8a6d988698164f5fc9ffa8d5d03d0d1187e3a0ed886c239b3eae4be2f'
+                    // ],
+                    //     time: 1559224740,
+                    //     mediantime: 1559224740,
+                    //     nonce: 3617423,
+                    //     bits: '1e0ffff0',
+                    //     difficulty: 0.000244140625,
+                    //     chainwork: '0000000000000000000000000000000000000000000000000000000000100010',
+                    //     nextblockhash: '00000cc8e391a6cbd8212446e1f730ebda98e1d2cdc5ef5efa86d0b385c6228e',
+                    //     moneysupply: 0,
+                    //     zFIXsupply: {
+                    //     '1': 0,
+                    //         '5': 0,
+                    //         '10': 0,
+                    //         '50': 0,
+                    //         '100': 0,
+                    //         '500': 0,
+                    //         '1000': 0,
+                    //         '5000': 0,
+                    //         total: 0
+                    //     }
+                    // }
 
-                resolve(results);
-            },
-            (error) => {
-                reject(error);
-            }
-        )
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        }
     });
     return promise;
 }
@@ -379,15 +414,36 @@ var getBlockHash = function(wallet, index) {
         if(!settings[wallet]) {
             reject('this wallet do not exist in our system');
         }
-        getFromWallet(wallet_cli, commands).then(
-            (results) => {
-                //TODO make sure return type hash
-                resolve(results);
-            },
-            (error) => {
-                reject(error);
-            }
-        )
+        if(wallet_cli.indexOf('http') > -1) {
+            getFromUrl(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type hash
+                    try {
+                        results = results.toString();
+                        if(results.length === 64) {
+                            resolve(results);
+                        } else {
+                            reject('not a valid hash');
+                        }
+                    } catch (e) {
+                        reject(e);
+                    }
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        } else {
+            getFromWallet(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type hash
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        }
     });
     return promise;
 }
@@ -625,28 +681,40 @@ var getRawTransaction = function(wallet, txid) {
         if(!settings[wallet]) {
             reject('this wallet do not exist in our system');
         }
-        getFromWallet(wallet_cli, commands).then(
-            (results) => {
-                //TODO make sure return type object
-                // {
-                //     hex: '01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0451021404ffffffff010000c52ebca2b1002321020a306f5db7863475d3c11bee89e29f579ffbbe3117cf6cc6b18e5aae0eb7b6bdac00000000',
-                //     txid: '30d701a30486a3e1791f1a29a7ac452a7adf72e7a3bef98235f9bf935fb34827',
-                //     version: 1,
-                //     locktime: 0,
-                //     vin: [ { coinbase: '51021404', sequence: 4294967295 } ],
-                //     vout: [ { value: 500000000, n: 0, scriptPubKey: [Object] } ],
-                //     blockhash: '00000cc8e391a6cbd8212446e1f730ebda98e1d2cdc5ef5efa86d0b385c6228e',
-                //     confirmations: 215349,
-                //     time: 1559228652,
-                //     blocktime: 1559228652
-                // }
+        if(wallet_cli.indexOf('http') > -1) {
+            getFromUrl(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type hash
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        } else {
+            getFromWallet(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type object
+                    // {
+                    //     hex: '01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0451021404ffffffff010000c52ebca2b1002321020a306f5db7863475d3c11bee89e29f579ffbbe3117cf6cc6b18e5aae0eb7b6bdac00000000',
+                    //     txid: '30d701a30486a3e1791f1a29a7ac452a7adf72e7a3bef98235f9bf935fb34827',
+                    //     version: 1,
+                    //     locktime: 0,
+                    //     vin: [ { coinbase: '51021404', sequence: 4294967295 } ],
+                    //     vout: [ { value: 500000000, n: 0, scriptPubKey: [Object] } ],
+                    //     blockhash: '00000cc8e391a6cbd8212446e1f730ebda98e1d2cdc5ef5efa86d0b385c6228e',
+                    //     confirmations: 215349,
+                    //     time: 1559228652,
+                    //     blocktime: 1559228652
+                    // }
 
-                resolve(results);
-            },
-            (error) => {
-                reject(error);
-            }
-        )
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        }
     });
     return promise;
 }
@@ -706,15 +774,37 @@ var getConnectionCount = function(wallet){
         if(!settings[wallet]) {
             reject('this wallet do not exist in our system');
         }
-        getFromWallet(wallet_cli, commands).then(
-            (results) => {
-                //TODO make sure return type int
-                resolve(results);
-            },
-            (error) => {
-                reject(error);
-            }
-        )
+        if(wallet_cli.indexOf('http') > -1) {
+            getFromUrl(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type hash
+                    try {
+                        results = parseInt(results);
+                        resolve(results);
+                    } catch (e) {
+                        reject(e);
+                    }
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        } else {
+            getFromWallet(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type int
+                    try {
+                        results = parseInt(results);
+                        resolve(results);
+                    } catch (e) {
+                        reject(e);
+                    }
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        }
     });
     return promise;
 }
@@ -727,34 +817,46 @@ var getInfo = function(wallet){
         if(!settings[wallet]) {
             reject('this wallet do not exist in our system');
         }
-        getFromWallet(wallet_cli, commands).then(
-            (results) => {
-                //TODO make sure return type object
-                // {
-                //     "version": 3030400,
-                //     "protocolversion": 70921,
-                //     "walletversion": 61000,
-                //     "balance": 0.00000000,
-                //     "blocks": 215366,
-                //     "timeoffset": 0,
-                //     "connections": 110,
-                //     "proxy": "",
-                //     "difficulty": 6555342.677358772,
-                //     "testnet": false,
-                //     "moneysupply": 3473681471.34521756,
-                //     "keypoololdest": 1576493730,
-                //     "keypoolsize": 999,
-                //     "paytxfee": 0.00000000,
-                //     "relayfee": 0.00100000,
-                //     "staking status": "Staking Not Active",
-                //     "errors": ""
-                // }
-                resolve(results);
-            },
-            (error) => {
-                reject(error);
-            }
-        )
+        if(wallet_cli.indexOf('http') > -1) {
+            getFromUrl(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type hash
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        } else {
+            getFromWallet(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type object
+                    // {
+                    //     "version": 3030400,
+                    //     "protocolversion": 70921,
+                    //     "walletversion": 61000,
+                    //     "balance": 0.00000000,
+                    //     "blocks": 215366,
+                    //     "timeoffset": 0,
+                    //     "connections": 110,
+                    //     "proxy": "",
+                    //     "difficulty": 6555342.677358772,
+                    //     "testnet": false,
+                    //     "moneysupply": 3473681471.34521756,
+                    //     "keypoololdest": 1576493730,
+                    //     "keypoolsize": 999,
+                    //     "paytxfee": 0.00000000,
+                    //     "relayfee": 0.00100000,
+                    //     "staking status": "Staking Not Active",
+                    //     "errors": ""
+                    // }
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        }
     });
     return promise;
 }
@@ -925,15 +1027,27 @@ var getNetworkHashps = function(wallet){
         if(!settings[wallet]) {
             reject('this wallet do not exist in our system');
         }
-        getFromWallet(wallet_cli, commands).then(
-            (results) => {
-                //TODO make sure return type int
-                resolve(results);
-            },
-            (error) => {
-                reject(error);
-            }
-        )
+        if(wallet_cli.indexOf('http') > -1) {
+            getFromUrl(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type hash
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        } else {
+            getFromWallet(wallet_cli, commands).then(
+                (results) => {
+                    //TODO make sure return type int
+                    resolve(results);
+                },
+                (error) => {
+                    reject(error);
+                }
+            )
+        }
     });
     return promise;
     var results = "";
@@ -1220,6 +1334,26 @@ var getFromWallet = function(wallet_cli, commands) {
             // proc.stdin.end();
             // proc.stdout.destroy();
             // proc.stderr.destroy();
+        });
+    });
+    return promise;
+}
+
+var getFromUrl = function(wallet_cli, commands) {
+    var results = '';
+    var promise = new Promise(function(resolve, reject) {
+        var url = wallet_cli + '/' + commands.join('/');
+        request({uri: url, method :"POST", json: true}, function (error, response, body) {
+            if(error) {
+                console.log('error', error)
+                reject(error);
+            } else {
+                if(!body.err) {
+                    resolve(body.results);
+                } else {
+                    reject(body.errMessage);
+                }
+            }
         });
     });
     return promise;
