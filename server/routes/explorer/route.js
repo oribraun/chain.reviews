@@ -1,6 +1,7 @@
 const express = require('express');
 var router = express.Router();
 var path = require('path');
+var fs = require('fs-extra');
 
 const settings = require('./../../wallets/all_settings');
 
@@ -33,7 +34,18 @@ router.get('/*', (req, res) => {
                     markets: markets.map(function(obj) { return {symbol: obj.symbol, summary: obj.summary}})
                 };
                 console.log(data);
-                res.render(path.resolve(__dirname + "/../../../chain.review.clients/explorer/dist/index.html"), {
+                var pth = __dirname + "/../../../chain.review.clients/explorer/dist/index.html";
+                let html = path.resolve(pth);
+                var htmlData = fs.readFileSync(html, {encoding: 'utf-8'});
+                htmlData = htmlData.replace('<base href="">', '<base href="/explorer/' + res.locals.wallet + '">');
+                var output_path = pth.replace('index.html', 'compiled_index.html');
+                fs.writeFileSync(output_path, htmlData);
+                console.log(htmlData);
+                console.log(output_path);
+                // let base = "explorer/" + res.locals.wallet;
+                // let replacement = `</title><base href="${base}">`;
+                // fs.createReadStream(html).pipe(replacestream('</title>', replacement))
+                res.render(path.resolve(output_path), {
                     data: JSON.stringify(data),
                 });
             });

@@ -79,6 +79,16 @@ function getOne(address, cb) {
     });
 }
 
+function getOneIncludesString(str, cb) {
+    AddressToUpdate[db.getCurrentConnection()].findOne({address: new RegExp(str)}, function(err, address) {
+        if(address) {
+            return cb(address);
+        } else {
+            return cb();
+        }
+    });
+}
+
 function deleteOne(id, cb) {
     AddressToUpdate[db.getCurrentConnection()].deleteOne({_id: id}, function(err, tx) {
         if(tx) {

@@ -24,8 +24,6 @@ db.setCurrentConnection('fix');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.engine("html", ejs.renderFile);
-app.use("/exp",express.static(__dirname + "/../chain.review.clients/explorer/dist"));
-app.use("/main",express.static(__dirname + "/../chain.review.clients/main"));
 app.set('view engine', 'ejs');
 
 const routes = require('./routes');
@@ -96,6 +94,9 @@ var addToHeader = function (req, res, next) {
 };
 
 app.use('/', addToHeader, routes);
+
+app.use("/",express.static(__dirname + "/../chain.review.clients/explorer/dist"));
+app.use("/main",express.static(__dirname + "/../chain.review.clients/main"));
 
 
 // wallet_commands.getBlockHash('fix-cli', 0).then(function(blockHash){
