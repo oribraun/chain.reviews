@@ -96,6 +96,7 @@ var addToHeader = function (req, res, next) {
 app.use('/', addToHeader, routes);
 
 app.use("/",express.static(__dirname + "/../chain.review.clients/explorer/dist"));
+app.use("/",express.static(__dirname + "/../chain.review.clients/google-console-varification"));
 app.use("/main",express.static(__dirname + "/../chain.review.clients/main"));
 
 
