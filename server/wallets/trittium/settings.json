@@ -30,5 +30,6 @@
         "database": "trittiumdb",
         "address": "localhost",
         "port": 27017
-    }
+    },
+    "active": true
 }
