@@ -1413,7 +1413,7 @@ if (wallet) {
                                     // delete all blocks from current number and update again
                                     var failedBlockIndex = latestTx[i].blockindex;
                                     // console.log('err', err);
-                                    // console.log('failedBlockIndex', failedBlockIndex);
+                                    console.log('failedBlockIndex', failedBlockIndex);
                                     BlockController.deleteAllWhereGte(failedBlockIndex, function(numberRemoved) {
                                         TxController.deleteAllWhereGte(failedBlockIndex, function (numberRemoved) {
                                             TxVinVoutController.deleteAllWhereGte(failedBlockIndex, function(numberDeleted) {
