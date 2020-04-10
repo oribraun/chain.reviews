@@ -2744,7 +2744,7 @@ if (wallet) {
                     return;
                 };
                 var currentBlock = 0;
-                var startedFromBlock = currentBlockIndex;
+                var startedFromBlock = currentBlock;
                 createFile();
                 var currentBlocks = [];
                 var limit = 50000;
