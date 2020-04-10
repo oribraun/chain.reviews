@@ -710,7 +710,7 @@ if (wallet) {
                                     if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                                         startReIndexClusterLiner(blockNum);
                                     }
-                                    else if(err && err.indexOf('No information available about transaction') > -1) {
+                                    else if(err && err.toString().indexOf('No information available about transaction') > -1) {
                                         var newTx = new Tx({
                                             txid: current_block.tx[i],
                                             vin: [],
@@ -1505,7 +1505,7 @@ if (wallet) {
                                 }).catch(function (err) {
                                     if (err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                                         startReIndexClusterLiner(blockNum);
-                                    } else if (err && err.indexOf('No information available about transaction') > -1) {
+                                    } else if (err && err.toString().indexOf('No information available about transaction') > -1) {
                                         var newTx = new Tx({
                                             txid: current_block.tx[i],
                                             vin: [],
@@ -3111,7 +3111,7 @@ if (wallet) {
                 console.log(res)
                 reindex();
             }).catch(function(err){
-                if(err.indexOf('couldn\'t connect to server') > -1) {
+                if(err.toString().indexOf('couldn\'t connect to server') > -1) {
                     reindex();
                 }
             })
@@ -3129,7 +3129,7 @@ if (wallet) {
                 console.log(res)
                 rescan();
             }).catch(function(err){
-                if(err.indexOf('couldn\'t connect to server') > -1) {
+                if(err.toString().indexOf('couldn\'t connect to server') > -1) {
                     rescan();
                 }
             })
