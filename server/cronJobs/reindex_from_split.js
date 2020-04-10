@@ -70,7 +70,7 @@ function startReindex() {
     });
 }
 function startUpdateVinVout() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/chain.review/server/sync.js', wallet, 'save_tx_vin_vout_and_addresses_based_on_latest', hash_number], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['/var/www/html/chain.review/server/sync.js', wallet, 'save_from_tx_vin_vout_and_addresses', hash_number], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
