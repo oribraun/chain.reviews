@@ -14,6 +14,7 @@ var obj = {
                 resolve(addresses);
             } else {
                 wallet_commands.getRawTransaction(wallet, vin.txid).then(function(tx){
+                    tx = JSON.parse(tx);
                     if (tx && tx.vout) {
                         console.log('getting vin tx from wallet', vin.txid);
                         var loop = true;
