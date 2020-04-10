@@ -5,7 +5,7 @@ const db = require('./../../database/db');
 
 const explorerRoute = require('./route');
 router.use('/:wallet',function(req, res, next){
-    if(!settings[req.params['wallet']]) {
+    if(!settings[req.params['wallet']] || !settings[req.params['wallet']].active) {
         res.send('wallet not found');
         return;
     }
