@@ -3479,14 +3479,16 @@ if (wallet) {
                                         }
                                     } else {
                                         console.log('negative confirmation');
-                                        console.log('index', i)
+                                        console.log('negative index', block.blockindex)
+                                        console.log('negative hash',  block.blockhash)
                                         if (cluster.worker.isConnected()) {
                                             cluster.worker.send({killAll: true});
                                         }
                                     }
                                 }).catch((err) => {
                                     console.log('err', err)
-                                    console.log('index', i)
+                                    console.log('err index', block.blockindex)
+                                    console.log('err hash',  block.blockhash)
                                     if (cluster.worker.isConnected()) {
                                         cluster.worker.send({killAll: true});
                                     }
