@@ -1400,14 +1400,33 @@ if (wallet) {
                     var checkLatestBlocksInWallet = function() {
                         BlockController.getAll('blockindex', 'desc', 6, function (latestTx) {
                             function startCheckingBlock(i) {
-                                wallet_commands.getBlock(wallet, latestTx[i].blockhash).then((results) => {
-                                    // results = JSON.parse(results);
+                                wallet_commands.getBlock(wallet, latestTx[i].blockhash).then((block) => {
+                                    block = JSON.parse(block);
                                     // console.log(results.height);
-                                    if(latestTx[i + 1] !== undefined) {
-                                        startCheckingBlock(++i);
+                                    if(block.confirmations >= 0) {
+                                        if (latestTx[i + 1] !== undefined) {
+                                            startCheckingBlock(++i);
+                                        } else {
+                                            // console.log('finish checking all is ok');
+                                            startReIndexClusterLinerAll();
+                                        }
                                     } else {
-                                        // console.log('finish checking all is ok');
-                                        startReIndexClusterLinerAll();
+                                        console.log('on update negative confirmation');
+                                        console.log('on update negative index', block.height);
+                                        console.log('on update negative hash',  block.hash);
+                                        var failedBlockIndex = latestTx[i].blockindex;
+                                        // console.log('err', err);
+                                        console.log('failedBlockIndex', failedBlockIndex);
+                                        BlockController.deleteAllWhereGte(failedBlockIndex, function(numberRemoved) {
+                                            TxController.deleteAllWhereGte(failedBlockIndex, function (numberRemoved) {
+                                                TxVinVoutController.deleteAllWhereGte(failedBlockIndex, function(numberDeleted) {
+                                                    AddressToUpdateController.deleteAllWhereGte(failedBlockIndex, function (numberDeleted2) {
+                                                        startReIndexClusterLinerAll();
+                                                        // console.log('deleted all before start update')
+                                                    })
+                                                });
+                                            })
+                                        })
                                     }
                                 }).catch((err) => {
                                     // delete all blocks from current number and update again
@@ -2370,7 +2389,11 @@ if (wallet) {
                                 blockhash: current_block.hash,
                                 blockindex: current_block.height,
                             });
-                            BlockController.updateOne(newBlock, function(err) {});
+                            BlockController.updateOne(newBlock, function(err) {
+                                if(err) {
+                                    console.log('create block err ', err);
+                                }
+                            });
                             var updateBlockTx = function(i, current_block) {
                                 wallet_commands.getRawTransaction(wallet, current_block.tx[i]).then(function (obj) {
                                     obj = JSON.parse(obj);
@@ -3658,7 +3681,7 @@ function updateStats() {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
         // console.log('latestTx', latestTx);
         // console.log('settings[wallet].coin', settings[wallet].coin);
-        if(latestTx.length) {
+        if(latestTx && latestTx.length) {
             wallet_commands.getInfo(wallet).then(function(info) {
                 info = JSON.parse(info);
                 // console.log('updating masternode count');
