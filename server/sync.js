@@ -3658,7 +3658,7 @@ function updateStats() {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
         // console.log('latestTx', latestTx);
         // console.log('settings[wallet].coin', settings[wallet].coin);
-        if(latestTx.length) {
+        if(latestTx && latestTx.length) {
             wallet_commands.getInfo(wallet).then(function(info) {
                 info = JSON.parse(info);
                 // console.log('updating masternode count');
