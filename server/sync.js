@@ -27,6 +27,8 @@ var commands_require_db = [
     'save_from_tx_vin_vout_and_addresses',
     'save_tx_vin_vout_and_addresses_based_on_latest',
 
+    'delete_from',
+
     'save_tx_linear',
     'reindex_block_only_from',
 
@@ -3011,6 +3013,29 @@ if (wallet) {
             }
             break;
 
+        case 'delete_from':
+            if( !hash_number || isNaN(hash_number)) {
+                console.log('missing block number');
+                db.multipleDisconnect();
+                process.exit()
+                return;
+            }
+            BlockController.deleteAllWhereGte(hash_number, function(blocksDeleted) {
+                TxController.deleteAllWhereGte(hash_number, function (txsDeleted) {
+                    TxVinVoutController.deleteAllWhereGte(hash_number, function(txVinVoutsDeleted) {
+                        AddressToUpdateController.deleteAllWhereGte(hash_number, function (addressDeleted) {
+                            // console.log('deleted all before start update')
+                            console.log('blocksDeleted', blocksDeleted)
+                            console.log('txsDeleted', txsDeleted)
+                            console.log('txVinVoutsDeleted', txVinVoutsDeleted)
+                            console.log('addressDeleted', addressDeleted)
+                            db.multipleDisconnect();
+                            process.exit()
+                        })
+                    });
+                })
+            })
+            break;
 
         case 'reindex_block_only_from':
             if (cluster.isMaster) {
