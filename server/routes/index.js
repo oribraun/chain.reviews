@@ -14,7 +14,7 @@ app.get('/', function(req, res) {
     var array = [];
     var wallets = [];
     for (var wallet in settings) {
-        if(wallet !== 'bitcoin' && wallet !== 'digibyte') {
+        if(settings[wallet].active) {
             wallets.push(wallet);
         }
     }

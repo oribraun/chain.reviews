@@ -40,7 +40,8 @@ var default_settings = {
         "database": "",
         "address" : "localhost",
         "port" : 27017
-    }
+    },
+    "active": false
 }
 
 if(!settings[wallet]) {
