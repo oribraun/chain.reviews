@@ -3468,12 +3468,21 @@ if (wallet) {
                                     res = JSON.parse(res);
                                     i = i + cpuCount;
                                     // console.log('next i', i);
-                                    if (i < count) {
-                                        if (cluster.worker.isConnected()) {
-                                            startTest(i);
+                                    console.log('res.confirmations', res.confirmations);
+                                    if(res.confirmations >= 0) {
+                                        if (i < count) {
+                                            if (cluster.worker.isConnected()) {
+                                                startTest(i);
+                                            }
+                                        } else {
+                                            cluster.worker.kill();
                                         }
                                     } else {
-                                        cluster.worker.kill();
+                                        console.log('negative confirmation');
+                                        console.log('index', i)
+                                        if (cluster.worker.isConnected()) {
+                                            cluster.worker.send({killAll: true});
+                                        }
                                     }
                                 }).catch((err) => {
                                     console.log('err', err)
