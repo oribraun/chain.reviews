@@ -6,6 +6,7 @@ var TxVinVoutSchema = new Schema({
   txid: { type: String, lowercase: true, unique: true, index: true},
   vin: { type: Array, default: [] },
   vout: { type: Array, default: [] },
+  type: { type: Number, default: 0 , index: true},
   timestamp: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
   blockindex: {type: Number, default: 0, index: true},
