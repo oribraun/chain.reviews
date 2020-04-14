@@ -7,7 +7,7 @@ var AddressToUpdateSchema = new Schema({
   address: { type: String, index: true},
   txid: { type: String, default: '' },
   txid_timestamp: { type: Number, default: 0 },
-  txid_type: { type: Number, default: 0 },
+  txid_type: { type: Number, default: 0, index: true },
   amount: { type: Number, default: 0 , index: true},
   type: { type: String, default: '' },
   blockindex: {type: Number, default: 0, index: true},
