@@ -43,10 +43,10 @@ function updateOne(obj, cb) { // update or create
             return cb(err);
         }
         if(tx) { // exist
-            // console.log('exist', tx._id)
             // tx.txid = obj.txid;
             tx.vin = obj.vin;
             tx.vout = obj.vout;
+            tx.type = obj.type;
             tx.timestamp = obj.timestamp;
             tx.total = obj.total.toFixed(8);
             tx.blockindex = obj.blockindex;
@@ -64,6 +64,7 @@ function updateOne(obj, cb) { // update or create
                 txid: obj.txid,
                 vin: obj.vin,
                 vout: obj.vout,
+                type: obj.type,
                 timestamp : obj.timestamp,
                 total: obj.total.toFixed(8),
                 blockindex: obj.blockindex,
@@ -80,6 +81,16 @@ function updateOne(obj, cb) { // update or create
     });
 }
 
+function saveType(obj, cb) {
+    // db.txvinvouts.update(   {},   { $set: {type: 0} },   false,   true )
+    TxVinVout[db.getCurrentConnection()].updateOne({_id: obj._id},{$set: {type: obj.type}}, function(err){
+        if(err) {
+            cb(err)
+        } else {
+            cb();
+        }
+    })
+}
 function getOne(blockindex, cb) {
     TxVinVout[db.getCurrentConnection()].findOne({blockindex: blockindex}, function(err, tx) {
         if(tx) {
@@ -421,3 +432,4 @@ module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getAll2 = getAll2;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getTransactionsChart = getTransactionsChart;
+module.exports.saveType = saveType;
