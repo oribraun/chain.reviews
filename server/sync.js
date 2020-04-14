@@ -34,7 +34,7 @@ var commands_require_db = [
     'reindex_block_only_from',
 
     'update_address_type',
-    'update_tx_vin_vout_and_addresses_type',
+    'update_tx_vin_vout_type',
     'updatemasternodes',
     'updatepeers',
 
@@ -1782,7 +1782,7 @@ if (wallet) {
                 }
             }
             break;
-        case 'update_tx_vin_vout_and_addresses_type': // 1:8:42.847 - block count 388282
+        case 'update_tx_vin_vout_type': // 1:8:42.847 - block count 388282
             if (cluster.isMaster) {
                 var startTime = new Date();
                 var countAddress = 0;
