@@ -5,6 +5,7 @@ const db = require('./../../database/db');
 const settings = require('./../../wallets/all_settings');
 const wallet_commands = require('../../wallet_commands');
 const helpers = require('../../helpers');
+const types = require('../../types');
 
 var TxController = require('./../../database/controllers/tx_controller');
 var BlockController = require('./../../database/controllers/block_controller');
@@ -556,7 +557,7 @@ router.get('/getBlockTxsByHash/:hash', (req, res) => {
                     time: dbBlock.timestamp,
                     tx: txs
                 }
-                var data = {block: block, txs: txs, dbBlock: dbBlock}
+                var data = {block: block, txs: txs}
                 response.data = data;
                 res.send(JSON.stringify(response, null, 2));
             })
@@ -577,6 +578,8 @@ router.get('/getTxDetails/:txid', (req, res) => {
                         vin: txVinVout.vin,
                         vout: txVinVout.vout,
                         time: txVinVout.timestamp,
+                        type: txVinVout.type,
+                        type_str: types.toStr(txVinVout.type),
                         confirmations: -1
                     }
                     wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {

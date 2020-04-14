@@ -1616,7 +1616,7 @@ if (wallet) {
                 var limit = 50000;
                 var countAddresses = 0;
                 var offset = 0;
-                var cpuCount = 1;
+                var cpuCount = numCPUs;
                 var clusterQ = [];
                 var gettingNextAddressInProgress = false;
                 var exit_count = 0;
@@ -1754,9 +1754,9 @@ if (wallet) {
                 });
                 var startAddressClusterLiner = function(currentAddress) {
                     var address = currentAddress;
-                    address.txid_timestamp = parseInt(address.txid_timestamp);
+                    // address.txid_timestamp = parseInt(address.txid_timestamp);
                     var updateAddress = function(address) {
-                        AddressToUpdateController.save(address, function(err){
+                        AddressToUpdateController.saveTxType(address, function(err){
                             if(err) {
                                 console.log('err', err);
                                 if(err.stack.indexOf('Server selection timed out') > -1 ||
@@ -1764,13 +1764,18 @@ if (wallet) {
                                     cluster.worker.send({mongoTimeout: true});
                                 }
                             } else {
-                                // console.log('address updated', address);
+                                console.log('address updated', address);
                                 cluster.worker.send({finished: true});
                             }
                         })
                     }
                     if(address) {
-                        updateAddress(address);
+                        TxVinVoutController.getTxBlockFieldsByTxid(address.txid, {type: 1}, function(tx){
+                            // console.log('tx', tx);
+                            address.txid_type = tx.type;
+                            // console.log('address', address);
+                            updateAddress(address);
+                        })
                     } else {
                         cluster.worker.send({finished: true});
                     }
@@ -3450,8 +3455,8 @@ var getAddresses = function(limit, offset, blockindex) {
         if(blockindex) {
             where = {blockindex : {$gte : blockindex}};
         }
-        where.txid_timestamp = {$type: 2};
-        AddressToUpdateController.getAll2(where, fields,'blockindex', 'asc', limit, offset, function(results) {
+        where.txid_type = {$exists: false};
+        AddressToUpdateController.getAll2(where, fields,'', '', limit, offset, function(results) {
             // if(startCount < 1) {
             //     startCount++;
             //     resolve(results);
@@ -3607,13 +3612,13 @@ var globalCheckVinVoutCluster = function(tx) {
                 var addreses_to_update = [];
                 for (var i = 0; i < obj.nvin.length; i++) {
                     // TODO update mongodb adress sceme
-                    addreses_to_update.push({address: obj.nvin[i].addresses, txid: tx.txid, amount: obj.nvin[i].amount, type: 'vin', txid_timestamp: tx.timestamp, blockindex: tx.blockindex})
+                    addreses_to_update.push({address: obj.nvin[i].addresses, txid: tx.txid, amount: obj.nvin[i].amount, type: 'vin', txid_timestamp: tx.timestamp, blockindex: tx.blockindex, txid_type: tx.type})
                     // addreses_to_update.push({address: txVinVout.vin[i].addresses, txid: txid, amount: obj.nvin[i].amount, type: 'vin'})
                     // update_address(nvin[i].addresses, txid, nvin[i].amount, 'vin')
                 }
                 for (var i = 0; i < obj.vout.length; i++) {
                     // TODO update mongodb adress sceme
-                    addreses_to_update.push({address: obj.vout[i].addresses, txid: tx.txid, amount: obj.vout[i].amount, type: 'vout', txid_timestamp: tx.timestamp, blockindex: tx.blockindex})
+                    addreses_to_update.push({address: obj.vout[i].addresses, txid: tx.txid, amount: obj.vout[i].amount, type: 'vout', txid_timestamp: tx.timestamp, blockindex: tx.blockindex, txid_type: tx.type})
                     // addreses_to_update.push({address: obj.vout[i].addresses, txid: txid, amount: obj.vout[i].amount, type: 'vout'})
                     // update_address(vout[t].addresses, txid, vout[t].amount, 'vout')
                 }
