@@ -133,6 +133,16 @@ function getTxBlockByTxid(txid, cb) {
     });
 }
 
+function getTxBlockFieldsByTxid(txid, fields, cb) {
+    TxVinVout[db.getCurrentConnection()].findOne({txid: txid}, fields, function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
 function update(coin, options, cb) {
     TxVinVout[db.getCurrentConnection()].updateOne({coin: coin}, options, function(err) {
         if(err) {
@@ -433,3 +443,4 @@ module.exports.getAll2 = getAll2;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getTransactionsChart = getTransactionsChart;
 module.exports.saveType = saveType;
+module.exports.getTxBlockFieldsByTxid = getTxBlockFieldsByTxid;
