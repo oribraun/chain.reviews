@@ -5,7 +5,7 @@ const cluster = require('cluster');
 const fs = require('fs-extra');
 const exec = require('child_process').exec;
 const numCPUs = require('os').cpus().length;
-const types = require('./types');
+const tx_types = require('./tx_types');
 
 const db = require('./database/db');
 const settings = require('./wallets/all_settings');
@@ -1957,15 +1957,15 @@ if (wallet) {
                                     // if(addreses_to_update.length) {
                                     //     cluster.worker.send({addreses_to_update: addreses_to_update});
                                     // }
-                                    var type = types.NORMAL;
+                                    var type = tx_types.NORMAL;
                                     if(!obj.vout.length) {
-                                        type = types.NONSTANDARD;
+                                        type = tx_types.NONSTANDARD;
                                     } else if(!obj.nvin.length) {
-                                        type = types.POS;
+                                        type = tx_types.POS;
                                     } else if(obj.nvin.length && obj.nvin[0].addresses === 'coinbase') {
-                                        type = types.NEW_COINS;
+                                        type = tx_types.NEW_COINS;
                                     }
-                                    var vinvout = {_id: tx._id, txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp, type: type, type_str: types.toStr(type)};
+                                    var vinvout = {_id: tx._id, txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp, type: type, type_str: tx_types.toStr(type)};
                                     var finishUpdateTx = false;
                                     // console.log('vinvout', vinvout);
                                     TxVinVoutController.updateOne(vinvout, function(err) {
@@ -3219,46 +3219,59 @@ function updateStats() {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
         // console.log('latestTx', latestTx);
         // console.log('settings[wallet].coin', settings[wallet].coin);
-        if(latestTx && latestTx.length) {
-            wallet_commands.getInfo(wallet).then(function(info) {
-                info = JSON.parse(info);
-                // console.log('updating masternode count');
-                // wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
-                //     console.log('finish updating masternode count');
-                wallet_commands.getNetworkHashps(wallet).then(function(networkhashps) {
-                    var hashrate = (networkhashps / 1000000000).toFixed(4);
-                    wallet_commands.getConnectionCount(wallet).then(function(connections) {
-                        wallet_commands.getBlockCount(wallet).then(function(blockcount) {
-                            get_supply('GETINFO').then(function(supply) {
-                                var stats = {
-                                    coin: settings[wallet].coin,
-                                    difficulty: info.difficulty,
-                                    moneysupply: info.moneysupply,
-                                    hashrate: hashrate,
-                                    // masternodesCount: JSON.parse(masterNodesCount),
-                                    connections: parseInt(connections),
-                                    blockcount: parseInt(blockcount),
-                                    last_block: latestTx[0].blockindex,
-                                    supply: supply,
-                                    version: info.version,
-                                    protocol: info.protocolversion,
-                                    // last_price: stats.last_price,
-                                };
-                                console.log(stats)
-                                StatsController.updateWalletStats(stats, function (err) {
-                                    if (err) {
-                                        console.log(err)
-                                    }
-                                    console.log('reindex cluster complete - ', latestTx[0].blockindex);
-                                    console.log('took - ', helpers.getFinishTime(startTime));
+        TxVinVoutController.getUsersTxsCount24Hours(function(users_tx_count_24_hours) {
+            if (latestTx && latestTx.length) {
+                wallet_commands.getInfo(wallet).then(function (info) {
+                    info = JSON.parse(info);
+                    // console.log('updating masternode count');
+                    // wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
+                    //     console.log('finish updating masternode count');
+                    wallet_commands.getNetworkHashps(wallet).then(function (networkhashps) {
+                        var hashrate = (networkhashps / 1000000000).toFixed(4);
+                        wallet_commands.getConnectionCount(wallet).then(function (connections) {
+                            wallet_commands.getBlockCount(wallet).then(function (blockcount) {
+                                get_supply('GETINFO').then(function (supply) {
+                                    var stats = {
+                                        coin: settings[wallet].coin,
+                                        difficulty: info.difficulty,
+                                        moneysupply: info.moneysupply,
+                                        hashrate: hashrate,
+                                        // masternodesCount: JSON.parse(masterNodesCount),
+                                        connections: parseInt(connections),
+                                        blockcount: parseInt(blockcount),
+                                        last_block: latestTx[0].blockindex,
+                                        supply: supply,
+                                        version: info.version,
+                                        protocol: info.protocolversion,
+                                        users_tx_count_24_hours: users_tx_count_24_hours,
+                                        // last_price: stats.last_price,
+                                    };
+                                    console.log(stats)
+                                    StatsController.updateWalletStats(stats, function (err) {
+                                        if (err) {
+                                            console.log(err)
+                                        }
+                                        console.log('reindex cluster complete - ', latestTx[0].blockindex);
+                                        console.log('took - ', helpers.getFinishTime(startTime));
+                                        deleteFile();
+                                        db.multipleDisconnect();
+                                        process.exit();
+                                    });
+                                });
+                            }).catch(function (err) {
+                                console.log(err)
+                                if (err && err.toString().indexOf("couldn't connect to server") > -1) {
+                                    console.log('\n*******************************************************************');
+                                    console.log('******wallet disconnected please make sure wallet has started******');
+                                    console.log('*******************************************************************\n');
                                     deleteFile();
                                     db.multipleDisconnect();
-                                    process.exit();
-                                });
-                            });
-                        }).catch(function(err) {
+                                    process.exit(1);
+                                }
+                            })
+                        }).catch(function (err) {
                             console.log(err)
-                            if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                            if (err && err.toString().indexOf("couldn't connect to server") > -1) {
                                 console.log('\n*******************************************************************');
                                 console.log('******wallet disconnected please make sure wallet has started******');
                                 console.log('*******************************************************************\n');
@@ -3267,9 +3280,9 @@ function updateStats() {
                                 process.exit(1);
                             }
                         })
-                    }).catch(function(err) {
+                    }).catch(function (err) {
                         console.log(err)
-                        if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                        if (err && err.toString().indexOf("couldn't connect to server") > -1) {
                             console.log('\n*******************************************************************');
                             console.log('******wallet disconnected please make sure wallet has started******');
                             console.log('*******************************************************************\n');
@@ -3278,9 +3291,20 @@ function updateStats() {
                             process.exit(1);
                         }
                     })
-                }).catch(function(err) {
+                    // }).catch(function(err) {
+                    //     console.log(err)
+                    //     if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                    //         console.log('\n*******************************************************************');
+                    //         console.log('******wallet disconnected please make sure wallet has started******');
+                    //         console.log('*******************************************************************\n');
+                    //         deleteFile();
+                    //         db.multipleDisconnect();
+                    //         process.exit(1);
+                    //     }
+                    // })
+                }).catch(function (err) {
                     console.log(err)
-                    if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                    if (err && err.toString().indexOf("couldn't connect to server") > -1) {
                         console.log('\n*******************************************************************');
                         console.log('******wallet disconnected please make sure wallet has started******');
                         console.log('*******************************************************************\n');
@@ -3289,34 +3313,13 @@ function updateStats() {
                         process.exit(1);
                     }
                 })
-                // }).catch(function(err) {
-                //     console.log(err)
-                //     if(err && err.toString().indexOf("couldn't connect to server") > -1) {
-                //         console.log('\n*******************************************************************');
-                //         console.log('******wallet disconnected please make sure wallet has started******');
-                //         console.log('*******************************************************************\n');
-                //         deleteFile();
-                //         db.multipleDisconnect();
-                //         process.exit(1);
-                //     }
-                // })
-            }).catch(function(err) {
-                console.log(err)
-                if(err && err.toString().indexOf("couldn't connect to server") > -1) {
-                    console.log('\n*******************************************************************');
-                    console.log('******wallet disconnected please make sure wallet has started******');
-                    console.log('*******************************************************************\n');
-                    deleteFile();
-                    db.multipleDisconnect();
-                    process.exit(1);
-                }
-            })
-        } else {
-            console.log('reindex no blocks found');
-            deleteFile();
-            db.multipleDisconnect();
-            process.exit();
-        }
+            } else {
+                console.log('reindex no blocks found');
+                deleteFile();
+                db.multipleDisconnect();
+                process.exit();
+            }
+        });
 
     })
 }
@@ -3625,15 +3628,15 @@ var globalCheckVinVoutCluster = function(tx) {
                 // if(addreses_to_update.length) {
                 //     cluster.worker.send({addreses_to_update: addreses_to_update});
                 // }
-                var type = types.NORMAL;
+                var type = tx_types.NORMAL;
                 if(!obj.vout.length) {
-                    type = types.NONSTANDARD;
+                    type = tx_types.NONSTANDARD;
                 } else if(!obj.nvin.length) {
-                    type = types.POS;
+                    type = tx_types.POS;
                 } else if(obj.nvin.length && obj.nvin[0].addresses === 'coinbase') {
-                    type = types.NEW_COINS;
+                    type = tx_types.NEW_COINS;
                 }
-                var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp, type: type, type_str: types.toStr(type)};
+                var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp, type: type, type_str: tx_types.toStr(type)};
                 var finishUpdateTx = false;
                 var finishUpdateAddress = false;
                 TxVinVoutController.updateOne(vinvout, function(err) {

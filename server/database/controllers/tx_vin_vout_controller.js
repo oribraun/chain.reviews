@@ -1,5 +1,6 @@
 var TxVinVout = require('../models/txVinVout');
 var db = require('./../db');
+var tx_types = require('./../../tx_types');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
@@ -426,6 +427,37 @@ function getTransactionsChart(date, cb) {
     });
 }
 
+function getUsersTxsCount(cb) {
+    TxVinVout[db.getCurrentConnection()].find({type: {$eq: tx_types.NORMAL}}, {_id: 0}).countDocuments(function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb();
+        }
+    });
+}
+
+function getUsersTxsCount24Hours(cb) {
+    // TxVinVout[db.getCurrentConnection()].find({type: {$eq: tx_types.NORMAL}, timestamp: {$gte : Date.now() / 1000 - 24*60*60}}, {_id: 0}).countDocuments(function(err, tx) {
+    //     if(tx) {
+    //         return cb(tx);
+    //     } else {
+    //         return cb();
+    //     }
+    // });
+    TxVinVout[db.getCurrentConnection()].aggregate([
+        {"$match" : {timestamp:{$gte: Date.now() / 1000 - 24*60*60}}},
+        {"$match" : {type: {$eq: tx_types.NORMAL}}},
+        {$project: {_id: 0}}
+    ]).exec(function(err, tx) {
+        if(tx) {
+            return cb(tx.length);
+        } else {
+            return cb();
+        }
+    })
+}
+
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.updateOne = updateOne;
@@ -444,3 +476,5 @@ module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getTransactionsChart = getTransactionsChart;
 module.exports.saveType = saveType;
 module.exports.getTxBlockFieldsByTxid = getTxBlockFieldsByTxid;
+module.exports.getUsersTxsCount = getUsersTxsCount;
+module.exports.getUsersTxsCount24Hours = getUsersTxsCount24Hours;

@@ -30,6 +30,7 @@ function updateOne(obj, cb) { // update or create
             stats.connections = obj.connections;
             stats.masternodesCount = obj.masternodesCount;
             stats.last_price = obj.last_price;
+            stats.users_tx_count = obj.users_tx_count;
             stats.save(function(err) {
                 if (err) {
                     return cb(err);
@@ -51,6 +52,7 @@ function updateOne(obj, cb) { // update or create
                 connections: obj.connections,
                 masternodesCount: obj.masternodesCount,
                 last_price: obj.last_price,
+                users_tx_count: obj.users_tx_count,
             });
 
             newStats.save(function(err) {
@@ -180,6 +182,7 @@ function updateWalletStats(obj, cb) { // update or create
             stats.supply = obj.supply;
             stats.version = obj.version;
             stats.protocol = obj.protocol;
+            stats.users_tx_count_24_hours = obj.users_tx_count_24_hours;
             stats.save(function(err) {
                 if (err) {
                     return cb(err);
@@ -202,6 +205,7 @@ function updateWalletStats(obj, cb) { // update or create
                 supply: obj.supply,
                 version: obj.version,
                 protocol: obj.protocol,
+                users_tx_count_24_hours: obj.users_tx_count_24_hours,
             });
 
             newStats.save(function(err) {
