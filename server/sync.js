@@ -1236,7 +1236,7 @@ if (wallet) {
                                             startReIndexClusterLinerAll();
                                         }
                                     } else {
-                                        console.log('on update negative confirmation');
+                                        console.log('on update negative confirmation', block.confirmations);
                                         console.log('on update negative index', block.height);
                                         console.log('on update negative hash',  block.hash);
                                         var failedBlockIndex = latestTx[i].blockindex;
@@ -3455,7 +3455,7 @@ var getAddresses = function(limit, offset, blockindex) {
         if(blockindex) {
             where = {blockindex : {$gte : blockindex}};
         }
-        where.txid_type = {$exists: false};
+        where.txid_type = {$or: [{$exists: false}, {txid_type: {$et: 0}}]};
         AddressToUpdateController.getAll2(where, fields,'', '', limit, offset, function(results) {
             // if(startCount < 1) {
             //     startCount++;
