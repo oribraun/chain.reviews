@@ -8,7 +8,7 @@ module.exports = {
         if(this.NAMES[num - 1]) {
             return this.NAMES[num - 1];
         } else {
-            return 'not exist in types';
+            return 'not exist in txs types';
         }
     },
     getIndexOf: function(str) {

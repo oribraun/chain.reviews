@@ -3,6 +3,7 @@ const app = express();
 const explorer_api = require('./explorer-api');
 const api = require('./api');
 const explorer = require('./explorer');
+const main = require('./main');
 const helpers = require('./../helpers');
 const path = require('path');
 
@@ -98,4 +99,5 @@ var allowOnlyForExplorer = function (req, res, next) {
 app.use("/explorer-api", allowOnlyForExplorer, explorer_api);
 app.use("/api", api);
 app.use("/explorer", explorer);
+app.use("/main", main);
 module.exports = app;
