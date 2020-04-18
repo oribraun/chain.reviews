@@ -5,7 +5,7 @@ const db = require('./../../database/db');
 const settings = require('./../../wallets/all_settings');
 const wallet_commands = require('../../wallet_commands');
 const helpers = require('../../helpers');
-const types = require('../../types');
+const tx_types = require('../../tx_types');
 
 var TxController = require('./../../database/controllers/tx_controller');
 var BlockController = require('./../../database/controllers/block_controller');
@@ -19,6 +19,7 @@ var PeersController = require('./../../database/controllers/peers_controller');
 var MarketController = require('./../../database/controllers/markets_controller');
 var CoinMarketCapController = require('./../../database/controllers/coin_market_cap_controller');
 var TxByDayController = require('./../../database/controllers/tx_by_day_controller');
+var ClusterController = require('./../../database/controllers/cluster_controller');
 
 // var wallet = process.argv[2];
 
@@ -579,7 +580,7 @@ router.get('/getTxDetails/:txid', (req, res) => {
                         vout: txVinVout.vout,
                         time: txVinVout.timestamp,
                         type: txVinVout.type,
-                        type_str: types.toStr(txVinVout.type),
+                        type_str: tx_types.toStr(txVinVout.type),
                         confirmations: -1
                     }
                     wallet_commands.getRawTransaction(res.locals.wallet, req.params['txid']).then(function (tx) {
@@ -861,5 +862,48 @@ router.post('/getMarketsSummary', (req, res) => {
         res.send(JSON.stringify(response, null, 2));
     });
 });
+
+// router.get('/getAllClusters/:limit/:offset', (req, res) => {
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     if((parseInt(req.params['limit']) > 50)) {
+//         res.send('max limit value is 50');
+//         return;
+//     }
+//     if(isNaN(parseInt(req.params['offset']))) {
+//         res.send('offset value have to be number');
+//         return;
+//     }
+//     // ClusterController.getAll2('addresses','desc',parseInt(req.params['limit']), parseInt(req.params['offset']),function(results) {
+//     //     res.send(JSON.stringify(results, null, 2));
+//     // })
+//     ClusterController.getAllClusters(parseInt(req.params['limit']), parseInt(req.params['offset']),function(results) {
+//         res.send(JSON.stringify(results, null, 2));
+//     })
+// })
+// router.get('/getCluster/:clusterId/:limit/:offset', (req, res) => {
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     if((parseInt(req.params['limit']) > 50)) {
+//         res.send('max limit value is 50');
+//         return;
+//     }
+//     if(isNaN(parseInt(req.params['offset']))) {
+//         res.send('offset value have to be number');
+//         return;
+//     }
+//     ClusterController.getClusterTxs(req.params['clusterId'].toString(), req.params['limit'], req.params['offset'], function(results) {
+//         res.send(JSON.stringify(results, null, 2));
+//     })
+// })
+// router.get('/getClusterTxCount/:clusterId', (req, res) => {
+//     ClusterController.getClusterTxsCount2(req.params['clusterId'].toString(), function(count) {
+//         res.send(JSON.stringify(count, null, 2));
+//     })
+// })
 module.exports = router;
 
