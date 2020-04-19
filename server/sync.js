@@ -3455,10 +3455,10 @@ var getAddresses = function(limit, offset, blockindex) {
     var promise = new Promise(function(resolve, reject) {
         var where = {};
         var fields = {}
+        where = {$or: [{txid_type: {$exists: false}}, {txid_type: {$eq: 0}}]};
         if(blockindex) {
             where = {blockindex : {$gte : blockindex}};
         }
-        where.txid_type = {$or: [{$exists: false}, {txid_type: {$et: 0}}]};
         AddressToUpdateController.getAll2(where, fields,'', '', limit, offset, function(results) {
             // if(startCount < 1) {
             //     startCount++;
