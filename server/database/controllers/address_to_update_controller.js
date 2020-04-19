@@ -17,8 +17,11 @@ function getAll(sortBy, order, limit, cb) {
 
 function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     var sort = {};
-    sort[sortBy] = order == 'asc' ? 1 : -1;
+    if(sortBy) {
+        sort[sortBy] = order == 'asc' ? 1 : -1;
+    }
     AddressToUpdate[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
+        console.log(err);
         if(tx) {
             return cb(tx);
         } else {
@@ -804,7 +807,6 @@ function getAddressTxChart(address, date, cb) {
     aggregate.push({$project: {
             "_id": "$_id",
             "amount": "$amount",
-            "type": "$type",
             "date": {
                 $dateToString: {
                     date: {
@@ -913,6 +915,15 @@ function save(obj, cb) { // update or create
         }
     })
 }
+function saveTxType(obj, cb) { // update or create
+    AddressToUpdate[db.getCurrentConnection()].updateOne({_id: obj._id},{$set: {txid_type: obj.txid_type}}, function(err){
+        if(err) {
+            cb(err)
+        } else {
+            cb();
+        }
+    })
+}
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -941,3 +952,4 @@ module.exports.getAddressTxsPublic = getAddressTxsPublic;
 module.exports.getAddressTxChart = getAddressTxChart;
 module.exports.getAll2 = getAll2;
 module.exports.save = save;
+module.exports.saveTxType = saveTxType;
