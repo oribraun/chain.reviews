@@ -3457,7 +3457,7 @@ var getAddresses = function(limit, offset, blockindex) {
         var fields = {}
         where = {$or: [{txid_type: {$exists: false}}, {txid_type: {$eq: 0}}]};
         if(blockindex) {
-            where = {blockindex : {$gte : blockindex}};
+            where.blockindex = { $gte : blockindex};
         }
         AddressToUpdateController.getAll2(where, fields,'', '', limit, offset, function(results) {
             // if(startCount < 1) {
