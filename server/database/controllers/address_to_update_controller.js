@@ -39,6 +39,7 @@ function updateOne(obj, cb) { // update or create
             address.address = obj.address;
             address.txid = obj.txid;
             address.txid_timestamp = obj.txid_timestamp;
+            address.txid_type = obj.txid_type;
             address.amount = obj.amount;
             address.type = obj.type;
             address.blockindex = obj.blockindex;
@@ -56,6 +57,7 @@ function updateOne(obj, cb) { // update or create
                 address: obj.address,
                 txid: obj.txid,
                 txid_timestamp: obj.txid_timestamp,
+                txid_type: obj.txid_type,
                 amount: obj.amount,
                 type: obj.type,
                 blockindex: obj.blockindex,
