@@ -21,7 +21,6 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
         sort[sortBy] = order == 'asc' ? 1 : -1;
     }
     AddressToUpdate[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
-        console.log(err);
         if(tx) {
             return cb(tx);
         } else {
