@@ -458,6 +458,16 @@ function getUsersTxsCount24Hours(cb) {
     })
 }
 
+
+function getLastTx(cb) {
+    TxVinVout[db.getCurrentConnection()].find({'total': {$gt: 0}}).sort({_id: 'desc'}).limit(1).exec(function(err, txs){
+        if(txs) {
+            return cb(txs[0]);
+        } else {
+            return cb();
+        }
+    });
+}
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.updateOne = updateOne;
@@ -478,3 +488,4 @@ module.exports.saveType = saveType;
 module.exports.getTxBlockFieldsByTxid = getTxBlockFieldsByTxid;
 module.exports.getUsersTxsCount = getUsersTxsCount;
 module.exports.getUsersTxsCount24Hours = getUsersTxsCount24Hours;
+module.exports.getLastTx = getLastTx;

@@ -41,6 +41,7 @@ var default_settings = {
         "address" : "localhost",
         "port" : 27017
     },
+    "masternode_required": 0,
     "active": false
 }
 
