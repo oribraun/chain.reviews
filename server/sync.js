@@ -1941,22 +1941,7 @@ if (wallet) {
                         helpers.prepare_vin_db(wallet, tx).then(function (vin) {
                             helpers.prepare_vout(tx.vout, tx.txid, vin).then(function (obj) {
                                 helpers.calculate_total(obj.vout).then(function (total) {
-                                    var addreses_to_update = [];
-                                    for (var i = 0; i < obj.nvin.length; i++) {
-                                        // TODO update mongodb adress sceme
-                                        addreses_to_update.push({address: obj.nvin[i].addresses, txid: tx.txid, amount: obj.nvin[i].amount, type: 'vin', txid_timestamp: tx.timestamp, blockindex: tx.blockindex})
-                                        // addreses_to_update.push({address: txVinVout.vin[i].addresses, txid: txid, amount: obj.nvin[i].amount, type: 'vin'})
-                                        // update_address(nvin[i].addresses, txid, nvin[i].amount, 'vin')
-                                    }
-                                    for (var i = 0; i < obj.vout.length; i++) {
-                                        // TODO update mongodb adress sceme
-                                        addreses_to_update.push({address: obj.vout[i].addresses, txid: tx.txid, amount: obj.vout[i].amount, type: 'vout', txid_timestamp: tx.timestamp, blockindex: tx.blockindex})
-                                        // addreses_to_update.push({address: obj.vout[i].addresses, txid: txid, amount: obj.vout[i].amount, type: 'vout'})
-                                        // update_address(vout[t].addresses, txid, vout[t].amount, 'vout')
-                                    }
-                                    // if(addreses_to_update.length) {
-                                    //     cluster.worker.send({addreses_to_update: addreses_to_update});
-                                    // }
+
                                     var type = tx_types.NORMAL;
                                     if(!obj.vout.length) {
                                         type = tx_types.NONSTANDARD;
@@ -1965,6 +1950,7 @@ if (wallet) {
                                     } else if(obj.nvin.length && obj.nvin[0].addresses === 'coinbase') {
                                         type = tx_types.NEW_COINS;
                                     }
+
                                     var vinvout = {_id: tx._id, txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp, type: type, type_str: tx_types.toStr(type)};
                                     var finishUpdateTx = false;
                                     // console.log('vinvout', vinvout);
@@ -1982,34 +1968,6 @@ if (wallet) {
                                             cluster.worker.send({finished: true});
                                         }
                                     })
-
-                                    // var insertAddresses = function() {
-                                    //     if (addreses_to_update.length) {
-                                    //         console.log('updating address - ' + addreses_to_update[0].blockindex, addreses_to_update[0].address);
-                                    //         AddressToUpdateController.updateOne(addreses_to_update[0], function(err){
-                                    //             if(err) {
-                                    //                 console.log(err);
-                                    //                 if(err.stack.indexOf('Server selection timed out') > -1 ||
-                                    //                     err.stack.indexOf('interrupted at shutdown') > -1) {
-                                    //                     cluster.worker.send({mongoTimeout: true});
-                                    //                 }
-                                    //             } else {
-                                    //                 cluster.worker.send({countAddress: true});
-                                    //                 addreses_to_update.shift();
-                                    //             }
-                                    //             insertAddresses();
-                                    //         })
-                                    //     } else {
-                                    //         finishUpdateAddress = true;
-                                    //         if(finishUpdateTx && finishUpdateAddress) {
-                                    //             cluster.worker.send({finished: true});
-                                    //         }
-                                    //     }
-                                    // }
-                                    // insertAddresses();
-                                    // console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
-                                    // cluster.worker.send({finished: true});
-                                    // resolve({tx: tx, nvin: obj.nvin, vout: obj.vout, total: total, addreses_to_update: addreses_to_update});
                                 })
                             })
                         })
@@ -3612,31 +3570,33 @@ var globalCheckVinVoutCluster = function(tx) {
     helpers.prepare_vin_db(wallet, tx).then(function (vin) {
         helpers.prepare_vout(tx.vout, tx.txid, vin).then(function (obj) {
             helpers.calculate_total(obj.vout).then(function (total) {
+
+                var tx_type = tx_types.NORMAL;
+                if(!obj.vout.length) {
+                    tx_type = tx_types.NONSTANDARD;
+                } else if(!obj.nvin.length) {
+                    tx_type = tx_types.POS;
+                } else if(obj.nvin.length && obj.nvin[0].addresses === 'coinbase') {
+                    tx_type = tx_types.NEW_COINS;
+                }
+
                 var addreses_to_update = [];
                 for (var i = 0; i < obj.nvin.length; i++) {
                     // TODO update mongodb adress sceme
-                    addreses_to_update.push({address: obj.nvin[i].addresses, txid: tx.txid, amount: obj.nvin[i].amount, type: 'vin', txid_timestamp: tx.timestamp, blockindex: tx.blockindex, txid_type: tx.type})
+                    addreses_to_update.push({address: obj.nvin[i].addresses, txid: tx.txid, amount: obj.nvin[i].amount, type: 'vin', txid_timestamp: tx.timestamp, blockindex: tx.blockindex, txid_type: tx_type})
                     // addreses_to_update.push({address: txVinVout.vin[i].addresses, txid: txid, amount: obj.nvin[i].amount, type: 'vin'})
                     // update_address(nvin[i].addresses, txid, nvin[i].amount, 'vin')
                 }
                 for (var i = 0; i < obj.vout.length; i++) {
                     // TODO update mongodb adress sceme
-                    addreses_to_update.push({address: obj.vout[i].addresses, txid: tx.txid, amount: obj.vout[i].amount, type: 'vout', txid_timestamp: tx.timestamp, blockindex: tx.blockindex, txid_type: tx.type})
+                    addreses_to_update.push({address: obj.vout[i].addresses, txid: tx.txid, amount: obj.vout[i].amount, type: 'vout', txid_timestamp: tx.timestamp, blockindex: tx.blockindex, txid_type: tx_type})
                     // addreses_to_update.push({address: obj.vout[i].addresses, txid: txid, amount: obj.vout[i].amount, type: 'vout'})
                     // update_address(vout[t].addresses, txid, vout[t].amount, 'vout')
                 }
                 // if(addreses_to_update.length) {
                 //     cluster.worker.send({addreses_to_update: addreses_to_update});
                 // }
-                var type = tx_types.NORMAL;
-                if(!obj.vout.length) {
-                    type = tx_types.NONSTANDARD;
-                } else if(!obj.nvin.length) {
-                    type = tx_types.POS;
-                } else if(obj.nvin.length && obj.nvin[0].addresses === 'coinbase') {
-                    type = tx_types.NEW_COINS;
-                }
-                var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp, type: type, type_str: tx_types.toStr(type)};
+                var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp, type: tx_type, type_str: tx_types.toStr(tx_type)};
                 var finishUpdateTx = false;
                 var finishUpdateAddress = false;
                 TxVinVoutController.updateOne(vinvout, function(err) {
