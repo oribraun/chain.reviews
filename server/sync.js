@@ -1766,7 +1766,7 @@ if (wallet) {
                                     cluster.worker.send({mongoTimeout: true});
                                 }
                             } else {
-                                console.log('address updated', address);
+                                console.log('address updated', address.address);
                                 cluster.worker.send({finished: true});
                             }
                         })
