@@ -90,56 +90,26 @@ if(settings[wallet]) {
 // console.log('type', type)
 // console.log('hash_number', hash_number)
 
-var path = __dirname + '/../' + wallet + 'InProgress.pid';
-var mn_path = __dirname + '/../' + wallet + 'MasternodesInProgress.pid';
-var peers_path = __dirname + '/../' + wallet + 'PeersInProgress.pid';
-var address_path = __dirname + '/../' + wallet + 'AddressInProgress.pid';
-var txByDay_path = __dirname + '/../' + wallet + 'TxByDayInProgress.pid';
-var market_path = __dirname + '/../' + wallet + 'MarketInProgress.pid';
+// var path = __dirname + '/../' + wallet + 'InProgress.pid';
+// var mn_path = __dirname + '/../' + wallet + 'MasternodesInProgress.pid';
+// var peers_path = __dirname + '/../' + wallet + 'PeersInProgress.pid';
+// var address_path = __dirname + '/../' + wallet + 'AddressInProgress.pid';
+// var txByDay_path = __dirname + '/../' + wallet + 'TxByDayInProgress.pid';
+// var market_path = __dirname + '/../' + wallet + 'MarketInProgress.pid';
+function ucFirst(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
 function fileExist(type) {
     // console.log(path)
-    var p = path;
-    if(type && type === 'mn') {
-        p = mn_path;
-    } else if(type && type === 'peers') {
-        p = peers_path;
-    } else if(type && type === 'address') {
-        p = address_path;
-    } else if(type && type === 'txByDay') {
-        p = txByDay_path;
-    } else if(type && type === 'market') {
-        p = market_path;
-    }
+    var p = __dirname + '/../' + wallet +  ucFirst(type) + 'InProgress.pid';
     return fs.existsSync(p);
 }
 function createFile(type) {
-    var p = path;
-    if(type && type === 'mn') {
-        p = mn_path;
-    } else if(type && type === 'peers') {
-        p = peers_path;
-    } else if(type && type === 'address') {
-        p = address_path;
-    } else if(type && type === 'txByDay') {
-        p = txByDay_path;
-    } else if(type && type === 'market') {
-        p = market_path;
-    }
+    var p = __dirname + '/../' + wallet +  ucFirst(type) + 'InProgress.pid';
     fs.writeFileSync(p, process.pid);
 }
 function readFile(type) {
-    var p = path;
-    if(type && type === 'mn') {
-        p = mn_path;
-    } else if(type && type === 'peers') {
-        p = peers_path;
-    } else if(type && type === 'address') {
-        p = address_path;
-    } else if(type && type === 'txByDay') {
-        p = txByDay_path;
-    } else if(type && type === 'market') {
-        p = market_path;
-    }
+    var p = __dirname + '/../' + wallet +  ucFirst(type) + 'InProgress.pid';
     return fs.readFileSync(p);
 }
 function killPidFromFile() {
@@ -151,18 +121,7 @@ function killPidFromFile() {
     }
 }
 function deleteFile(type) {
-    var p = path;
-    if(type && type === 'mn') {
-        p = mn_path;
-    } else if(type && type === 'peers') {
-        p = peers_path;
-    } else if(type && type === 'address') {
-        p = address_path;
-    } else if(type && type === 'txByDay') {
-        p = txByDay_path;
-    } else if(type && type === 'market') {
-        p = market_path;
-    }
+    var p = __dirname + '/../' + wallet +  ucFirst(type) + 'InProgress.pid';
     console.log('trying to delete - ', p)
     if(fileExist(type)) {
         try {
@@ -3047,6 +3006,13 @@ if (wallet) {
         }
         case 'updateextrastats': {
             var startTime = new Date();
+            if(fileExist('extraStats')) {
+                console.log('market update is in progress');
+                db.multipleDisconnect();
+                process.exit(1)
+                return;
+            }
+            createFile('extraStats');
             updateExtraStats();
             break;
         }
@@ -3510,13 +3476,14 @@ function updateExtraStats() {
                     console.log(err)
                 }
                 console.log('took - ', helpers.getFinishTime(startTime));
+                deleteFile('extraStats');
                 db.multipleDisconnect();
                 process.exit();
             });
         } else {
             console.log(' no stats found yet');
             console.log('took - ', helpers.getFinishTime(startTime));
-            deleteFile();
+            deleteFile('extraStats');
             db.multipleDisconnect();
             process.exit();
         }

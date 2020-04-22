@@ -29,6 +29,14 @@ if (array_key_exists($coin, $bases)) {
     exit(1);
 }
 
+$file = __DIR__ . "/../../" . $argv[1] . "ParserInProgress.pid";
+if(!is_file($file)){
+    file_put_contents($file, getmypid());
+} else {
+    echo $argv[1] . " parser is in progress\n";
+    exit(1);
+}
+
 try {
     $mongo = new Mongo();
 } catch (Exception $e) {
@@ -45,3 +53,6 @@ MergeClusters($db);
 
 include_once "internal_transactions.php";
 InternalTransactions($db);
+
+echo "finished\n";
+unlink($file);
