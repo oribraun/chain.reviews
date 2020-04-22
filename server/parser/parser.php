@@ -1,6 +1,6 @@
 <?php
 
-$path = "./../wallets/";
+$path = __DIR__ . "/../wallets";
 $results = scandir($path);
 
 $bases = [];
