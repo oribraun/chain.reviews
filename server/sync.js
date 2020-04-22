@@ -42,6 +42,7 @@ var commands_require_db = [
     'updatestats',
     'updateextrastats',
     'updaterichlist',
+    'updaterichlistandextrastats',
     'updatemarket',
     'updatetxbyday',
     'test',
@@ -97,10 +98,17 @@ if(settings[wallet]) {
 // var txByDay_path = __dirname + '/../' + wallet + 'TxByDayInProgress.pid';
 // var market_path = __dirname + '/../' + wallet + 'MarketInProgress.pid';
 function ucFirst(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+    if(string && string.length) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    } else {
+        return string;
+    }
 }
 function fileExist(type) {
     // console.log(path)
+    if(!type) {
+        type = "";
+    }
     var p = __dirname + '/../' + wallet +  ucFirst(type) + 'InProgress.pid';
     return fs.existsSync(p);
 }
@@ -3007,7 +3015,7 @@ if (wallet) {
         case 'updateextrastats': {
             var startTime = new Date();
             if(fileExist('extraStats')) {
-                console.log('market update is in progress');
+                console.log('extra stats update is in progress');
                 db.multipleDisconnect();
                 process.exit(1)
                 return;
@@ -3018,6 +3026,10 @@ if (wallet) {
         }
         case 'updaterichlist': {
             updateRichlist();
+            break;
+        }
+        case 'updaterichlistandextrastats': {
+            updateRichlistAndExtraStats();
             break;
         }
         case 'updatemarket': {
@@ -3453,14 +3465,14 @@ function updateExtraStats() {
     }))
     promises.push(new Promise((resolve, reject) => {
         AddressToUpdateController.countUnique(function(total_wallets_count) {
-            console.log('total_wallets_count')
+            console.log('total_wallets_count', total_wallets_count)
             data.total_wallets_count = total_wallets_count;
             resolve();
         })
     }))
     promises.push(new Promise((resolve, reject) => {
         AddressToUpdateController.countActive(function(active_wallets_count) {
-        console.log('active_wallets_count')
+        console.log('active_wallets_count', active_wallets_count)
         data.active_wallets_count = active_wallets_count;
         resolve();
         })
@@ -3506,6 +3518,44 @@ function updateRichlist() {
                     db.multipleDisconnect();
                     process.exit();
                 })
+            })
+        })
+    })
+}
+function updateRichlistAndExtraStats() {
+    var startTime = new Date();
+    RichlistController.getOne(settings[wallet].coin, function(richlist) {
+        console.log('updating richlist');
+        AddressToUpdateController.getRichlistAndExtraStats('received', 'desc', 100, settings[wallet].dev_address, function(results){
+            var received = results.data;
+            AddressToUpdateController.getRichlistAndExtraStats('balance', 'desc', 100, settings[wallet].dev_address, function(results){
+                var active_wallets_count = results.countActive;
+                var total_wallets_count = results.countUnique;
+                var dev_wallet_balance = results.devAddressBalance;
+                var balance = results.data;
+                if(received && received.length) {
+                    richlist.received = received.map(function (o) {return {received: o.received, a_id: o._id}});
+                }
+                if(balance && balance.length) {
+                    richlist.balance = balance.map(function(o){ return {balance: o.balance, a_id: o._id}});
+                }
+                StatsController.getOne(settings[wallet].coin, function(stats) {
+                    stats.active_wallets_count = active_wallets_count;
+                    stats.total_wallets_count = total_wallets_count;
+                    stats.dev_wallet_balance = dev_wallet_balance;
+                    StatsController.updateWalletExtraStats(stats, function (err) {
+                        console.log(stats)
+                        if (err) {
+                            console.log(err)
+                        }
+                        RichlistController.updateOne(richlist, function (err) {
+                            console.log('finish updating richlist');
+                            console.log('took - ', helpers.getFinishTime(startTime));
+                            db.multipleDisconnect();
+                            process.exit();
+                        })
+                    });
+                });
             })
         })
     })

@@ -701,6 +701,77 @@ function getRichlistFaster(sortBy, order, limit, cb) {
     });
 }
 
+function getRichlistAndExtraStats(sortBy, order, limit, dev_address, cb) {
+    var sort = {};
+    sort[sortBy] = order == 'desc' ? -1 : 1;
+    var aggregate = [];
+    aggregate.push({$match: {amount: {$gt: 0}}});
+    aggregate.push({$match: {_id: {$ne: "coinbase"}}});
+    aggregate.push({
+        "$group": {
+            "_id": "$address",
+            "sent" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$type", "vin" ] },
+                                then: "$amount",
+                                else: 0 }}
+            },
+            "received" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$type", "vout" ] },
+                                then: "$amount",
+                                else: 0 }}
+            },
+        },
+    })
+    aggregate.push({
+        "$project": {
+            "_id": "$_id",
+            // "sent": "$sent",
+            "received": "$received",
+            "balance": {"$subtract": ['$received', '$sent']},
+        }
+    })
+    aggregate.push({$sort:sort});
+    aggregate.push({
+        "$group": {
+            "_id": null,
+            "countUnique": {$sum: 1},
+            "countActive": {$sum: {$cond: { if: { $gt: [ "$balance", 0 ] }, then: 1, else: 0}}},
+            "devAddressBalance": {$sum: {$cond: { if: { $eq: [ "$_id", dev_address ] }, then: "$balance", else: 0}}},
+            "received_data": {$push: {"_id": "$_id", "received": "$received"}},
+            "balance_data": {$push: {"_id": "$_id", "balance": "$balance"}},
+        }
+    });
+    if(sortBy === 'received') {
+        aggregate.push({
+            "$project": {
+                "_id": 0,
+                "countActive": "$countActive",
+                "data": {"$slice": ["$received_data", 0, parseInt(limit)]},
+            }
+        });
+    }
+    if(sortBy === 'balance') {
+        aggregate.push({
+            "$project": {
+                "_id": 0,
+                "countActive": "$countActive",
+                "countUnique": "$countUnique",
+                "devAddressBalance": "$devAddressBalance",
+                "data": {"$slice": ["$balance_data", 0, parseInt(limit)]},
+            }
+        });
+    }
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
+        if(address && address.length) {
+            return cb(address[0]);
+        } else {
+            return cb(err);
+        }
+    });
+}
+
 function getAllTx(txid, cb) {
     AddressToUpdate[db.getCurrentConnection()].find({txid: txid}).exec( function(err, addresses) {
         if(addresses) {
@@ -1038,6 +1109,7 @@ module.exports.countUnique = countUnique;
 module.exports.countActive = countActive;
 module.exports.deleteAllWhereGte = deleteAllWhereGte;
 module.exports.getRichlistFaster = getRichlistFaster;
+module.exports.getRichlistAndExtraStats = getRichlistAndExtraStats;
 module.exports.getAllTx = getAllTx;
 module.exports.countUniqueTx = countUniqueTx;
 module.exports.countTx = countTx;
