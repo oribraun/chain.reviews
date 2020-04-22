@@ -17,7 +17,7 @@ const walletRoute = require('./wallet');
 
 const dbRoute = require('./db');
 router.use('/db/:wallet',function(req, res, next){
-    if(!settings[req.params['wallet']]) {
+    if(!settings[req.params['wallet']] || !settings[req.params['wallet']].active) {
         res.send('wallet not found');
         return;
     }

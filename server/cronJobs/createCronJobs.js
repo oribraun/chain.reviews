@@ -17,6 +17,7 @@ for (var wallet in settings) {
         string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_richlist.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdateRichlist.log 2>&1\n";
         string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_market.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdateMarket.log 2>&1\n";
         string += "  * * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_tx_chart.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdateTxChart.log 2>&1\n";
+        string += " * /1 * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_extra_stats.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdateExtraStats.log 2>&1\n";
         // string += "  * * * * * root sleep 0 && /usr/bin/php /var/www/html/chain.review/server/parser/parser.php " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdateClusters.log 2>&1\n";
         string += "\n\n";
     }

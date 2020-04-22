@@ -4,7 +4,7 @@
     "daemon": "/usr/local/bin/dogecashd",
     "example_txid": "229da48a3dc5cb3daf02734b22138210d7c98ea2ce340ff4251a54ab7c79eafa",
     "example_hash": "00000ae6d22cf38ad8bb55538f508bcf84c0ace873e87ef4cc200e366e848412",
-    "dev_address": "DLBKUG2dwJyXCF9FaTG55W2fjEjypZqVRZ",
+    "dev_address": "D9DoSAvUTzh1uNyt7RV6fonK8wYn38wg2i",
     "commands": {
         "startwallet": "-daemon",
         "stopwallet": "stop",

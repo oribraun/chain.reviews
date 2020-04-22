@@ -34,11 +34,13 @@ var commands_require_db = [
     'reindex_block_only_from',
 
     'update_address_type',
+    'update_address_type_timestamp',
     'update_tx_vin_vout_type',
     'updatemasternodes',
     'updatepeers',
 
     'updatestats',
+    'updateextrastats',
     'updaterichlist',
     'updatemarket',
     'updatetxbyday',
@@ -1782,6 +1784,182 @@ if (wallet) {
                 }
             }
             break;
+        case 'update_address_type_timestamp': // 12:47:25.775 - block count 268159
+            if (cluster.isMaster) {
+                var startTime = new Date();
+                console.log(`Master ${process.pid} is running`);
+                if(fileExist('address')) {
+                    console.log('reindex is in progress');
+                    db.multipleDisconnect();
+                    process.exit(1)
+                    return;
+                }
+                createFile('address');
+                var currentAddresses = [];
+                var limit = 50000;
+                var countAddresses = 0;
+                var offset = 0;
+                var cpuCount = numCPUs;
+                var clusterQ = [];
+                var gettingNextAddressInProgress = false;
+                var exit_count = 0;
+                var mongoTimeout = false;
+                gettingNextAddressInProgress = true;
+                var startAddressLinerAll = function() {
+                    var currentBlockIndex = 0; // 595079 blockindex for main chain.review
+                    AddressToUpdateController.estimatedDocumentCount(function(count) {
+                        console.log('count', count)
+                        gettingNextAddresses(limit, offset, currentBlockIndex).then(function (res) {
+                            gettingNextAddressInProgress = false;
+                            if (res && res.length) {
+                                currentAddresses = currentAddresses.concat(res);
+                            }
+                            if (currentAddresses.length) {
+                                for (let i = 0; i < cpuCount; i++) {
+                                    var worker = cluster.fork();
+                                    worker.on('message', function (msg) {
+                                        if (msg.finished) {
+                                            (function (id) {
+                                                clusterQ.push(id);
+                                                if (currentAddresses.length) {
+                                                    if (currentAddresses.length === limit - limit / 10) {
+                                                        if (!gettingNextAddressInProgress) {
+                                                            gettingNextAddressInProgress = true;
+                                                            // offset++;
+                                                            gettingNextAddresses(limit, offset, currentBlockIndex).then(function (res) {
+                                                                // console.log('res.length', res.length)
+                                                                if (res && res.length) {
+                                                                    currentAddresses = currentAddresses.concat(res);
+                                                                }
+                                                                gettingNextAddressInProgress = false;
+                                                                if (currentAddresses.length) {
+                                                                    console.log('clusterQ', clusterQ)
+                                                                    while (clusterQ.length) {
+                                                                        cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
+                                                                        clusterQ.shift();
+                                                                        countAddresses++;
+                                                                        currentAddresses.shift();
+                                                                    }
+                                                                } else {
+                                                                    while (clusterQ.length) {
+                                                                        cluster.workers[clusterQ[0]].send({kill: true});
+                                                                        clusterQ.shift();
+                                                                    }
+                                                                }
+                                                            });
+                                                        }
+                                                    }
+                                                    cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
+                                                    clusterQ.shift();
+                                                    countAddresses++;
+                                                    currentAddresses.shift();
+
+                                                } else {
+                                                    if (!gettingNextTxsInProgress) {
+                                                        cluster.workers[clusterQ[0]].send({kill: true});
+                                                        clusterQ.shift();
+                                                    }
+                                                }
+                                            })(this.id)
+                                        }
+                                        if (msg.mongoTimeout) {
+                                            mongoTimeout = true;
+                                            for(var id in cluster.workers) {
+                                                cluster.workers[id].send({kill: true});
+                                            }
+                                        }
+                                    })
+                                    worker.on('exit', (code, signal) => {
+                                        exit_count++;
+                                        if (exit_count === cpuCount) {
+                                            if (!updateInProgress) {
+                                                // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                                // updateDbAddreess(local_addreses_before_save, function() {
+                                                //     endReindex();
+                                                // });
+                                                if(mongoTimeout) {
+                                                    console.log('\n*******************************************************************');
+                                                    console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                    console.log('*******************************************************************\n');
+                                                    deleteFile('address');
+                                                    db.multipleDisconnect();
+                                                    process.exit(1);
+                                                }
+                                                console.log('took - ', helpers.getFinishTime(startTime));
+                                                deleteFile('address');
+                                                db.multipleDisconnect();
+                                                process.exit(1);
+                                                // console.log('countAddresses', countAddresses)
+                                                // console.log('took ', helpers.getFinishTime(startTime));
+                                                // endReindex();
+                                            }
+                                            // console.log('addreses_to_update', addreses_to_update.length)
+                                        }
+                                        console.log(`worker ${worker.process.pid} died`);
+                                    })
+                                    if (currentAddresses.length) {
+                                        worker.send({currentAddress: currentAddresses[0]});
+                                        countAddresses++;
+                                        currentAddresses.shift();
+                                    } else {
+                                        worker.send({kill: true});
+                                    }
+                                }
+                            } else {
+                                console.log('no new blocks found');
+                                deleteFile('address');
+                                db.multipleDisconnect();
+                                process.exit();
+                                return;
+                            }
+                        });
+                    })
+                }
+
+                // var addresses = [];
+                // var local_addreses_before_save = [];
+                var updateInProgress = false;
+
+
+                setTimeout(startAddressLinerAll)
+                // startVinVoutClusterLinerAll()
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                process.on('message', function(msg) {
+                    if(msg.currentAddress !== undefined) {
+                        startAddressClusterLiner(msg.currentAddress);
+                    }
+                    if(msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+                var startAddressClusterLiner = function(currentAddress) {
+                    var address = currentAddress;
+                    address.txid_timestamp = parseInt(address.txid_timestamp);
+                    var updateAddress = function(address) {
+                        AddressToUpdateController.save(address, function(err){
+                            if(err) {
+                                console.log('err', err);
+                                if(err.stack.indexOf('Server selection timed out') > -1 ||
+                                    err.stack.indexOf('interrupted at shutdown') > -1) {
+                                    cluster.worker.send({mongoTimeout: true});
+                                }
+                            } else {
+                                console.log('address updated', address);
+                                cluster.worker.send({finished: true});
+                            }
+                        })
+                    }
+                    if(address) {
+                        updateAddress(address);
+                    } else {
+                        cluster.worker.send({finished: true});
+                    }
+                }
+            }
+            break;
         case 'update_tx_vin_vout_type': // 1:8:42.847 - block count 388282
             if (cluster.isMaster) {
                 var startTime = new Date();
@@ -2721,16 +2899,19 @@ if (wallet) {
                                         if(stats) {
                                             console.log('updating masternode count');
                                             wallet_commands.getMasternodeCount(wallet).then(function (masterNodesCount) {
-                                                // console.log('masternodes updated');
-                                                stats.masternodesCount = JSON.parse(masterNodesCount);
-                                                StatsController.updateWalletStats(stats, function (err) {
-                                                    if (err) {
-                                                        console.log(err)
-                                                    }
-                                                    console.log('finish updating masternode count');
-                                                    db.multipleDisconnect();
-                                                    deleteFile('mn');
-                                                    process.exit();
+                                                MasternodeController.getMasternodesCountByCollateral(settings[wallet].masternode_required, function(masternodesCountByCollateral) {
+                                                    // console.log('masternodes updated');
+                                                    stats.masternodesCount = JSON.parse(masterNodesCount);
+                                                    stats.masternodesCountByCollateral = masternodesCountByCollateral;
+                                                    StatsController.updateWalletStats(stats, function (err) {
+                                                        if (err) {
+                                                            console.log(err)
+                                                        }
+                                                        console.log('finish updating masternode count');
+                                                        db.multipleDisconnect();
+                                                        deleteFile('mn');
+                                                        process.exit();
+                                                    });
                                                 });
                                             }).catch(function (err) {
                                                 console.log(err)
@@ -2862,6 +3043,11 @@ if (wallet) {
         case 'updatestats': {
             var startTime = new Date();
             updateStats();
+            break;
+        }
+        case 'updateextrastats': {
+            var startTime = new Date();
+            updateExtraStats();
             break;
         }
         case 'updaterichlist': {
@@ -3282,6 +3468,61 @@ function updateStats() {
     })
 }
 
+function updateExtraStats() {
+    var promises = [];
+    var data = {};
+    promises.push(new Promise((resolve, reject) => {
+        StatsController.getOne(wallet, function(stats) {
+            console.log('stats')
+            data.stats = stats;
+            resolve();
+        })
+    }))
+    promises.push(new Promise((resolve, reject) => {
+        AddressToUpdateController.getAddressDetails(settings[wallet].dev_address, function(address) {
+            console.log('address')
+            data.address = address;
+            resolve();
+        })
+    }))
+    promises.push(new Promise((resolve, reject) => {
+        AddressToUpdateController.countUnique(function(total_wallets_count) {
+            console.log('total_wallets_count')
+            data.total_wallets_count = total_wallets_count;
+            resolve();
+        })
+    }))
+    promises.push(new Promise((resolve, reject) => {
+        AddressToUpdateController.countActive(function(active_wallets_count) {
+        console.log('active_wallets_count')
+        data.active_wallets_count = active_wallets_count;
+        resolve();
+        })
+    }))
+    Promise.all(promises).then((response) => {
+        console.log('all')
+        if(data.stats) {
+            data.stats.total_wallets_count = data.total_wallets_count;
+            data.stats.active_wallets_count = data.active_wallets_count;
+            data.stats.dev_wallet_balance = data.address.balance;
+            StatsController.updateWalletExtraStats(data.stats, function (err) {
+                if (err) {
+                    console.log(err)
+                }
+                console.log('took - ', helpers.getFinishTime(startTime));
+                db.multipleDisconnect();
+                process.exit();
+            });
+        } else {
+            console.log(' no stats found yet');
+            console.log('took - ', helpers.getFinishTime(startTime));
+            deleteFile();
+            db.multipleDisconnect();
+            process.exit();
+        }
+    });
+}
+
 function updateRichlist() {
     RichlistController.getOne(settings[wallet].coin, function(richlist) {
         console.log('updating richlist');
@@ -3417,6 +3658,7 @@ var getAddresses = function(limit, offset, blockindex) {
         if(blockindex) {
             where.blockindex = { $gte : blockindex};
         }
+        // where.txid_timestamp = {$type: 2};
         AddressToUpdateController.getAll2(where, fields,'', '', limit, offset, function(results) {
             // if(startCount < 1) {
             //     startCount++;

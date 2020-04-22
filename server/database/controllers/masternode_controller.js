@@ -113,7 +113,7 @@ function estimatedDocumentCount(cb) {
     });
 }
 
-function getCollateralCount(cb) {
+function getCollateralCount(masternode_required, cb) {
     var aggregate = [];
     aggregate.push({
         "$match": {
@@ -124,17 +124,17 @@ function getCollateralCount(cb) {
         }
     });
     aggregate.push({$group: {
-        _id: "$collateral",
-        collateral: {$first: "$collateral"},
-        count: { $sum: 1 },
-    }});
+            _id: "$collateral",
+            collateral: {$first: "$collateral"},
+            count: { $sum: 1 },
+        }});
     aggregate.push({$project : {
-        _id : 0 ,
-        collateral : 1 ,
-        count : 1,
-        originalMasternodes : {"$divide": ['$collateral', 1000000]},
-        total : {"$multiply": ['$count', {"$divide": ['$collateral', 1000000]}]}
-    }});
+            _id : 0 ,
+            collateral : 1 ,
+            count : 1,
+            originalMasternodes : {"$divide": ['$collateral', masternode_required]},
+            total : {"$multiply": ['$count', {$cond: { if: { $eq: [ {"$divide": ['$collateral', masternode_required]}, 0 ] }, then: 1, else: {"$divide": ['$collateral', masternode_required]} }}]}
+        }});
     aggregate.push({$sort: {collateral: 1}});
     Masternode[db.getCurrentConnection()].aggregate(aggregate).exec( function(err, masternodes) {
         // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
@@ -142,6 +142,39 @@ function getCollateralCount(cb) {
             return cb(masternodes);
         } else {
             return cb();
+        }
+    });
+}
+
+function getMasternodesCountByCollateral(masternode_required, cb) {
+    var aggregate = [];
+    aggregate.push({
+        "$match": {
+            "collateral": {
+                "$exists": true,
+                "$ne": null
+            }
+        }
+    });
+    aggregate.push({$group: {
+            _id: "$collateral",
+            collateral: {$first: "$collateral"},
+            count: { $sum: 1 },
+        }});
+    aggregate.push({$project : {
+            _id : 0 ,
+            total : {"$multiply": ['$count', {$cond: { if: { $eq: [ {"$divide": ['$collateral', masternode_required]}, 0 ] }, then: 1, else: {"$divide": ['$collateral', masternode_required]} }}]}
+        }});
+    aggregate.push({$group: {
+            _id: null,
+            count: { $sum: "$total" },
+        }});
+    Masternode[db.getCurrentConnection()].aggregate(aggregate).exec( function(err, masternodes) {
+        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        if(masternodes) {
+            return cb(masternodes[0].count);
+        } else {
+            return cb(err);
         }
     });
 }
@@ -154,3 +187,4 @@ module.exports.deleteAll = deleteAll;
 module.exports.count = count;
 module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.getCollateralCount = getCollateralCount;
+module.exports.getMasternodesCountByCollateral = getMasternodesCountByCollateral;

@@ -4,7 +4,7 @@
     "daemon": "/usr/local/bin/trittiumd",
     "example_txid": "70090a65008415200c3419e91cf4ba2751213e3406c653d804d2521afb4ee0f4",
     "example_hash": "00000f478561c8bd30a8d6cb66c2d9ba03bc62fb2130a75f3fc954a7a613d166",
-    "dev_address": "TD64LbCuDLVCTcTQBMLNQgmxXJYGCFMKu2",
+    "dev_address": "TKVGyrpqMNjpcMfLWDB8SyoMMF67bGcQ4z",
     "commands": {
         "startwallet": "-daemon",
         "stopwallet": "stop",

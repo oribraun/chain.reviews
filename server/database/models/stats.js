@@ -12,10 +12,14 @@ var StatsSchema = new Schema({
   blockcount: { type: Number, default: 0 },
   connections: { type: Number, default: 0 },
   masternodesCount: { type: Object, default: {} },
+  masternodesCountByCollateral: { type: Number, default: 0 },
   last_price: { type: Number, default: 0 },
   version: { type: String, default: "" },
   protocol: { type: String, default: "" },
   users_tx_count_24_hours: { type: Number, default: 0 },
+  total_wallets_count: { type: Number, default: 0 },
+  active_wallets_count: { type: Number, default: 0 },
+  dev_wallet_balance: { type: Number, default: 0 },
 }, {timestamps: true});
 var connections = db.getConnections();
 var obj = {};
