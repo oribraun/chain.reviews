@@ -446,12 +446,21 @@ function getUsersTxsCount24Hours(cb) {
     //     }
     // });
     TxVinVout[db.getCurrentConnection()].aggregate([
+        {$sort: {"blockindex": -1}},
+        {$limit: 100000},
         {"$match" : {timestamp:{$gte: Date.now() / 1000 - 24*60*60}}},
         {"$match" : {type: {$eq: tx_types.NORMAL}}},
-        {$project: {_id: 0}}
+        {$group: {_id: 0, count: {$sum: 1}}}
     ]).exec(function(err, tx) {
+        if(err) {
+            console.log(err);
+        }
         if(tx) {
-            return cb(tx.length);
+            if(tx.length) {
+                return cb(tx[0].count);
+            } else {
+                return cb(0);
+            }
         } else {
             return cb();
         }
