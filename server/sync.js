@@ -182,6 +182,14 @@ if (wallet) {
                 process.exit();
             });
             break;
+        case 'getinfo':
+            wallet_commands.getInfo(wallet).then(function(blockCount){
+                console.log('blockCount', blockCount);
+            }).catch(function(err) {
+                console.log('error getting blockCount', err);
+                process.exit();
+            });
+            break;
         case 'getblock':
             if(hash_number != undefined && hash_number) {
                 wallet_commands.getBlock(wallet, hash_number).then(function (block) {
