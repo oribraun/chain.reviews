@@ -113,10 +113,16 @@ function fileExist(type) {
     return fs.existsSync(p);
 }
 function createFile(type) {
+    if(!type) {
+        type = "";
+    }
     var p = __dirname + '/../' + wallet +  ucFirst(type) + 'InProgress.pid';
     fs.writeFileSync(p, process.pid);
 }
 function readFile(type) {
+    if(!type) {
+        type = "";
+    }
     var p = __dirname + '/../' + wallet +  ucFirst(type) + 'InProgress.pid';
     return fs.readFileSync(p);
 }
@@ -129,6 +135,9 @@ function killPidFromFile() {
     }
 }
 function deleteFile(type) {
+    if(!type) {
+        type = "";
+    }
     var p = __dirname + '/../' + wallet +  ucFirst(type) + 'InProgress.pid';
     console.log('trying to delete - ', p)
     if(fileExist(type)) {
