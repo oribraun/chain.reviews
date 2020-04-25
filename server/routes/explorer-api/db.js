@@ -876,7 +876,7 @@ router.post('/getAllClustersWithTxsCount', (req, res) => {
         res.send(JSON.stringify(response, null, 2));
     })
 })
-router.get('/getAllClustersWithAddressCount', (req, res) => {
+router.post('/getAllClustersWithAddressCount', (req, res) => {
     const response = helpers.getGeneralResponse();
     ClusterController.getAllClustersWithAddressCount(null, function(results) {
         if(results) {
