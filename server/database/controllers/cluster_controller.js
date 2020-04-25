@@ -418,7 +418,7 @@ function getAllClustersWithAddressCount(id,  cb) {
         "$group": {
             "_id": "$_id",
             "tags" : { "$first": "$tags" },
-            "count" : { "$sum": 1 },
+            "address_count" : { "$sum": 1 },
         }
     });
     aggregate.push({
@@ -503,7 +503,7 @@ function getAllClustersWithAddressAndTxsCount(id, limit, offset,  cb) {
         }
     });
     aggregate.push({
-        $sort:{count:-1}
+        $sort:{address_count:-1}
     })
     if(offset) {
         aggregate.push({$skip: offset * limit});
