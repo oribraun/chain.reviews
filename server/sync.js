@@ -673,7 +673,7 @@ if (wallet) {
                 // var limit = 1;
                 // var countBlocks = 0;
                 // var offset = 150111;
-                var limit = 50000;
+                var limit = 20000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -843,7 +843,7 @@ if (wallet) {
                 }
                 createFile();
                 var currentBlocks = [];
-                var limit = 50000;
+                var limit = 20000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -1301,7 +1301,7 @@ if (wallet) {
                 }
                 createFile();
                 var currentBlocks = [];
-                var limit = 50000;
+                var limit = 20000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = 1;
@@ -1599,7 +1599,7 @@ if (wallet) {
                 }
                 createFile('address');
                 var currentAddresses = [];
-                var limit = 50000;
+                var limit = 20000;
                 var countAddresses = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -1780,7 +1780,7 @@ if (wallet) {
                 }
                 createFile('address');
                 var currentAddresses = [];
-                var limit = 50000;
+                var limit = 20000;
                 var countAddresses = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -1957,7 +1957,7 @@ if (wallet) {
                 }
                 createFile();
                 var currentBlocks = [];
-                var limit = 50000;
+                var limit = 20000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -2293,7 +2293,7 @@ if (wallet) {
                 var startedFromBlock = currentBlock;
                 createFile();
                 var currentBlocks = [];
-                var limit = 50000;
+                var limit = 20000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -2476,7 +2476,7 @@ if (wallet) {
                 var startedFromBlock = currentBlock;
                 createFile();
                 var currentBlocks = [];
-                var limit = 50000;
+                var limit = 20000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -2689,7 +2689,7 @@ if (wallet) {
                 var startedFromBlock = currentBlock;
                 createFile();
                 var currentBlocks = [];
-                var limit = 50000;
+                var limit = 20000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
