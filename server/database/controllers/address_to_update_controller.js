@@ -139,6 +139,36 @@ function getMany(address, cb) {
     });
 }
 
+function getGroupCountForAddresses(addresses, limit, offset, cb) {
+    var aggregate = [];
+    aggregate.push({ $match : {address : {$in : addresses}} });
+    aggregate.push({"$group": {
+            "_id": "$address",
+            "tx_count": {"$sum": 1},
+        }
+    });
+    aggregate.push({$sort:{tx_count:-1}});
+    if(parseInt(offset)) {
+        aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
+    }
+    if(parseInt(limit)) {
+        aggregate.push({$limit: parseInt(limit)});
+    }
+    aggregate.push({"$project": {
+            "_id": 0,
+            "address": "$_id",
+            "tx_count": 1,
+        }
+    });
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, addresses) {
+        if(addresses) {
+            return cb(addresses);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
 function getOneJoin(address, limit, offset, cb) {
     var aggregate = [];
     var objID = mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1");
@@ -1128,3 +1158,4 @@ module.exports.getAll2 = getAll2;
 module.exports.getByTotalTest = getByTotalTest;
 module.exports.save = save;
 module.exports.saveTxType = saveTxType;
+module.exports.getGroupCountForAddresses = getGroupCountForAddresses;

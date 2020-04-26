@@ -538,68 +538,35 @@ function getClusterAddresses(id, limit, offset, cb) {
     var aggregate = [];
     var objID = mongoose.Types.ObjectId(id);
 
-    limit = parseInt(limit);
-    offset = parseInt(offset);
-    aggregate.push({ $match : { _id : objID } });
-    aggregate.push({
-        "$unwind": {
-            "path": "$addresses",
-            "preserveNullAndEmptyArrays": true
-        }
-    });
-    aggregate.push({
-        "$lookup": {
-            "from": AddressToUpdate[db.getCurrentConnection()].collection.name,
-            "let": { "address": "$addresses" },
-            "pipeline": [
-                { "$match": { "$expr": { "$eq": [ "$address", "$$address" ] } }},
-                { "$project": {
-                        "_id": 0,
-                        "amount": "1",
-                    }
-                }
-            ],
-            "as": "txs"
-        }
-    });
-    aggregate.push({
-        "$project": {
-            "_id": 0,
-            "address": "$addresses",
-            "tx_count": {"$size": "$txs"},
-            // "tags" : { "$ifNull" : [ "$tags", [ ] ] },
-            // "tx_count" : "$tx_count",
-        }
-    });
-    aggregate.push({
-        $sort:{tx_count:-1}
-    })
-    if(offset) {
-        aggregate.push({$skip: offset * limit});
-    }
-    if(limit) {
-        aggregate.push({$limit: limit});
-    }
+    // limit = parseInt(limit);
+    // offset = parseInt(offset);
+    // aggregate.push({ $match : { _id : objID } });
     // aggregate.push({
     //     "$unwind": {
-    //         "path": "$txs",
+    //         "path": "$addresses",
     //         "preserveNullAndEmptyArrays": true
     //     }
     // });
     // aggregate.push({
-    //     "$group": {
-    //         "_id": "$addresses",
-    //         // "tags" : { "$first": "$tags" },
-    //         "txs" : { "$push": "$txs" },
-    //         "addresses" : { "$first": "$addresses" },
-    //         // "tx_count" : { "$size": "$txs" },
+    //     "$lookup": {
+    //         "from": AddressToUpdate[db.getCurrentConnection()].collection.name,
+    //         "let": { "address": "$addresses" },
+    //         "pipeline": [
+    //             { "$match": { "$expr": { "$eq": [ "$address", "$$address" ] } }},
+    //             { "$project": {
+    //                     "_id": 0,
+    //                     "amount": "1",
+    //                 }
+    //             }
+    //         ],
+    //         "as": "txs"
     //     }
     // });
     // aggregate.push({
     //     "$project": {
     //         "_id": 0,
-    //         "addresses": "$addresses",
-    //         "txs_count": {"$size": "$txs"},
+    //         "address": "$addresses",
+    //         "tx_count": {"$size": "$txs"},
     //         // "tags" : { "$ifNull" : [ "$tags", [ ] ] },
     //         // "tx_count" : "$tx_count",
     //     }
@@ -607,11 +574,59 @@ function getClusterAddresses(id, limit, offset, cb) {
     // aggregate.push({
     //     $sort:{tx_count:-1}
     // })
-    Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, clusters) {
-        if(clusters && clusters.length) {
-            return cb(clusters);
+    // if(offset) {
+    //     aggregate.push({$skip: offset * limit});
+    // }
+    // if(limit) {
+    //     aggregate.push({$limit: limit});
+    // }
+    // // aggregate.push({
+    // //     "$unwind": {
+    // //         "path": "$txs",
+    // //         "preserveNullAndEmptyArrays": true
+    // //     }
+    // // });
+    // // aggregate.push({
+    // //     "$group": {
+    // //         "_id": "$addresses",
+    // //         // "tags" : { "$first": "$tags" },
+    // //         "txs" : { "$push": "$txs" },
+    // //         "addresses" : { "$first": "$addresses" },
+    // //         // "tx_count" : { "$size": "$txs" },
+    // //     }
+    // // });
+    // // aggregate.push({
+    // //     "$project": {
+    // //         "_id": 0,
+    // //         "addresses": "$addresses",
+    // //         "txs_count": {"$size": "$txs"},
+    // //         // "tags" : { "$ifNull" : [ "$tags", [ ] ] },
+    // //         // "tx_count" : "$tx_count",
+    // //     }
+    // // });
+    // // aggregate.push({
+    // //     $sort:{tx_count:-1}
+    // // })
+    // Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, clusters) {
+    //     if(clusters && clusters.length) {
+    //         return cb(clusters);
+    //     } else {
+    //         return cb(err);
+    //     }
+    // });
+
+    var objID = mongoose.Types.ObjectId(id);
+
+    limit = parseInt(limit);
+    offset = parseInt(offset);
+
+    Cluster[db.getCurrentConnection()].findOne({ _id : objID }, function(err, results) {
+        if(results) {
+            AddressToUpdateController.getGroupCountForAddresses(results.addresses, limit, offset, function(res) {
+                return cb(res);
+            })
         } else {
-            return cb(null);
+            return cb();
         }
     });
 }
