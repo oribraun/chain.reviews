@@ -300,7 +300,7 @@ function getClusterTxsCount2(id, cb) {
     Cluster[db.getCurrentConnection()].find({_id: objID}, {addresses: 1}).exec(function(err, cluster) {
         if(cluster) {
             var addresses = cluster[0].addresses;
-            AddressToUpdate[db.getCurrentConnection()].find({address: {$in: addresses}}, {_id: 0}).countDocuments().exec(function (err, count) {
+            AddressToUpdate[db.getCurrentConnection()].find({address: {$in: addresses}}, {}).countDocuments().exec(function (err, count) {
                 if (count) {
                     return cb(count);
                 } else {

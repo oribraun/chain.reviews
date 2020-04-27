@@ -520,7 +520,7 @@ function countUniqueTx(address, cb) {
 }
 
 function countTx(address, cb) {
-    AddressToUpdate[db.getCurrentConnection()].find({address : {$eq : address}}).countDocuments({}, function (err, count) {
+    AddressToUpdate[db.getCurrentConnection()].find({address : {$eq : address}}, {}).countDocuments({}, function (err, count) {
         if(err) {
             cb()
         } else {
@@ -530,7 +530,7 @@ function countTx(address, cb) {
 }
 
 function countTxInArray(addresses, cb) {
-    AddressToUpdate[db.getCurrentConnection()].find({address : {$in : addresses}}).countDocuments({}, function (err, count) {
+    AddressToUpdate[db.getCurrentConnection()].find({address : {$in : addresses}}, {}).countDocuments({}, function (err, count) {
         if(err) {
             cb()
         } else {

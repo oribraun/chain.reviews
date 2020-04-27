@@ -28,7 +28,9 @@ function getAll1(sortBy, order, limit, offset, cb) {
 
 function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     var sort = {};
-    sort[sortBy] = order == 'asc' ? 1 : -1;
+    if(sortBy) {
+        sort[sortBy] = order == 'asc' ? 1 : -1;
+    }
     TxVinVout[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
@@ -174,7 +176,8 @@ function estimatedDocumentCount(cb) {
 }
 
 function countWhereTotal(cb) {
-    TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}}).countDocuments({}, function (err, count) {
+    var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+    TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}, timestamp: {$gte: yearFromNowTimestamp }}, {}).countDocuments({}, function (err, count) {
         if(err) {
             cb()
         } else {
@@ -430,7 +433,7 @@ function getTransactionsChart(date, cb) {
 }
 
 function getUsersTxsCount(cb) {
-    TxVinVout[db.getCurrentConnection()].find({type: {$eq: tx_types.NORMAL}}, {_id: 0}).countDocuments(function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].find({type: {$eq: tx_types.NORMAL}}, {}).countDocuments(function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
