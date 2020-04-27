@@ -7,7 +7,7 @@ var TxVinVoutSchema = new Schema({
   vin: { type: Array, default: [] },
   vout: { type: Array, default: [] },
   type: { type: Number, default: 0 , index: true},
-  timestamp: { type: Number, default: 0 },
+  timestamp: { type: Number, default: 0 , index: true},
   total: { type: Number, default: 0 },
   blockindex: {type: Number, default: 0, index: true},
 // }, {id: false, timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }});

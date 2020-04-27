@@ -323,6 +323,8 @@ function getTransactionsChart2(date, cb) {
 function getTransactionsChart(date, cb) {
     var aggregate = [];
     aggregate.push({$match: {total: {$gt: 0}}});
+    var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+    aggregate.push({$match: {timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
     if(date) {
         var timestamp = new Date(date).getTime() / 1000;
         aggregate.push({$match: {timestamp: {$gte: timestamp }}});

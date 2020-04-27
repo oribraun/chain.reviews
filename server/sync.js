@@ -3046,6 +3046,13 @@ if (wallet) {
             break;
         }
         case 'updaterichlistandextrastats': {
+            if(fileExist('richlist')) {
+                console.log('richlist update is in progress');
+                db.multipleDisconnect();
+                process.exit(1)
+                return;
+            }
+            createFile('richlist');
             updateRichlistAndExtraStats();
             break;
         }
@@ -3568,6 +3575,7 @@ function updateRichlistAndExtraStats() {
                         RichlistController.updateOne(richlist, function (err) {
                             console.log('finish updating richlist');
                             console.log('took - ', helpers.getFinishTime(startTime));
+                            deleteFile('richlist');
                             db.multipleDisconnect();
                             process.exit();
                         })
@@ -4005,6 +4013,7 @@ function updateMarket(wallet) {
             if(finishUpdateMarketCap && finishUpdateMarket) {
                 deleteFile('market');
                 db.multipleDisconnect()
+                process.exit();
             }
         }
         if(symbolsToUpdate.length) {
@@ -4040,7 +4049,7 @@ function updateTxByDay(wallet) {
 
     function updateTxByDay(dateString) {
         TxVinVoutController.getTransactionsChart(dateString, function(txByDays) {
-            if(txByDays.length) {
+            if(txByDays && txByDays.length) {
                 updateTxByDayOneByOne(txByDays);
             } else {
                 console.log('no tx found');
