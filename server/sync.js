@@ -2533,13 +2533,9 @@ if (wallet) {
                                                                         if (currentBlocks[countBlocks]) {
                                                                             console.log('clusterQ', clusterQ)
                                                                             while (clusterQ.length) {
-                                                                                cluster.workers[clusterQ[0]].send({
-                                                                                    currentBlock: currentBlocks[countBlocks],
-                                                                                    order: lastOrder + countBlocks
-                                                                                });
+                                                                                cluster.workers[clusterQ[0]].send({currentBlock: currentBlocks[countBlocks], order: lastOrder + countBlocks});
                                                                                 clusterQ.shift();
                                                                                 countBlocks++;
-                                                                                currentBlocks.shift();
                                                                             }
                                                                         } else {
                                                                             while (clusterQ.length) {
@@ -2550,13 +2546,9 @@ if (wallet) {
                                                                     });
                                                                 }
                                                             }
-                                                            cluster.workers[clusterQ[0]].send({
-                                                                currentBlock: currentBlocks[countBlocks],
-                                                                order: lastOrder + countBlocks
-                                                            });
+                                                            cluster.workers[clusterQ[0]].send({currentBlock: currentBlocks[countBlocks],order: lastOrder + countBlocks});
                                                             clusterQ.shift();
                                                             countBlocks++;
-                                                            currentBlocks.shift();
 
                                                         } else {
                                                             if (!gettingNextTxsInProgress) {
@@ -2599,10 +2591,7 @@ if (wallet) {
                                                 console.log(`worker ${worker.process.pid} died`);
                                             });
                                             if (currentBlocks[countBlocks]) {
-                                                worker.send({
-                                                    currentBlock: currentBlocks[countBlocks],
-                                                    order: lastOrder + countBlocks
-                                                });
+                                                worker.send({currentBlock: currentBlocks[countBlocks],order: lastOrder + countBlocks});
                                                 countBlocks++;
                                             } else {
                                                 worker.send({kill: true});
