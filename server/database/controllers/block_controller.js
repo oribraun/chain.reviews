@@ -3,7 +3,7 @@ var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
-    sort[sortBy] = order;
+    sort[sortBy] = order == 'asc' ? 1 : -1;
     Block[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
@@ -15,7 +15,7 @@ function getAll(sortBy, order, limit, cb) {
 
 function getAll1(sortBy, order, limit, offset, cb) {
     var sort = {};
-    sort[sortBy] = order;
+    sort[sortBy] = order == 'asc' ? 1 : -1;
     Block[db.getCurrentConnection()].find({}).sort(sort).limit(limit).skip(offset).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
@@ -38,7 +38,11 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
 }
 
 function getAll4(fields, sortBy, order, limit, offset, cb) {
-    this.estimatedDocumentCount(function(count) {
+    this.getAll('blockindex', 'desc', 1 ,function(block) {
+        var blockindex = 0;
+        if(block && block.length) {
+            blockindex = block[0].blockindex;
+        }
         var sort = {};
         var sortOposite = {};
         if (sortBy) {
@@ -50,7 +54,7 @@ function getAll4(fields, sortBy, order, limit, offset, cb) {
         aggregate.push({$sort: sort});
         if (offset) {
             // aggregate.push({$skip: offset*limit});
-            aggregate.push({$match: {blockindex: {$lte: count - offset * limit}}});
+            aggregate.push({$match: {blockindex: {$lte: blockindex - offset * limit}}});
         }
         aggregate.push({$limit: limit});
         aggregate.push({$project: fields});

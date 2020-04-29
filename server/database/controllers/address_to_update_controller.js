@@ -465,7 +465,11 @@ function countUnique(cb) {
     // });
 
     AddressToUpdate[db.getCurrentConnection()].distinct("address", function(err, results){
-        return cb(results.length);
+        var count = 0;
+        if(results && results.length) {
+            count = results.length;
+        }
+        return cb(count);
     });
 }
 

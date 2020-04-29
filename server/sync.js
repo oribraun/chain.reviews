@@ -3437,21 +3437,25 @@ if (wallet) {
                 var exit_count = 0;
                 cluster.on('exit', (worker, code, signal) => {
                     exit_count++;
-                    // if(exit_count === numCPUs) {
-                    //     db.multipleDisconnect();
-                    // }
-                    db.multipleDisconnect();
-                    process.exit();
+                    if(exit_count === numCPUs) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                    // db.multipleDisconnect();
+                    // process.exit();
                     console.log(`worker ${worker.process.pid} died`);
                 });
             } else {
                 process.on('SIGTERM', function() {
-                    process.exit();
+                    // process.exit();
                 })
                 var worker_number = cluster.worker.id;
+                var count = 0;
                 // console.log('start i', parseInt(hash_number) + worker_number)
                 BlockController.getAll('blockindex', 'desc', 1, (res) => {
+                    console.log('max blockindex - ', res[0].blockindex);
                     function startTest(i) {
+                        count++;
                         BlockController.getOne(i, (block) => {
                             if(!block) {
                                 console.log('block is null ', i);
@@ -3465,6 +3469,7 @@ if (wallet) {
                                         startTest(i);
                                     }
                                 } else {
+                                    console.log('count', count);
                                     cluster.worker.kill();
                                 }
                             }
