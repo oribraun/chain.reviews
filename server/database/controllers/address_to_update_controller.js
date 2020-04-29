@@ -463,7 +463,8 @@ function countUnique(cb) {
     //         return cb(null);
     //     }
     // });
-
+    // AddressToUpdate[db.getCurrentConnection()].aggregate([{$group: {_id: '$address'} }]).allowDiskUse(true).exec(;
+    // .aggregate([{$group:{_id: '$address'}},{$group:{_id: null, count: {$sum: 1}}}],{allowDiskUse: true})
     AddressToUpdate[db.getCurrentConnection()].distinct("address", function(err, results){
         var count = 0;
         if(results && results.length) {
@@ -741,8 +742,8 @@ function getRichlistAndExtraStats(sortBy, order, limit, dev_address, cb) {
     var aggregate = [];
     aggregate.push({$match: {amount: {$gt: 0}}});
     aggregate.push({$match: {_id: {$ne: "coinbase"}}});
-    var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
-    aggregate.push({$match: {txid_timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
+    // var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
     aggregate.push({
         "$group": {
             "_id": "$address",
