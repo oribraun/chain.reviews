@@ -3418,7 +3418,6 @@ if (wallet) {
             }
             break;
         case 'find_missing_blocks':
-            // 27675 stream block
             var cpuCount = numCPUs;
             if (cluster.isMaster) {
                 console.log(`Master ${process.pid} is running`);
@@ -3451,7 +3450,7 @@ if (wallet) {
                 })
                 var worker_number = cluster.worker.id;
                 // console.log('start i', parseInt(hash_number) + worker_number)
-                BlockController.estimatedDocumentCount((count) => {
+                BlockController.getAll('blockindex', 'desc', 1, (res) => {
                     function startTest(i) {
                         BlockController.getOne(i, (block) => {
                             if(!block) {
@@ -3461,7 +3460,7 @@ if (wallet) {
                                 }
                             } else {
                                 i = i + cpuCount;
-                                if (i < count) {
+                                if (i < res[0].blockindex) {
                                     if (cluster.worker.isConnected()) {
                                         startTest(i);
                                     }
@@ -3471,7 +3470,7 @@ if (wallet) {
                             }
                         })
                     }
-                    if(count) {
+                    if(res && res.length) {
                         if(hash_number) {
                             startTest(parseInt(hash_number) + worker_number)
                         } else {
