@@ -108,51 +108,6 @@ function getAll4(fields, sortBy, order, limit, offset, cb) {
             return cb(results);
         })
     })
-    // TxVinVout[db.getCurrentConnection()].find(whereforCount, fields).lean().sort(sortOposite).limit(limit).exec(function (err, lastPage) { // getting last page
-    //     TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).limit(limit).exec(function (err, currentPage) {
-    //         if (currentPage && currentPage.length) {
-    //             fromOrder = currentPage[0].order;
-    //             fromId = currentPage[0]._id;
-    //         }
-    //         results.currentPage = currentPage;
-    //         results.lastPage = lastPage;
-    //         return cb(results);
-    //     })
-    // });
-    // TxVinVout[db.getCurrentConnection()].find({}).lean().sort({order: -1}).limit(1).exec( function(err, lastOrder) {
-    //     var currentOrderNumber = lastOrder[0].order;
-    //     if (pageOrder) {
-    //         var currentOrderNumber = pageOrder;
-    //         // var objID = mongoose.Types.ObjectId(id);
-    //     }
-    //     where.order = {$lte: currentOrderNumber};
-    //     whereforLastPageId.order = {$gt: currentOrderNumber};
-    //     // {_id: {$gt: mongoose.Types.ObjectId("5ea6c33cbb8e5e68440f1d3a")}, total: {$gt: 0}}
-    //     // getting data
-    //     TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).limit(limit).exec(function (err, txs) {
-    //         TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).skip(limit).limit(1).exec(function (err, nextPageDocument) {
-    //             TxVinVout[db.getCurrentConnection()].find(whereforLastPageId, fields).lean().sort(sortOposite).skip(limit - 1).limit(1).exec(function (err, lastPageDocument) {
-    //                 var results = {};
-    //                 if (txs && txs.length) {
-    //                     results.txs = txs;
-    //                     // results.txs_count = txs.length;
-    //                     results.nextPageOrder = "";
-    //                     results.lastPageOrder = "";
-    //                     results.currentPageOrder = currentOrderNumber;
-    //                     if(nextPageDocument && nextPageDocument.length) {
-    //                         results.nextPageOrder = nextPageDocument[0].order;
-    //                     }
-    //                     if (lastPageDocument && lastPageDocument.length) {
-    //                         results.lastPageOrder = lastPageDocument[0].order;
-    //                     }
-    //                     return cb(results);
-    //                 } else {
-    //                     return cb();
-    //                 }
-    //             });
-    //         })
-    //     });
-    // })
 }
 
 function getAll5(pageOrder, fields, sortBy, order, limit, offset, cb) {
