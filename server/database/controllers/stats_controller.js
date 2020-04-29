@@ -179,6 +179,9 @@ function updateWalletStats(obj, cb) { // update or create
             if(obj.masternodesCount) {
                 stats.masternodesCount = obj.masternodesCount;
             }
+            if(obj.masternodesCountByCollateral) {
+                stats.masternodesCountByCollateral = obj.masternodesCountByCollateral;
+            }
             stats.supply = obj.supply;
             stats.version = obj.version;
             stats.protocol = obj.protocol;
@@ -202,6 +205,7 @@ function updateWalletStats(obj, cb) { // update or create
                 blockcount: obj.blockcount,
                 connections: obj.connections,
                 masternodesCount: obj.masternodesCount,
+                masternodesCountByCollateral: obj.masternodesCountByCollateral,
                 supply: obj.supply,
                 version: obj.version,
                 protocol: obj.protocol,
@@ -222,6 +226,29 @@ function updateWalletStats(obj, cb) { // update or create
     });
 }
 
+function updateWalletExtraStats(obj, cb) { // update or create
+    Stats[db.getCurrentConnection()].findOne({coin: obj.coin}, function(err, stats) {
+        if(err) {
+            return cb(err);
+        }
+        if(stats) { // exist
+            stats.total_wallets_count = obj.total_wallets_count;
+            stats.active_wallets_count = obj.active_wallets_count;
+            stats.dev_wallet_balance = obj.dev_wallet_balance;
+            stats.save(function(err) {
+                if (err) {
+                    return cb(err);
+                } else {
+                    //console.log('txid: ');
+                    return cb();
+                }
+            })
+        } else {
+            return cb();
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -231,3 +258,4 @@ module.exports.update = update;
 module.exports.count = count;
 module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.updateWalletStats = updateWalletStats;
+module.exports.updateWalletExtraStats = updateWalletExtraStats;

@@ -262,6 +262,7 @@ function getAllTxWithVinVoutByHash(hash, sortBy, order, cb) {
                 "timestamp": "$vintx.timestamp",
                 "blockindex": "$vintx.blockindex",
                 "txid": "$vintx.txid",
+                "type": "$vintx.type",
                 "blockhash": "$vintx.blockhash",
                 "createdAt": "$vintx.createdAt",
                 "updatedAt": "$vintx.updatedAt",
@@ -282,6 +283,7 @@ function getAllTxWithVinVoutByHash(hash, sortBy, order, cb) {
                 "timestamp" : { "$first": "$timestamp" },
                 "blockindex" : { "$first": "$blockindex" },
                 "txid" : { "$first": "$txid" },
+                "type" : { "$first": "$type" },
                 "blockhash" : { "$first": "$blockhash" },
             }
         },

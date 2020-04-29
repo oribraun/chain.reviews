@@ -31,5 +31,6 @@
         "address": "localhost",
         "port": 27017
     },
-    "active": false
+    "masternode_required": 0,
+    "active": true
 }

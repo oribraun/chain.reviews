@@ -7,9 +7,10 @@ var TxVinVoutSchema = new Schema({
   vin: { type: Array, default: [] },
   vout: { type: Array, default: [] },
   type: { type: Number, default: 0 , index: true},
-  timestamp: { type: Number, default: 0 },
-  total: { type: Number, default: 0 },
+  timestamp: { type: Number, default: 0 , index: true},
+  total: { type: Number, default: 0 , index: true },
   blockindex: {type: Number, default: 0, index: true},
+  order: {type: Number, default: 0, unique: true, index: true},
 // }, {id: false, timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }});
 }, {id: false, timestamps: true });
 var connections = db.getConnections();

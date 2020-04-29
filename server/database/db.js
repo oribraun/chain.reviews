@@ -18,9 +18,10 @@ var mainDbSettings = {
 }
 
 const options = {
-    socketTimeoutMS: 30000,
+    socketTimeoutMS: 1*60*1000, // 1 minute timeout
     keepAlive: true,
-    reconnectTries: 30000,
+    // reconnectTries: 30000,
+    // autoReconnect: false,
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true
@@ -37,7 +38,7 @@ var db = {
         dbString = dbString + ':' + dbSettings.port;
         dbString = dbString + '/' + dbSettings.database;
         // console.log(dbString)
-        mongoose.connect(dbString,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, function(err, database) {
+        mongoose.connect(dbString,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, autoReconnect: false}, function(err, database) {
             if (err) {
                 console.log(err)
                 console.log('Unable to connect to database: %s', dbString);

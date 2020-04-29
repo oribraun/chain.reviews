@@ -125,7 +125,7 @@ router.post('/getAllTxVinVout', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getAll2({total: {$gt: 0}}, {_id: false, timestamp: true, txid: true, total: true, blockindex: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    TxVinVoutController.getAll2({total: {$gt: 0}}, {_id: false, timestamp: true, txid: true, total: true, blockindex: true, type: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
         if(results) {
             response.data = results;
         } else {
@@ -676,7 +676,8 @@ router.get('/getMasternodeCount', (req, res) => {
 
 router.get('/masternodesCollateralCount', (req, res) => {
     const response = helpers.getGeneralResponse();
-    MasternodeController.getCollateralCount(function(results) {
+    var wallet = res.locals.wallet;
+    MasternodeController.getCollateralCount(settings[wallet].masternode_required, function(results) {
         if(results) {
             response.data = results;
         } else {
@@ -863,6 +864,114 @@ router.post('/getMarketsSummary', (req, res) => {
     });
 });
 
+router.post('/getAllClustersWithTxsCount', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    ClusterController.getAllClustersWithTxsCount(null, function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no clusters found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+router.post('/getAllClustersWithAddressCount', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    ClusterController.getAllClustersWithAddressCount(null, function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no clusters found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+router.post('/getAllClustersWithAddressAndTxsCount', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    if(isNaN(parseInt(req.body['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    if((parseInt(req.body['limit']) > 50)) {
+        res.send('max limit value is 50');
+        return;
+    }
+    if(isNaN(parseInt(req.body['offset']))) {
+        res.send('offset value have to be number');
+        return;
+    }
+    ClusterController.getAllClustersWithAddressAndTxsCount(null, req.body['limit'], req.body['offset'], function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no clusters found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+router.post('/getClusterDetails', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    ClusterController.getAllClustersWithAddressAndTxsCount(req.body['clusterId'].toString(), 1, 0, function(results) {
+        if(results) {
+            response.data = results[0];
+        } else {
+            response.err = 1;
+            response.errMessage = 'no cluster found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+router.post('/getClusterAddresses', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    if(isNaN(parseInt(req.body['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    if((parseInt(req.body['limit']) > 50)) {
+        res.send('max limit value is 50');
+        return;
+    }
+    if(isNaN(parseInt(req.body['offset']))) {
+        res.send('offset value have to be number');
+        return;
+    }
+    ClusterController.getClusterAddresses(req.body['clusterId'].toString(), req.body['limit'], req.body['offset'], function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no txs found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+router.post('/getClusterTxs', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    if(isNaN(parseInt(req.body['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    if((parseInt(req.body['limit']) > 50)) {
+        res.send('max limit value is 50');
+        return;
+    }
+    if(isNaN(parseInt(req.body['offset']))) {
+        res.send('offset value have to be number');
+        return;
+    }
+    ClusterController.getClusterTxs(req.body['clusterId'].toString(), req.body['limit'], req.body['offset'], function(results) {
+        if(results) {
+            response.data = results.txs;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no txs found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
 // router.get('/getAllClusters/:limit/:offset', (req, res) => {
 //     if(isNaN(parseInt(req.params['limit']))) {
 //         res.send('limit value have to be number');
