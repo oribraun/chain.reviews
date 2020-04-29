@@ -37,6 +37,28 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAll4(fields, sortBy, order, limit, offset, cb) {
+    this.estimatedDocumentCount(function(count) {
+        var sort = {};
+        var sortOposite = {};
+        if (sortBy) {
+            sort[sortBy] = order == 'asc' ? 1 : -1;
+            sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+        }
+        var aggregate = [];
+        // aggregate.push({$match: {total:  {$gt: 0}}});
+        aggregate.push({$sort: sort});
+        if (offset) {
+            // aggregate.push({$skip: offset*limit});
+            aggregate.push({$match: {blockindex: {$lte: count - offset * limit}}});
+        }
+        aggregate.push({$limit: limit});
+        aggregate.push({$project: fields});
+        Block[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, results) {
+            return cb(results);
+        })
+    })
+}
 function updateOne(obj, cb) { // update or create
     Block[db.getCurrentConnection()].findOne({blockhash: obj.blockhash}, function(err, block) {
         if(err) {
@@ -161,6 +183,7 @@ function getAllDuplicate(cb) {
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.getAll2 = getAll2;
+module.exports.getAll4 = getAll4;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
