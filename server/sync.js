@@ -4277,6 +4277,9 @@ function updateMarket(wallet) {
                 // console.log('data', data);
             }).catch(function (err) {
                 console.log('err', err)
+                deleteFile('market');
+                db.multipleDisconnect()
+                process.exit();
             })
         }
 
@@ -4308,10 +4311,18 @@ function updateMarket(wallet) {
                             finishUpdateMarkets();
                         }
                     });
+                }).catch(function (err) {
+                    console.log('err', err)
+                    deleteFile('market');
+                    db.multipleDisconnect()
+                    process.exit();
                 })
                 // console.log('data', data);
             }).catch(function (err) {
                 console.log('err', err)
+                deleteFile('market');
+                db.multipleDisconnect()
+                process.exit();
             })
         }
 
@@ -4333,7 +4344,10 @@ function updateMarket(wallet) {
         // console.log(symbolsToUpdate)
         // console.log('data', data);
     }).catch(function(err) {
-        console.log('err', err)
+        console.log('err', err);
+        deleteFile('market');
+        db.multipleDisconnect()
+        process.exit();
     });
 }
 
