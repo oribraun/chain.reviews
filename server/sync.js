@@ -48,6 +48,7 @@ var commands_require_db = [
     'updatetxbyday',
     'test',
     'find_unconfirmed',
+    'find_missing_blocks',
 ]
 if(settings[wallet]) {
     if(commands_require_db.indexOf(type) > -1) {
@@ -3414,6 +3415,70 @@ if (wallet) {
                                         cluster.worker.send({killAll: true});
                                     }
                                 })
+                            }
+                        })
+                    }
+                    if(count) {
+                        if(hash_number) {
+                            startTest(parseInt(hash_number) + worker_number)
+                        } else {
+                            startTest(worker_number)
+                        }
+                    }
+                })
+            }
+            break;
+        case 'find_missing_blocks':
+            // 27675 stream block
+            var cpuCount = numCPUs;
+            if (cluster.isMaster) {
+                console.log(`Master ${process.pid} is running`);
+
+                // Fork workers.
+                for (let i = 0; i < cpuCount; i++) {
+                    var worker = cluster.fork();
+                    worker.on('message', function (msg) {
+                        if(msg.killAll) {
+                            for (var id in cluster.workers) {
+                                cluster.workers[id].kill();
+                            }
+                        }
+                    })
+                }
+
+                var exit_count = 0;
+                cluster.on('exit', (worker, code, signal) => {
+                    exit_count++;
+                    // if(exit_count === numCPUs) {
+                    //     db.multipleDisconnect();
+                    // }
+                    db.multipleDisconnect();
+                    process.exit();
+                    console.log(`worker ${worker.process.pid} died`);
+                });
+            } else {
+                process.on('SIGTERM', function() {
+                    process.exit();
+                })
+                var worker_number = cluster.worker.id;
+                // console.log('start i', parseInt(hash_number) + worker_number)
+                BlockController.estimatedDocumentCount((count) => {
+                    function startTest(i) {
+                        BlockController.getOne(i, (block) => {
+                            if(!block) {
+                                console.log('block is null ', i);
+                                if (cluster.worker.isConnected()) {
+                                    cluster.worker.send({killAll: true});
+                                }
+                            } else {
+                                i = i + cpuCount;
+                                if (i < count) {
+                                    if (cluster.worker.isConnected()) {
+                                        startTest(i);
+                                    }
+                                } else {
+                                    cluster.worker.kill();
+                                }
                             }
                         })
                     }
