@@ -31,7 +31,7 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     if(sortBy) {
         sort[sortBy] = order == 'asc' ? 1 : -1;
     }
-    TxVinVout[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
+    TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
         } else {
@@ -40,6 +40,188 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAll3(pageOrder, fields, sortBy, order, limit, cb) {
+    var sort = {};
+    var sortOposite = {};
+    if(sortBy) {
+        sort[sortBy] = order == 'asc' ? 1 : -1;
+        sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+    }
+    var where = {};
+    var whereforLastPageId = {};
+    where.total =  {$gt: 0};
+    whereforLastPageId.total =  {$gt: 0};
+    TxVinVout[db.getCurrentConnection()].find({}).lean().sort({order: -1}).limit(1).exec( function(err, lastOrder) {
+        var currentOrderNumber = lastOrder[0].order;
+        if (pageOrder) {
+            var currentOrderNumber = pageOrder;
+            // var objID = mongoose.Types.ObjectId(id);
+        }
+        where.order = {$lte: currentOrderNumber};
+        whereforLastPageId.order = {$gt: currentOrderNumber};
+        // {_id: {$gt: mongoose.Types.ObjectId("5ea6c33cbb8e5e68440f1d3a")}, total: {$gt: 0}}
+        // getting data
+        TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).limit(limit).exec(function (err, txs) {
+            TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).skip(limit).limit(1).exec(function (err, nextPageDocument) {
+                TxVinVout[db.getCurrentConnection()].find(whereforLastPageId, fields).lean().sort(sortOposite).skip(limit - 1).limit(1).exec(function (err, lastPageDocument) {
+                    var results = {};
+                    if (txs && txs.length) {
+                        results.txs = txs;
+                        // results.txs_count = txs.length;
+                        results.nextPageOrder = "";
+                        results.lastPageOrder = "";
+                        results.currentPageOrder = currentOrderNumber;
+                        if(nextPageDocument && nextPageDocument.length) {
+                            results.nextPageOrder = nextPageDocument[0].order;
+                        }
+                        if (lastPageDocument && lastPageDocument.length) {
+                            results.lastPageOrder = lastPageDocument[0].order;
+                        }
+                        return cb(results);
+                    } else {
+                        return cb();
+                    }
+                });
+            })
+        });
+    })
+}
+
+function getAll4(fields, sortBy, order, limit, offset, cb) {
+    this.estimatedDocumentCount(function(count) {
+        var sort = {};
+        var sortOposite = {};
+        if (sortBy) {
+            sort[sortBy] = order == 'asc' ? 1 : -1;
+            sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+        }
+        var aggregate = [];
+        // aggregate.push({$match: {total:  {$gt: 0}}});
+        aggregate.push({$sort: sort});
+        if (offset) {
+            // aggregate.push({$skip: offset*limit});
+            aggregate.push({$match: {order: {$lte: count - offset * limit}}});
+        }
+        aggregate.push({$limit: limit});
+        aggregate.push({$project: fields});
+        TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, results) {
+            return cb(results);
+        })
+    })
+    // TxVinVout[db.getCurrentConnection()].find(whereforCount, fields).lean().sort(sortOposite).limit(limit).exec(function (err, lastPage) { // getting last page
+    //     TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).limit(limit).exec(function (err, currentPage) {
+    //         if (currentPage && currentPage.length) {
+    //             fromOrder = currentPage[0].order;
+    //             fromId = currentPage[0]._id;
+    //         }
+    //         results.currentPage = currentPage;
+    //         results.lastPage = lastPage;
+    //         return cb(results);
+    //     })
+    // });
+    // TxVinVout[db.getCurrentConnection()].find({}).lean().sort({order: -1}).limit(1).exec( function(err, lastOrder) {
+    //     var currentOrderNumber = lastOrder[0].order;
+    //     if (pageOrder) {
+    //         var currentOrderNumber = pageOrder;
+    //         // var objID = mongoose.Types.ObjectId(id);
+    //     }
+    //     where.order = {$lte: currentOrderNumber};
+    //     whereforLastPageId.order = {$gt: currentOrderNumber};
+    //     // {_id: {$gt: mongoose.Types.ObjectId("5ea6c33cbb8e5e68440f1d3a")}, total: {$gt: 0}}
+    //     // getting data
+    //     TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).limit(limit).exec(function (err, txs) {
+    //         TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).skip(limit).limit(1).exec(function (err, nextPageDocument) {
+    //             TxVinVout[db.getCurrentConnection()].find(whereforLastPageId, fields).lean().sort(sortOposite).skip(limit - 1).limit(1).exec(function (err, lastPageDocument) {
+    //                 var results = {};
+    //                 if (txs && txs.length) {
+    //                     results.txs = txs;
+    //                     // results.txs_count = txs.length;
+    //                     results.nextPageOrder = "";
+    //                     results.lastPageOrder = "";
+    //                     results.currentPageOrder = currentOrderNumber;
+    //                     if(nextPageDocument && nextPageDocument.length) {
+    //                         results.nextPageOrder = nextPageDocument[0].order;
+    //                     }
+    //                     if (lastPageDocument && lastPageDocument.length) {
+    //                         results.lastPageOrder = lastPageDocument[0].order;
+    //                     }
+    //                     return cb(results);
+    //                 } else {
+    //                     return cb();
+    //                 }
+    //             });
+    //         })
+    //     });
+    // })
+}
+
+function getAll5(pageOrder, fields, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    var sortOposite = {};
+    if(sortBy) {
+        sort[sortBy] = order == 'asc' ? 1 : -1;
+        sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+    }
+    var where = {};
+    var whereforLastPageId = {};
+    where.total =  {$gt: 0};
+    whereforLastPageId.total =  {$gt: 0};
+    var numberOfPagesToFetch = 10;
+    TxVinVout[db.getCurrentConnection()].find({}).lean().sort({order: -1}).limit(1).exec( function(err, lastOrder) {
+        var currentOrderNumber = lastOrder[0].order;
+        if (pageOrder) {
+            currentOrderNumber = pageOrder;
+            // var objID = mongoose.Types.ObjectId(id);
+        }
+        where.order = {$lte: currentOrderNumber};
+        whereforLastPageId.order = {$gt: currentOrderNumber};
+        // {_id: {$gt: mongoose.Types.ObjectId("5ea6c33cbb8e5e68440f1d3a")}, total: {$gt: 0}}
+        // getting data
+        TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).limit(limit).exec(function (err, txs) {
+            TxVinVout[db.getCurrentConnection()].find(where, fields).lean().sort(sort).skip(limit).limit(limit*numberOfPagesToFetch).exec(function (err, nextPageDocument) {
+                TxVinVout[db.getCurrentConnection()].find(whereforLastPageId, fields).lean().sort(sortOposite).skip(limit - 1).limit(limit*numberOfPagesToFetch).exec(function (err, lastPageDocument) {
+                    var results = {};
+                    if (txs && txs.length) {
+                        results.txs = txs;
+                        // results.txs_count = txs.length;
+                        // results.nextPageOrder = "";
+                        // results.lastPageOrder = "";
+                        results.currentPageOrder = currentOrderNumber;
+                        // if(nextPageDocument && nextPageDocument.length) {
+                        //     results.nextPageOrder = nextPageDocument[0].order;
+                        // }
+                        // if (lastPageDocument && lastPageDocument.length) {
+                        //     results.lastPageOrder = lastPageDocument[0].order;
+                        // }
+                        // results.nextPageDocumentLength = nextPageDocument.length;
+                        // results.lastPageDocumentLength = lastPageDocument.length;
+                        results.nextPages = {};
+                        results.lastPages = {};
+                        // results.offset = offset;
+                        var count = 1, i = 0;
+                        for(i = 0; i < nextPageDocument.length; i += limit) {
+                            count++;
+                            results.nextPages[offset + count] = nextPageDocument[i].order;
+                        }
+                        count = 1, i = 0;
+                        var lastPageOffset = 0;
+                        var currentOffset = offset - numberOfPagesToFetch;
+                        if(currentOffset > 0) {
+                            lastPageOffset = currentOffset;
+                        }
+                        for(i = 0; i < lastPageDocument.length; i += limit) {
+                            results.lastPages[lastPageOffset + count] = lastPageDocument[lastPageDocument.length - i - 1].order;
+                            count++;
+                        }
+                        return cb(results);
+                    } else {
+                        return cb();
+                    }
+                });
+            })
+        });
+    })
+}
 function updateOne(obj, cb) { // update or create
     TxVinVout[db.getCurrentConnection()].findOne({txid: obj.txid}, function(err, tx) {
         if(err) {
@@ -53,6 +235,7 @@ function updateOne(obj, cb) { // update or create
             tx.timestamp = obj.timestamp;
             tx.total = obj.total.toFixed(8);
             tx.blockindex = obj.blockindex;
+            tx.order = obj.order;
             tx.save(function(err) {
                 if (err) {
                     return cb(err);
@@ -71,6 +254,7 @@ function updateOne(obj, cb) { // update or create
                 timestamp : obj.timestamp,
                 total: obj.total.toFixed(8),
                 blockindex: obj.blockindex,
+                order: obj.order,
             });
             newTxVinVout.save(function(err) {
                 if (err) {
@@ -177,7 +361,8 @@ function estimatedDocumentCount(cb) {
 
 function countWhereTotal(cb) {
     var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
-    TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}, timestamp: {$gte: yearFromNowTimestamp }}, {}).countDocuments({}, function (err, count) {
+    // TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}, timestamp: {$gte: yearFromNowTimestamp }}, {}).lean().countDocuments({}, function (err, count) {
+    TxVinVout[db.getCurrentConnection()].find({total: {$gt: 0}}, {}).lean().countDocuments({}, function (err, count) {
         if(err) {
             cb()
         } else {
@@ -496,6 +681,9 @@ module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.countWhereTotal = countWhereTotal;
 module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getAll2 = getAll2;
+module.exports.getAll3 = getAll3;
+module.exports.getAll4 = getAll4;
+module.exports.getAll5 = getAll5;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getTransactionsChart = getTransactionsChart;
 module.exports.saveType = saveType;
