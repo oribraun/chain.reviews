@@ -68,7 +68,8 @@ router.post('/getAllBlocks', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    BlockController.getAll2({}, {blockindex: true, blockhash: true, timestamp: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    BlockController.getAll4({blockindex: true, blockhash: true, timestamp: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    // BlockController.getAll2({}, {blockindex: true, blockhash: true, timestamp: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
         if(results) {
             response.data = results;
         } else {
@@ -115,6 +116,28 @@ router.get('/getAllTx/:limit', (req, res) => {
 //         res.send(JSON.stringify(results, null, 2));
 //     })
 // });
+// router.post('/getAllTxVinVout', (req, res) => {
+//     if(isNaN(parseInt(req.body['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     if(isNaN(parseInt(req.body['offset']))) {
+//         res.send('offset value have to be number');
+//         return;
+//     }
+//     const response = helpers.getGeneralResponse();
+//     var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+//     // TxVinVoutController.getAll2({total: {$gt: 0}, timestamp: {$gte: yearFromNowTimestamp }}, {_id: false, timestamp: true, txid: true, total: true, blockindex: true, type: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+//     TxVinVoutController.getAll2({total: {$gt: 0}}, {_id: true, timestamp: true, txid: true, total: true, blockindex: true, type: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no tx found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// });
 router.post('/getAllTxVinVout', (req, res) => {
     if(isNaN(parseInt(req.body['limit']))) {
         res.send('limit value have to be number');
@@ -125,7 +148,7 @@ router.post('/getAllTxVinVout', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getAll2({total: {$gt: 0}}, {_id: false, timestamp: true, txid: true, total: true, blockindex: true, type: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    TxVinVoutController.getAll4({order: true, timestamp: true, txid: true, total: true, blockindex: true, type: true},'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
         if(results) {
             response.data = results;
         } else {

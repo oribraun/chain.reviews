@@ -247,6 +247,8 @@ function getAddressTxs(address, limit, offset, cb) {
         var aggregate = [];
         var objID = mongoose.Types.ObjectId("5e3eb7afca9bdb0e2adaf1c1");
         aggregate.push({$match: {address: address}});
+        // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+        // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
         // aggregate.push({$limit: count});
         // aggregate.push({ $match: { $and: [ { address: address }, { _id: { $gt: "5e3eb7afca9bdb0e2adaf1c1" } } ] } });
         // aggregate.push({$sort:{blockindex:-1}});
@@ -544,45 +546,47 @@ function countTxInArray(addresses, cb) {
     });
 }
 function getAddressDetails(address, cb) {
-    AddressToUpdate[db.getCurrentConnection()].aggregate([
-        { $match : { address : address } },
-        {
-            "$group": {
-                "_id": "$address",
-                "address": {"$first": "$address"},
-                "sent" : { "$sum":
-                        {$cond:
-                                {if: { $eq: [ "$_id", "coinbase" ] },
-                                    then: "$amount",
-                                    else: {$cond:
-                                            {if: { $eq: [ "$type", "vin" ] },
-                                                then: "$amount",
-                                                else: 0 }} }}
-                },
-                "received" : { "$sum":
-                        {$cond:
-                                {if: { $eq: [ "$_id", "coinbase" ] },
-                                    then: 0,
-                                    else: {$cond:
-                                            {if: { $eq: [ "$type", "vout" ] },
-                                                then: "$amount",
-                                                else: 0 }} }}
-                },
-                "amount" : { "$sum": "$amount" },
-                "count" : { $sum: 1 }
-            }
-        },
-        {
-            "$project": {
-                "_id": "$_id",
-                "address": "$address",
-                "sent": "$sent",
-                "received": "$received",
-                "balance": {"$subtract": ['$received', '$sent']},
-                "count": "$count",
-            }
-        },
-    ]).allowDiskUse(true).exec(function(err, results) {
+    var aggregate = [];
+    // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
+    aggregate.push({ $match : { address : address } });
+    aggregate.push({
+        "$group": {
+            "_id": "$address",
+            "address": {"$first": "$address"},
+            "sent" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: "$amount",
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vin" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+            "received" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: 0,
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vout" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+            "amount" : { "$sum": "$amount" },
+            "count" : { $sum: 1 }
+        }
+    })
+    aggregate.push({
+        "$project": {
+            "_id": "$_id",
+            "address": "$address",
+            "sent": "$sent",
+            "received": "$received",
+            "balance": {"$subtract": ['$received', '$sent']},
+            "count": "$count",
+        }
+    })
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, results) {
         if(results && results.length) {
             return cb(results[0]);
         } else {
@@ -742,8 +746,8 @@ function getRichlistAndExtraStats(sortBy, order, limit, dev_address, cb) {
     var aggregate = [];
     aggregate.push({$match: {amount: {$gt: 0}}});
     aggregate.push({$match: {_id: {$ne: "coinbase"}}});
-    // var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
-    // aggregate.push({$match: {txid_timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
+    // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
     aggregate.push({
         "$group": {
             "_id": "$address",
@@ -962,6 +966,8 @@ function getAddressTxChart(address, date, cb) {
     var aggregate = [];
     aggregate.push({$match: {amount: {$gt: 0}}});
     aggregate.push({$match: {address: address}});
+    // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
     if(date) {
         var timestamp = new Date(date).getTime() / 1000;
         aggregate.push({$match: {txid_timestamp: {$gte: timestamp }}});
