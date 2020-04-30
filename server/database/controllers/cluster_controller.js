@@ -9,9 +9,9 @@ function getAll(sortBy, order, limit, cb) {
     if(sortBy) {
         sort[sortBy] = order == 'desc' ? -1 : 1;
     }
-    Cluster[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
-        if(tx) {
-            return cb(tx);
+    Cluster[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, clusters) {
+        if(clusters) {
+            return cb(clusters);
         } else {
             return cb(null);
         }
@@ -630,6 +630,18 @@ function getClusterAddresses(id, limit, offset, cb) {
         }
     });
 }
+
+function getClusterByAddress(address, cb) {
+
+    Cluster[db.getCurrentConnection()].find({addresses:{$elemMatch:{$eq: address}}}, {_id: 1}).exec( function(err, clusters) {
+        if(clusters) {
+            return cb(clusters);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.getAll2 = getAll2;
 module.exports.updateOne = updateOne;
@@ -647,3 +659,4 @@ module.exports.getAllClusters = getAllClusters;
 module.exports.getAllClustersWithAddressCount = getAllClustersWithAddressCount;
 module.exports.getAllClustersWithTxsCount = getAllClustersWithTxsCount;
 module.exports.getAllClustersWithAddressAndTxsCount = getAllClustersWithAddressAndTxsCount;
+module.exports.getClusterByAddress = getClusterByAddress;
