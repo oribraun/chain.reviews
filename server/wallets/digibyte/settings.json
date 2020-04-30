@@ -2,9 +2,9 @@
     "coin": "digibyte",
     "cli": "http://134.122.89.4:3000/api/digibyte/",
     "daemon": "http://134.122.89.4:3000/api/digibyte/",
-    "example_txid": "txid for route examples",
-    "example_hash": "hash for route examples",
-    "dev_address": "address for route examples",
+    "example_txid": "dd8a4a3b8ecdc14e4142ffb73a5b0c8801030f98dbd818f1b90ac3683b4f2c60",
+    "example_hash": "4da631f2ac1bed857bd968c67c913978274d8aabed64ab2bcebc1665d7f4d3a0",
+    "dev_address": "DGfh712vYus7vU6QhaXyjVMdbMQJg28B5H",
     "commands": {
         "startwallet": "startWallet",
         "stopwallet": "stopWallet",

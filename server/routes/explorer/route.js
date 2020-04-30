@@ -22,7 +22,11 @@ router.get('/*', (req, res) => {
     // console.log(path.resolve(__dirname + "/../../../explorer/dist/index.html"));
     // BlockController.getAll2({}, {blockindex: true, blockhash: true, txid: true},'blockindex', 'desc', 10, 0, function(results) {
     StatsController.getOne(res.locals.wallet, function(stats) {
-        BlockController.estimatedDocumentCount(function(total) {
+        BlockController.getAll('blockindex', 'desc', 1 ,function(block) {
+            var total = 0;
+            if(block && block.length) {
+                total = block[0].blockindex;
+            }
             MarketsController.getAll('symbol', 'desc', 0, function(markets) {
                 var data = {
                     wallet: res.locals.wallet,

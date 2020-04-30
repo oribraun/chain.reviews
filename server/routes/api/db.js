@@ -18,7 +18,7 @@ var MasternodeController = require('./../../database/controllers/masternode_cont
 var PeersController = require('./../../database/controllers/peers_controller');
 var MarketController = require('./../../database/controllers/markets_controller');
 var TxByDayController = require('./../../database/controllers/tx_by_day_controller');
-// var ClusterController = require('./../../database/controllers/cluster_controller');
+var ClusterController = require('./../../database/controllers/cluster_controller');
 
 // var wallet = process.argv[2];
 
@@ -198,36 +198,114 @@ router.get('/getstats', (req, res) => {
     var return_hash = { };
     StatsController.getOne(wallet, function(stats) {
         if(stats) {
-            AddressToUpdateController.countUnique(function(total_wallets_count) {
-                return_hash.total_wallets_count = total_wallets_count;
-                // AddressToUpdateController.countActive(function(active_wallets_count) {
-                    return_hash.active_wallets_count = 0;
-                    return_hash.money_supply = stats.moneysupply;
-                    return_hash.masternodesCount = stats.masternodesCount.total;
-                    return_hash.block_count = stats.blockcount;
-                    AddressToUpdateController.getAddressDetails(settings[wallet].dev_address, function(address) {
-                        return_hash.dev_wallet_balance = (address.balance / 100000000);
-                        var coinsLocked = stats.masternodesCount.total * settings[wallet].masternode_required;
-                        var coinsLockedPercentage = coinsLocked / (stats.moneysupply/100);
-                        return_hash.coins_locked = coinsLockedPercentage.toFixed(2);
-                        return_hash[settings[wallet].coin + '_locked'] = coinsLockedPercentage.toFixed(2);
-                        TxVinVoutController.getLastTx(function(tx) {
-                            var time_from = tx.timestamp;
-                            var tx_blockindex = tx.blockindex - stats.blockcount;
-                            BlockController.getOne(tx_blockindex, function(block) {
-                                var time_to = block.timestamp;
-                                return_hash.average_sec_per_block = (time_from - time_to) / stats.blockcount;
-                                res.send(JSON.stringify(return_hash, null, 2));
-                            })
-                        })
-                    })
-                // })
+            return_hash.total_wallets_count = stats.total_wallets_count;
+            return_hash.active_wallets_count = stats.active_wallets_count;
+            return_hash.money_supply = parseFloat(stats.moneysupply);
+            return_hash.masternodesCount = stats.masternodesCount.total;
+            // return_hash.masternodesCountByCollateral = stats.masternodesCountByCollateral;
+            return_hash.block_count = stats.blockcount;
+            return_hash.dev_wallet_balance = (stats.dev_wallet_balance / 100000000);
+            var coinsLocked = stats.masternodesCountByCollateral * settings[wallet].masternode_required;
+            var coinsLockedPercentage = coinsLocked / (stats.moneysupply/100);
+            return_hash.coins_locked = coinsLockedPercentage.toFixed(2);
+            return_hash[settings[wallet].coin + '_locked'] = coinsLockedPercentage.toFixed(2);
+            TxVinVoutController.getLastTx(function(tx) {
+                var time_from = tx.timestamp;
+                BlockController.getOne(1, function(block) {
+                    var time_to = block.timestamp;
+                    return_hash.average_sec_per_block = (time_from - time_to) / stats.blockcount;
+                    res.send(JSON.stringify(return_hash, null, 2));
+                })
             })
         } else {
             res.send(' no stats found yet');
         }
     });
 });
+
+router.get('/listMasternodes', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    MasternodeController.getAll('lastseen', 'desc', 0, function(results) {
+        res.send(JSON.stringify(results, null, 2));
+        // db.disconnect();
+    })
+})
+
+// router.get('/getstats', (req, res) => {
+//     var wallet = res.locals.wallet;
+//     var return_hash = { };
+//     var promises = [];
+//     var data = {};
+//     promises.push(new Promise((resolve, reject) => {
+//         StatsController.getOne(wallet, function(stats) {
+//             console.log('stats')
+//             data.stats = stats;
+//             resolve();
+//         })
+//     }))
+//     promises.push(new Promise((resolve, reject) => {
+//         AddressToUpdateController.getAddressDetails(settings[wallet].dev_address, function(address) {
+//             console.log('address')
+//             data.address = address;
+//             resolve();
+//         })
+//     }))
+//     promises.push(new Promise((resolve, reject) => {
+//         TxVinVoutController.getLastTx(function(tx) {
+//             console.log('tx')
+//             data.tx = tx;
+//             resolve();
+//         })
+//     }))
+//     promises.push(new Promise((resolve, reject) => {
+//         BlockController.getOne(0, function(block) {
+//             console.log('block')
+//             data.block = block;
+//             resolve();
+//         })
+//     }))
+//     promises.push(new Promise((resolve, reject) => {
+//         AddressToUpdateController.countUnique(function(total_wallets_count) {
+//             console.log('total_wallets_count')
+//             data.total_wallets_count = total_wallets_count;
+//             resolve();
+//         })
+//     }))
+//     promises.push(new Promise((resolve, reject) => {
+//         // AddressToUpdateController.countActive(function(active_wallets_count) {
+//             console.log('active_wallets_count')
+//             data.active_wallets_count = 0;
+//             resolve();
+//         // })
+//     }))
+//     Promise.all(promises).then((response) => {
+//         console.log('all')
+//         if(data.stats) {
+//             // AddressToUpdateController.countUnique(function(total_wallets_count) {
+//             return_hash.total_wallets_count = data.total_wallets_count;
+//             // AddressToUpdateController.countActive(function(active_wallets_count) {
+//             return_hash.active_wallets_count = data.active_wallets_count;
+//             return_hash.money_supply = parseFloat(data.stats.moneysupply);
+//             return_hash.masternodesCount = data.stats.masternodesCount.total;
+//             return_hash.block_count = data.stats.blockcount;
+//             return_hash.dev_wallet_balance = (data.address.balance / 100000000);
+//             var coinsLocked = data.stats.masternodesCount.total * settings[wallet].masternode_required;
+//             var coinsLockedPercentage = coinsLocked / (data.stats.moneysupply/100);
+//             return_hash.coins_locked = coinsLockedPercentage.toFixed(2);
+//             return_hash[settings[wallet].coin + '_locked'] = coinsLockedPercentage.toFixed(2);
+//             var time_from = data.tx.timestamp;
+//             var tx_blockindex = data.tx.blockindex - data.stats.blockcount;
+//             var time_to = data.block.timestamp;
+//             return_hash.average_sec_per_block = (time_from - time_to) / data.stats.blockcount;
+//             return_hash.address = data.address;
+//             res.send(JSON.stringify(return_hash, null, 2));
+//             // })
+//             // })
+//         } else {
+//             res.send(' no stats found yet');
+//         }
+//     })
+// });
 
 // router.get('/countActive', (req, res) => {
 //     AddressToUpdateController.countActive(function(active_wallets_count) {
@@ -564,6 +642,111 @@ router.get('/getstats', (req, res) => {
 // router.get('/getUsersTxsCount24Hours', (req, res) => {
 //     TxVinVoutController.getUsersTxsCount24Hours(function(count) {
 //         res.send(JSON.stringify(count, null, 2));
+//     })
+// })
+
+// router.get('/getAllClustersWithTxsCount', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     ClusterController.getAllClustersWithTxsCount(null, function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no clusters found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// })
+// router.get('/getAllClustersWithAddressCount', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     ClusterController.getAllClustersWithAddressCount(null, function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no clusters found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// })
+// router.get('/getAllBlocks/:limit/:offset', (req, res) => {
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     if(isNaN(parseInt(req.params['offset']))) {
+//         res.send('offset value have to be number');
+//         return;
+//     }
+//     const response = helpers.getGeneralResponse();
+//     BlockController.getAll4({blockindex: true},'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no tx found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// });
+router.get('/getAllClustersWithAddressAndTxsCount/:limit/:offset', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    if(isNaN(parseInt(req.params['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    if((parseInt(req.params['limit']) > 50)) {
+        res.send('max limit value is 50');
+        return;
+    }
+    if(isNaN(parseInt(req.params['offset']))) {
+        res.send('offset value have to be number');
+        return;
+    }
+    ClusterController.getAllClustersWithAddressAndTxsCount(null, req.params['limit'], req.params['offset'], function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no clusters found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+// router.get('/getClusterDetails/:clusterId', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     ClusterController.getAllClustersWithAddressAndTxsCount(req.params['clusterId'].toString(), 1, 0, function(results) {
+//         if(results) {
+//             response.data = results[0];
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no cluster found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// })
+// router.get('/getClusterAddresses/:clusterId/:limit/:offset', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     if((parseInt(req.params['limit']) > 50)) {
+//         res.send('max limit value is 50');
+//         return;
+//     }
+//     if(isNaN(parseInt(req.params['offset']))) {
+//         res.send('offset value have to be number');
+//         return;
+//     }
+//     ClusterController.getClusterAddresses(req.params['clusterId'].toString(), req.params['limit'], req.params['offset'], function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no txs found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
 //     })
 // })
 module.exports = router;

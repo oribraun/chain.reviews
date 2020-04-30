@@ -2172,9 +2172,9 @@ if (wallet) {
                 var mongoTimeout = false;
                 var lastOrder = 0;
                 var startVinVoutClusterLinerAll = function() {
-                    TxVinVoutController.getAll2(  { order: {$exists: true } }, {},'order', 'desc', 1, 0, function(latestTx) {
+                    TxVinVoutController.getAll2(  {}, {order:1},'order', 'desc', 1, 0, function(latestTx) {
                         // var currentBlockIndex = 0;
-                        if (latestTx.length) {
+                        if (latestTx.length && latestTx[0].order) {
                             lastOrder = latestTx[0].order;
                         }
                         console.log('latestTx', latestTx)
@@ -4049,6 +4049,7 @@ function get_supply(type) {
 };
 var globalStartGettingTransactions = function(blockNum) {
     var txInsertCount = 0;
+    var blockInserted = false;
     wallet_commands.getBlockHash(wallet, blockNum).then(function (hash) {
         wallet_commands.getBlock(wallet, hash).then(function (block) {
             // TODO
@@ -4060,8 +4061,12 @@ var globalStartGettingTransactions = function(blockNum) {
                 blockindex: current_block.height,
             });
             BlockController.updateOne(newBlock, function(err) {
+                blockInserted = true;
                 if(err) {
                     console.log('create block err ', err);
+                }
+                if (txInsertCount >= current_block.tx.length && blockInserted) {
+                    cluster.worker.send({finished: true});
                 }
             });
             var updateBlockTx = function(i, current_block) {
@@ -4087,7 +4092,7 @@ var globalStartGettingTransactions = function(blockNum) {
                                 cluster.worker.send({mongoTimeout: true});
                             }
                         }
-                        if (txInsertCount >= current_block.tx.length) {
+                        if (txInsertCount >= current_block.tx.length && blockInserted) {
                             cluster.worker.send({finished: true});
                         }
                     });
@@ -4120,7 +4125,7 @@ var globalStartGettingTransactions = function(blockNum) {
                                     cluster.worker.send({mongoTimeout: true});
                                 }
                             }
-                            if (txInsertCount >= current_block.tx.length) {
+                            if (txInsertCount >= current_block.tx.length && blockInserted) {
                                 cluster.worker.send({finished: true});
                             }
                         });
