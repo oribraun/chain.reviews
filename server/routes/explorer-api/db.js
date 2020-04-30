@@ -148,7 +148,7 @@ router.post('/getAllTxVinVout', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getAll2({},{order: true, timestamp: true, txid: true, total: true, blockindex: true, type: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    TxVinVoutController.getAll2({total: {$gt: 0}},{order: true, timestamp: true, txid: true, total: true, blockindex: true, type: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
         if(results) {
             response.data = results;
         } else {
