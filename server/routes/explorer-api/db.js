@@ -148,7 +148,8 @@ router.post('/getAllTxVinVout', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getAll2({total: {$gt: 0}},{order: true, timestamp: true, txid: true, total: true, blockindex: true, type: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    // TxVinVoutController.getAll2({total: {$gt: 0}},{order: true, timestamp: true, txid: true, total: true, blockindex: true, type: true},'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    TxVinVoutController.getAll4({order: true, timestamp: true, txid: true, total: true, blockindex: true, type: true},'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
         if(results) {
             response.data = results;
         } else {
@@ -255,13 +256,18 @@ router.post('/getAddressTxs', (req, res) => {
 router.post('/getAddressDetails', (req, res) => {
     const response = helpers.getGeneralResponse();
     AddressToUpdateController.getAddressDetails(req.body['address'], function(results) {
-        if(results) {
-            response.data = results;
-        } else {
-            response.err = 1;
-            response.errMessage = 'no address found';
-        }
-        res.send(JSON.stringify(response, null, 2));
+        ClusterController.getClusterByAddress(req.body['address'], function (clusters) {
+            if (results) {
+                if(clusters) {
+                    results.clusters = clusters;
+                }
+                response.data = results;
+            } else {
+                response.err = 1;
+                response.errMessage = 'no address found';
+            }
+            res.send(JSON.stringify(response, null, 2));
+        });
     });
 })
 

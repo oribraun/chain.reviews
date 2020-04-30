@@ -43,6 +43,7 @@ app.use(session({
 }))
 
 app.use(cors());
+http.setTimeout(1000*60*3); // 3 minutes timeout
 http.listen(port, function() {
     console.log('Server Works !!! At port ' + port);
 });
