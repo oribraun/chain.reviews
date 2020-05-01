@@ -1116,9 +1116,9 @@ if (wallet) {
                 wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
                     // allBlocksCount = 152939;
                     var startTime = new Date();
-                    console.log(`Master ${process.pid} is running`);
+                    // console.log(`Master ${process.pid} is running`);
                     if(fileExist()) {
-                        console.log('reindex is in progress');
+                        // console.log('reindex is in progress');
                         db.multipleDisconnect();
                         process.exit(1)
                         return;
@@ -1145,7 +1145,7 @@ if (wallet) {
                                 return;
                             }
                             if(currentBlock > allBlocksCount) {
-                                console.log('no new blocks found');
+                                // console.log('no new blocks found');
                                 deleteFile();
                                 db.multipleDisconnect();
                                 process.exit();
@@ -1193,12 +1193,12 @@ if (wallet) {
                                             console.log('*******************************************************************\n');
                                             exit_code = 1;
                                         }
-                                        console.log('took - ', helpers.getFinishTime(startTime));
+                                        // console.log('took - ', helpers.getFinishTime(startTime));
                                         deleteFile();
                                         db.multipleDisconnect();
                                         process.exit(exit_code);
                                     }
-                                    console.log(`worker ${worker.process.pid} died`);
+                                    // console.log(`worker ${worker.process.pid} died`);
                                 });
                                 if(currentBlock <= allBlocksCount) {
                                     worker.send({blockNum: currentBlock});
@@ -1296,9 +1296,9 @@ if (wallet) {
         case 'update_tx_vin_vout_and_addresses': // 12:47:25.775 - block count 268159
             if (cluster.isMaster) {
                 var startTime = new Date();
-                console.log(`Master ${process.pid} is running`);
+                // console.log(`Master ${process.pid} is running`);
                 if(fileExist()) {
-                    console.log('reindex is in progress');
+                    // console.log('reindex is in progress');
                     db.multipleDisconnect();
                     process.exit(1)
                     return;
@@ -1332,8 +1332,8 @@ if (wallet) {
                         }
                         TxVinVoutController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted) {
                             AddressToUpdateController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted2) {
-                                console.log('tx vin vout', numberDeleted);
-                                console.log('address deleted', numberDeleted2);
+                                // console.log('tx vin vout', numberDeleted);
+                                // console.log('address deleted', numberDeleted2);
                                 gettingNextTxsInProgress = true;
                                 gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
                                     gotBlocks++;
@@ -1422,7 +1422,7 @@ if (wallet) {
                                                     }
                                                     // console.log('addreses_to_update', addreses_to_update.length)
                                                 }
-                                                console.log(`worker ${worker.process.pid} died`);
+                                                // console.log(`worker ${worker.process.pid} died`);
                                             })
                                             if (currentBlocks[countBlocks]) {
                                                 worker.send({currentBlock: currentBlocks[countBlocks], order: lastOrder + countBlocks});
@@ -1432,7 +1432,7 @@ if (wallet) {
                                             }
                                         }
                                     } else {
-                                        console.log('no new blocks found');
+                                        // console.log('no new blocks found');
                                         deleteFile();
                                         db.multipleDisconnect();
                                         process.exit();
@@ -3054,13 +3054,13 @@ if (wallet) {
             break;
         case 'updatemasternodes':
             if(fileExist('mn')) {
-                console.log('masternodes update is in progress');
+                // console.log('masternodes update is in progress');
                 db.multipleDisconnect();
                 process.exit(1)
                 return;
             }
             createFile('mn');
-            console.log('getting all masternodes from ' + wallet + ' wallet');
+            // console.log('getting all masternodes from ' + wallet + ' wallet');
             wallet_commands.getAllMasternodes(wallet).then(function(masternodes) {
                 // db.connect(settings[wallet].dbSettings);
                 var masternodes = JSON.parse(masternodes);
@@ -3077,7 +3077,7 @@ if (wallet) {
                                 } else {
                                     StatsController.getOne(settings[wallet].coin, function(stats){
                                         if(stats) {
-                                            console.log('updating masternode count');
+                                            // console.log('updating masternode count');
                                             wallet_commands.getMasternodeCount(wallet).then(function (masterNodesCount) {
                                                 MasternodeController.getMasternodesCountByCollateral(settings[wallet].masternode_required, function(masternodesCountByCollateral) {
                                                     // console.log('masternodes updated');
@@ -3087,7 +3087,7 @@ if (wallet) {
                                                         if (err) {
                                                             console.log(err)
                                                         }
-                                                        console.log('finish updating masternode count');
+                                                        // console.log('finish updating masternode count');
                                                         db.multipleDisconnect();
                                                         deleteFile('mn');
                                                         process.exit();
@@ -3118,7 +3118,7 @@ if (wallet) {
                     } else {
                         StatsController.getOne(settings[wallet].coin, function(stats){
                             if(stats) {
-                                console.log('updating masternode count');
+                                // console.log('updating masternode count');
                                 wallet_commands.getMasternodeCount(wallet).then(function (masterNodesCount) {
                                     // console.log('masternodes updated');
                                     stats.masternodesCount = JSON.parse(masterNodesCount);
@@ -3126,7 +3126,7 @@ if (wallet) {
                                         if (err) {
                                             console.log(err)
                                         }
-                                        console.log('finish updating masternode count');
+                                        // console.log('finish updating masternode count');
                                         db.multipleDisconnect();
                                         deleteFile('mn');
                                         process.exit();
@@ -3148,7 +3148,7 @@ if (wallet) {
                                 process.exit();
                             }
                         })
-                        console.log('no masternodes found');
+                        // console.log('no masternodes found');
                         // db.multipleDisconnect();
                         // deleteFile('mn');
                         // process.exit();
@@ -3163,7 +3163,7 @@ if (wallet) {
             break;
         case 'updatepeers': {
             if(fileExist('peers')) {
-                console.log('peers update is in progress');
+                // console.log('peers update is in progress');
                 db.multipleDisconnect();
                 process.exit(1)
                 return;
@@ -3228,7 +3228,7 @@ if (wallet) {
         case 'updateextrastats': {
             var startTime = new Date();
             if(fileExist('extraStats')) {
-                console.log('extra stats update is in progress');
+                // console.log('extra stats update is in progress');
                 db.multipleDisconnect();
                 process.exit(1)
                 return;
@@ -3243,7 +3243,7 @@ if (wallet) {
         }
         case 'updaterichlistandextrastats': {
             if(fileExist('richlist')) {
-                console.log('richlist update is in progress');
+                // console.log('richlist update is in progress');
                 db.multipleDisconnect();
                 process.exit(1)
                 return;
@@ -3254,7 +3254,7 @@ if (wallet) {
         }
         case 'updatemarket': {
             if(fileExist('market')) {
-                console.log('market update is in progress');
+                // console.log('market update is in progress');
                 db.multipleDisconnect();
                 process.exit(1)
                 return;
@@ -3265,7 +3265,7 @@ if (wallet) {
         }
         case 'updatetxbyday': {
             if(fileExist('txByDay')) {
-                console.log('txbyday update is in progress');
+                // console.log('txbyday update is in progress');
                 db.multipleDisconnect();
                 process.exit(1)
                 return;
@@ -3747,34 +3747,34 @@ function updateExtraStats() {
     var data = {};
     promises.push(new Promise((resolve, reject) => {
         StatsController.getOne(wallet, function(stats) {
-            console.log('stats')
+            // console.log('stats')
             data.stats = stats;
             resolve();
         })
     }))
     promises.push(new Promise((resolve, reject) => {
         AddressToUpdateController.getAddressDetails(settings[wallet].dev_address, function(address) {
-            console.log('address')
+            // console.log('address')
             data.address = address;
             resolve();
         })
     }))
     promises.push(new Promise((resolve, reject) => {
         AddressToUpdateController.countUnique(function(total_wallets_count) {
-            console.log('total_wallets_count', total_wallets_count)
+            // console.log('total_wallets_count', total_wallets_count)
             data.total_wallets_count = total_wallets_count;
             resolve();
         })
     }))
     promises.push(new Promise((resolve, reject) => {
         AddressToUpdateController.countActive(function(active_wallets_count) {
-        console.log('active_wallets_count', active_wallets_count)
+        // console.log('active_wallets_count', active_wallets_count)
         data.active_wallets_count = active_wallets_count;
         resolve();
         })
     }))
     Promise.all(promises).then((response) => {
-        console.log('all')
+        // console.log('all')
         if(data.stats) {
             data.stats.total_wallets_count = data.total_wallets_count;
             data.stats.active_wallets_count = data.active_wallets_count;
@@ -3783,14 +3783,14 @@ function updateExtraStats() {
                 if (err) {
                     console.log(err)
                 }
-                console.log('took - ', helpers.getFinishTime(startTime));
+                // console.log('took - ', helpers.getFinishTime(startTime));
                 deleteFile('extraStats');
                 db.multipleDisconnect();
                 process.exit();
             });
         } else {
-            console.log(' no stats found yet');
-            console.log('took - ', helpers.getFinishTime(startTime));
+            // console.log(' no stats found yet');
+            // console.log('took - ', helpers.getFinishTime(startTime));
             deleteFile('extraStats');
             db.multipleDisconnect();
             process.exit();
@@ -3821,7 +3821,7 @@ function updateRichlist() {
 function updateRichlistAndExtraStats() {
     var startTime = new Date();
     RichlistController.getOne(settings[wallet].coin, function(richlist) {
-        console.log('updating richlist');
+        // console.log('updating richlist');
         AddressToUpdateController.getRichlistAndExtraStats('received', 'desc', 100, settings[wallet].dev_address, function(results){
             var received = results.data;
             AddressToUpdateController.getRichlistAndExtraStats('balance', 'desc', 100, settings[wallet].dev_address, function(results){
@@ -3845,8 +3845,8 @@ function updateRichlistAndExtraStats() {
                             console.log(err)
                         }
                         RichlistController.updateOne(richlist, function (err) {
-                            console.log('finish updating richlist');
-                            console.log('took - ', helpers.getFinishTime(startTime));
+                            // console.log('finish updating richlist');
+                            // console.log('took - ', helpers.getFinishTime(startTime));
                             deleteFile('richlist');
                             db.multipleDisconnect();
                             process.exit();
@@ -4273,7 +4273,7 @@ function updateMarket(wallet) {
                     if (err) {
                         console.log(err);
                     } else {
-                        console.log('market cap update success ', data.symbol)
+                        // console.log('market cap update success ', data.symbol)
                     }
                     i++;
                     if(i < symbolsToUpdate.length) {
@@ -4310,7 +4310,7 @@ function updateMarket(wallet) {
                         if (err) {
                             console.log(err);
                         } else {
-                            console.log('market update success ', market.symbol)
+                            // console.log('market update success ', market.symbol)
                         }
                         i++;
                         if (i < symbolsToUpdate.length) {
@@ -4367,7 +4367,7 @@ function updateTxByDay(wallet) {
             if(data.length > 1) {
                 lastDate = data[1].d
             }
-            console.log('data',lastDate);
+            // console.log('data',lastDate);
             updateTxByDay(lastDate);
         } else {
             console.log('no data yet');
