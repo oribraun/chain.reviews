@@ -85,8 +85,8 @@ if(settings[wallet]) {
         var MarketController = require('./database/controllers/markets_controller');
         var CoinMarketCapController = require('./database/controllers/coin_market_cap_controller');
         var TxByDayController = require('./database/controllers/tx_by_day_controller');
-        var ClusterController = require('./database/controllers/cluster_controller');
-        var ClusterTxByDayController = require('./database/controllers/cluster_tx_by_day_controller');
+        // var ClusterController = require('./database/controllers/cluster_controller');
+        // var ClusterTxByDayController = require('./database/controllers/cluster_tx_by_day_controller');
 
     }
 } else {
