@@ -35,6 +35,9 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
         if(tx) {
             return cb(tx);
         } else {
+            if(err) {
+                console.log('err', err)
+            }
             return cb();
         }
     });
@@ -177,6 +180,34 @@ function getAll5(pageOrder, fields, sortBy, order, limit, offset, cb) {
         });
     })
 }
+
+function getAllAggregeate(where, fields, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    if(sortBy) {
+        sort[sortBy] = order == 'asc' ? 1 : -1;
+    }
+    var aggregate = [];
+    aggregate.push({$match: where});
+    if(Object.keys(fields).length) {
+        aggregate.push({$project: fields});
+    }
+    aggregate.push({$sort: sort});
+    aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
+    aggregate.push({$limit: limit});
+    TxVinVout[db.getCurrentConnection()].aggregate(
+        aggregate
+    ).allowDiskUse(true).exec( function(err, txs) {
+        if(txs) {
+            return cb(txs);
+        } else {
+            if(err) {
+                console.log('err', err)
+            }
+            return cb();
+        }
+    });
+}
+
 function updateOne(obj, cb) { // update or create
     TxVinVout[db.getCurrentConnection()].findOne({txid: obj.txid}, function(err, tx) {
         if(err) {
@@ -639,6 +670,7 @@ module.exports.getAll2 = getAll2;
 module.exports.getAll3 = getAll3;
 module.exports.getAll4 = getAll4;
 module.exports.getAll5 = getAll5;
+module.exports.getAllAggregeate = getAllAggregeate;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getTransactionsChart = getTransactionsChart;
 module.exports.saveType = saveType;
