@@ -5,9 +5,9 @@ const cluster = require('cluster');
 const fs = require('fs-extra');
 const exec = require('child_process').exec;
 let numCPUs = require('os').cpus().length;
-if(numCPUs > 4) {
-    numCPUs = 4;
-}
+// if(numCPUs > 4) {
+//     numCPUs = 4;
+// }
 const tx_types = require('./tx_types');
 
 const db = require('./database/db');
