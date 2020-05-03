@@ -692,14 +692,17 @@ if (wallet) {
                 var exit_count = 0;
                 var mongoTimeout = false;
                 var lastOrder = 0;
+                var blockindex = 0;
+                var lastTx;
                 var startVinVoutClusterLinerAll = function() {
                     TxVinVoutController.deleteAll(function(err) {
                         AddressToUpdateController.deleteAll(function(err) {
                             gettingNextTxsInProgress = true;
-                            gettingNextTxs(limit, offset).then(function (res) {
+                            gettingNextTxs(limit, offset, blockindex, lastTx).then(function (res) {
                                 gotBlocks++;
                                 gettingNextTxsInProgress = false;
                                 if (res && res.length) {
+                                    lastTx = res[res.length -1];
                                     currentBlocks = currentBlocks.concat(res);
                                 }
                                 if (currentBlocks.length) {
@@ -713,13 +716,14 @@ if (wallet) {
                                                 (function (id) {
                                                     clusterQ.push(id);
                                                     if (currentBlocks.length) {
-                                                        if (currentBlocks.length === limit - limit / 10) {
+                                                        if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
                                                             if (!gettingNextTxsInProgress) {
                                                                 gettingNextTxsInProgress = true;
                                                                 offset++;
-                                                                gettingNextTxs(limit, offset).then(function (res) {
+                                                                gettingNextTxs(limit, offset, blockindex, lastTx).then(function (res) {
                                                                     gotBlocks++;
                                                                     if (res && res.length) {
+                                                                        lastTx = res[res.length -1];
                                                                         currentBlocks = currentBlocks.concat(res);
                                                                     }
                                                                     gettingNextTxsInProgress = false;
@@ -1329,6 +1333,7 @@ if (wallet) {
                 var startVinVoutClusterLinerAll = function() {
                     TxVinVoutController.getAll('blockindex', 'desc', 1, function(latestTx) {
                         var currentBlockIndex = 0;
+                        var lastTx;
                         if(latestTx.length) {
                             currentBlockIndex = latestTx[0].blockindex + 1;
                             startedFromBlock = latestTx[0].blockindex;
@@ -1345,10 +1350,11 @@ if (wallet) {
                                 // console.log('tx vin vout', numberDeleted);
                                 // console.log('address deleted', numberDeleted2);
                                 gettingNextTxsInProgress = true;
-                                gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                                gettingNextTxs(limit, offset, currentBlockIndex, lastTx).then(function (res) {
                                     gotBlocks++;
                                     gettingNextTxsInProgress = false;
                                     if (res && res.length) {
+                                        lastTx = res[res.length -1];
                                         currentBlocks = currentBlocks.concat(res);
                                     }
                                     if (currentBlocks.length) {
@@ -1362,13 +1368,14 @@ if (wallet) {
                                                     (function (id) {
                                                         clusterQ.push(id);
                                                         if (currentBlocks.length) {
-                                                            if (currentBlocks.length === limit - limit / 10) {
+                                                            if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
                                                                 if (!gettingNextTxsInProgress) {
                                                                     gettingNextTxsInProgress = true;
                                                                     offset++;
-                                                                    gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                                                                    gettingNextTxs(limit, offset, currentBlockIndex, lastTx).then(function (res) {
                                                                         gotBlocks++;
                                                                         if (res && res.length) {
+                                                                            lastTx = res[res.length -1];
                                                                             currentBlocks = currentBlocks.concat(res);
                                                                         }
                                                                         gettingNextTxsInProgress = false;
@@ -2175,6 +2182,7 @@ if (wallet) {
                 var startVinVoutClusterLinerAll = function() {
                     TxVinVoutController.getAll2(  { type: {$eq: 0 } }, {},'blockindex', 'asc', 1, 0, function(latestTx) {
                         // var currentBlockIndex = 0;
+                        var lastTx;
                         if (latestTx.length) {
                             var currentBlockIndex = latestTx[0].blockindex;
                         } else {
@@ -2186,9 +2194,10 @@ if (wallet) {
                         console.log('currentBlockIndex', currentBlockIndex)
                         console.log('latestTx', latestTx)
                         gettingNextTxsInProgress = true;
-                        gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                        gettingNextTxs(limit, offset, currentBlockIndex, lastTx).then(function (res) {
                             gettingNextTxsInProgress = false;
                             if (res && res.length) {
+                                lastTx = res[res.length -1];
                                 currentBlocks = currentBlocks.concat(res);
                             }
                             if (currentBlocks.length) {
@@ -2202,12 +2211,13 @@ if (wallet) {
                                             (function (id) {
                                                 clusterQ.push(id);
                                                 if (currentBlocks.length) {
-                                                    if (currentBlocks.length === limit - limit / 10) {
+                                                    if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
                                                         if (!gettingNextTxsInProgress) {
                                                             gettingNextTxsInProgress = true;
                                                             offset++;
-                                                            gettingNextTxs(limit, offset).then(function (res) {
+                                                            gettingNextTxs(limit, offset, currentBlockIndex, lastTx).then(function (res) {
                                                                 if (res && res.length) {
+                                                                    lastTx = res[res.length -1];
                                                                     currentBlocks = currentBlocks.concat(res);
                                                                 }
                                                                 gettingNextTxsInProgress = false;
@@ -2694,6 +2704,7 @@ if (wallet) {
                 var lastOrder = 0;
                 var startVinVoutClusterLinerAll = function() {
                     var currentBlockIndex = currentBlock;
+                    var lastTx;
                     TxVinVoutController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted) {
                         AddressToUpdateController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted2) {
                             console.log('tx vin vout deleted', numberDeleted);
@@ -2704,10 +2715,11 @@ if (wallet) {
                                 }
                                 console.log('lastOrder', lastOrder);
                                 gettingNextTxsInProgress = true;
-                                gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                                gettingNextTxs(limit, offset, currentBlockIndex, lastTx).then(function (res) {
                                     gotBlocks++;
                                     gettingNextTxsInProgress = false;
                                     if (res && res.length) {
+                                        lastTx = res[res.length -1];
                                         currentBlocks = currentBlocks.concat(res);
                                     }
                                     if (currentBlocks.length) {
@@ -2721,13 +2733,14 @@ if (wallet) {
                                                     (function (id) {
                                                         clusterQ.push(id);
                                                         if (currentBlocks.length) {
-                                                            if (currentBlocks.length === limit - limit / 10) {
+                                                            if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
                                                                 if (!gettingNextTxsInProgress) {
                                                                     gettingNextTxsInProgress = true;
                                                                     offset++;
-                                                                    gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                                                                    gettingNextTxs(limit, offset, currentBlockIndex, lastTx).then(function (res) {
                                                                         gotBlocks++;
                                                                         if (res && res.length) {
+                                                                            lastTx = res[res.length -1];
                                                                             currentBlocks = currentBlocks.concat(res);
                                                                         }
                                                                         gettingNextTxsInProgress = false;
@@ -2888,15 +2901,17 @@ if (wallet) {
                 var startVinVoutClusterLinerAll = function() {
                     TxVinVoutController.getAll('blockindex', 'desc', 1, function(latestTx) {
                         var currentBlockIndex = 0;
+                        var lastTx;
                         if(latestTx.length) {
                             currentBlockIndex = latestTx[0].blockindex;
                             startedFromBlock = latestTx[0].blockindex;
                             lastOrder = latestTx[0].order;
                         }
                         gettingNextTxsInProgress = true;
-                        gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                        gettingNextTxs(limit, offset, currentBlockIndex, lastTx).then(function (res) {
                             gettingNextTxsInProgress = false;
                             if (res && res.length) {
+                                lastTx = res[res.length -1];
                                 currentBlocks = currentBlocks.concat(res);
                             }
                             if (currentBlocks.length) {
@@ -2910,12 +2925,14 @@ if (wallet) {
                                             (function (id) {
                                                 clusterQ.push(id);
                                                 if (currentBlocks.length) {
-                                                    if (currentBlocks.length === limit - limit / 10) {
+                                                    // if (currentBlocks.length === limit - limit / 10) {
+                                                    if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
                                                         if (!gettingNextTxsInProgress) {
                                                             gettingNextTxsInProgress = true;
                                                             offset++;
-                                                            gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                                                            gettingNextTxs(limit, offset, currentBlockIndex, lastTx).then(function (res) {
                                                                 if (res && res.length) {
+                                                                    lastTx = res[res.length -1];
                                                                     currentBlocks = currentBlocks.concat(res);
                                                                 }
                                                                 gettingNextTxsInProgress = false;
@@ -4077,9 +4094,9 @@ function updateRichlistAndExtraStats() {
 }
 
 
-var gettingNextTxs = function(limit, offset, blockindex) {
+var gettingNextTxs = function(limit, offset, blockindex, lastTx) {
     var promise = new Promise(function(resolve, reject) {
-        getNextTxs(limit, offset, blockindex).then(function (res) {
+        getNextTxs(blockindex, lastTx).then(function (res) {
             if (res.length) {
                 console.log('got chunks', (offset * limit) + ' - ' + (offset * limit + limit));
                 // currentBlocks = currentBlocks.concat(res);
@@ -4099,33 +4116,29 @@ var startCount = 0;
 // countBlocks 388143
 // took  0:5:54.26
 
-var lastTx;
-var getNextTxs = function(limit, offset, blockindex) {
+var getNextTxs = function(blockindex, lastTx) {
     var promise = new Promise(function(resolve, reject) {
         var where = {};
         var fields = {}
-        console.log('blockindex', blockindex)
         offset = offset * limit;
         if(blockindex) {
+            blockindex = parseInt(blockindex);
+            console.log('blockindex', blockindex);
+            console.log('blockindex + limit', blockindex + limit);
             where = {$and: [{blockindex : {$gte : blockindex}}, {blockindex : {$lt : blockindex + limit}}]};
-            offset = 0;
         }
         if(lastTx) {
-            where = {$and: [{blockindex : {$gt : lastTx.blockindex}}, {blockindex : {$lt : blockindex + limit}}]};
-            offset = 0;
+            console.log('lastTx.blockindex', lastTx.blockindex + 1);
+            console.log('lastTx.blockindex + limit', lastTx.blockindex + 1 + limit);
+            where = {$and: [{blockindex : {$gte : lastTx.blockindex + 1}}, {blockindex : {$lt : lastTx.blockindex + 1 + limit}}]};
         }
-        TxController.getAll2(where, fields,'blockindex', 'asc', limit, offset, function(results) {
+        TxController.getAll2(where, fields,'blockindex', 'asc', 0, 0, function(results) {
             // if(startCount < 1) {
             //     startCount++;
             //     resolve(results);
             // } else {
             //     resolve([]);
             // }
-            if(results && results.length) {
-                lastTx = results[results.length -1];
-            } else {
-                lastTx = null;
-            }
             resolve(results);
         });
     });
@@ -4445,10 +4458,12 @@ var globalCheckVinVoutCluster = function(tx) {
                             err.stack.indexOf('interrupted at shutdown') > -1) {
                             cluster.worker.send({mongoTimeout: true});
                         }
-                    }
-                    console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
-                    if(finishUpdateTx && finishUpdateAddress) {
-                        cluster.worker.send({finished: true});
+                        globalCheckVinVoutCluster(tx);
+                    } else {
+                        console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
+                        if (finishUpdateTx && finishUpdateAddress) {
+                            cluster.worker.send({finished: true});
+                        }
                     }
                 })
 
@@ -4481,6 +4496,9 @@ var globalCheckVinVoutCluster = function(tx) {
                 // resolve({tx: tx, nvin: obj.nvin, vout: obj.vout, total: total, addreses_to_update: addreses_to_update});
             })
         })
+    }).catch(function(err) {
+        console.log('tx not found on db')
+        cluster.worker.send({mongoTimeout: true});
     })
 }
 
