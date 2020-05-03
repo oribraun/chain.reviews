@@ -716,7 +716,7 @@ if (wallet) {
                                                 (function (id) {
                                                     clusterQ.push(id);
                                                     if (currentBlocks.length) {
-                                                        if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
+                                                        if (currentBlocks.length === limit - limit / 10) {
                                                             if (!gettingNextTxsInProgress) {
                                                                 gettingNextTxsInProgress = true;
                                                                 offset++;
@@ -1368,7 +1368,7 @@ if (wallet) {
                                                     (function (id) {
                                                         clusterQ.push(id);
                                                         if (currentBlocks.length) {
-                                                            if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
+                                                            if (currentBlocks.length === limit - limit / 10) {
                                                                 if (!gettingNextTxsInProgress) {
                                                                     gettingNextTxsInProgress = true;
                                                                     offset++;
@@ -2211,7 +2211,7 @@ if (wallet) {
                                             (function (id) {
                                                 clusterQ.push(id);
                                                 if (currentBlocks.length) {
-                                                    if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
+                                                    if (currentBlocks.length === limit - limit / 10) {
                                                         if (!gettingNextTxsInProgress) {
                                                             gettingNextTxsInProgress = true;
                                                             offset++;
@@ -2733,7 +2733,7 @@ if (wallet) {
                                                     (function (id) {
                                                         clusterQ.push(id);
                                                         if (currentBlocks.length) {
-                                                            if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
+                                                            if (currentBlocks.length === limit - limit / 10) {
                                                                 if (!gettingNextTxsInProgress) {
                                                                     gettingNextTxsInProgress = true;
                                                                     offset++;
@@ -2925,8 +2925,7 @@ if (wallet) {
                                             (function (id) {
                                                 clusterQ.push(id);
                                                 if (currentBlocks.length) {
-                                                    // if (currentBlocks.length === limit - limit / 10) {
-                                                    if (currentBlocks[countBlocks].blockindex === lastTx.blockindex - limit / 10) {
+                                                    if (currentBlocks.length === limit - limit / 10) {
                                                         if (!gettingNextTxsInProgress) {
                                                             gettingNextTxsInProgress = true;
                                                             offset++;
