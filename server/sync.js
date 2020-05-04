@@ -682,7 +682,7 @@ if (wallet) {
                 // var limit = 1;
                 // var countBlocks = 0;
                 // var offset = 150111;
-                var limit = 20000;
+                var limit = 2000;
                 var gotBlocks = 0;
                 var countBlocks = 0;
                 var offset = 0;
@@ -1319,7 +1319,7 @@ if (wallet) {
                 }
                 createFile();
                 var currentBlocks = [];
-                var limit = 20000;
+                var limit = 2000;
                 var gotBlocks = 0;
                 var countBlocks = 0;
                 var offset = 0;
@@ -2692,7 +2692,7 @@ if (wallet) {
                 var startedFromBlock = currentBlock;
                 createFile();
                 var currentBlocks = [];
-                var limit = 20000;
+                var limit = 2000;
                 var gotBlocks = 0;
                 var countBlocks = 0;
                 var offset = 0;
@@ -2889,7 +2889,7 @@ if (wallet) {
                 var startedFromBlock = currentBlock;
                 createFile();
                 var currentBlocks = [];
-                var limit = 20000;
+                var limit = 2000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -3400,6 +3400,10 @@ if (wallet) {
                         request({uri: 'http://freegeoip.app/json/' + address, json: true}, function (error, response, geo) {
                             // console.log('address', address);
                             // console.log('error', error);
+                            if(error) {
+                                end();
+                                return;
+                            }
                             var peer = {
                                 address: address,
                                 protocol: results[i].version,
