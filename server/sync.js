@@ -3400,6 +3400,10 @@ if (wallet) {
                         request({uri: 'http://freegeoip.app/json/' + address, json: true}, function (error, response, geo) {
                             // console.log('address', address);
                             // console.log('error', error);
+                            if(error) {
+                                end();
+                                return;
+                            }
                             var peer = {
                                 address: address,
                                 protocol: results[i].version,
