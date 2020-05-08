@@ -4785,22 +4785,25 @@ var globalCheckVinVoutCluster = function(tx) {
                 var vinvout = {txid: tx.txid, vin: obj.nvin, vout: obj.vout, total: total, blockindex: tx.blockindex, timestamp: tx.timestamp, type: tx_type, type_str: tx_types.toStr(tx_type), order: tx.order};
                 var finishUpdateTx = false;
                 var finishUpdateAddress = false;
-                TxVinVoutController.updateOne(vinvout, function(err) {
-                    finishUpdateTx = true;
-                    if(err) {
-                        console.log('err', err);
-                        if(err.stack.indexOf('Server selection timed out') > -1 ||
-                            err.stack.indexOf('interrupted at shutdown') > -1) {
-                            cluster.worker.send({mongoTimeout: true});
+                var insertTx = function() {
+                    TxVinVoutController.updateOne(vinvout, function (err) {
+                        if (err) {
+                            console.log('err', err);
+                            if (err.stack.indexOf('Server selection timed out') > -1 ||
+                                err.stack.indexOf('interrupted at shutdown') > -1) {
+                                cluster.worker.send({mongoTimeout: true});
+                            }
+                            insertTx();
+                        } else {
+                            finishUpdateTx = true;
+                            console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
+                            if (finishUpdateTx && finishUpdateAddress) {
+                                cluster.worker.send({finished: true});
+                            }
                         }
-                        globalCheckVinVoutCluster(tx);
-                    } else {
-                        console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
-                        if (finishUpdateTx && finishUpdateAddress) {
-                            cluster.worker.send({finished: true});
-                        }
-                    }
-                })
+                    })
+                }
+                insertTx();
 
                 var insertAddresses = function() {
                     if (addreses_to_update.length) {
