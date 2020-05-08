@@ -3840,11 +3840,15 @@ if (wallet) {
                                 }
                                 if(msg.finished) {
                                     if (txs && txs.length) {
-                                        cluster.workers[this.id].send({txid: txs[0]});
-                                        currentAddress++;
-                                        txs.shift();
+                                        if (cluster.workers[this.id]) {
+                                            cluster.workers[this.id].send({txid: txs[0]});
+                                            currentAddress++;
+                                            txs.shift();
+                                        }
                                     } else {
-                                        cluster.workers[this.id].send({kill: true});
+                                        if (cluster.workers[this.id]) {
+                                            cluster.workers[this.id].send({kill: true});
+                                        }
                                     }
                                 }
                             })
@@ -3951,14 +3955,19 @@ if (wallet) {
                             }
                             if (msg.finished) {
                                 if (currentBlock < count) {
-                                    cluster.workers[this.id].send({blockindex: currentBlock});
-                                    currentBlock++;
+                                    if (cluster.workers[this.id]) {
+                                        cluster.workers[this.id].send({blockindex: currentBlock});
+                                        currentBlock++;
+                                    }
                                 } else {
-                                    cluster.workers[this.id].send({kill: true});
+                                    if (cluster.workers[this.id]) {
+                                        cluster.workers[this.id].send({kill: true});
+                                    }
                                 }
                             }
                             if(msg.killAll) {
                                 for (var id in cluster.workers) {
+                                    console.log('id', id)
                                     cluster.workers[id].kill();
                                 }
                             }
@@ -3975,6 +3984,7 @@ if (wallet) {
                 var exit_count = 0;
                 cluster.on('exit', (worker, code, signal) => {
                     exit_count++;
+                    console.log('exit_count', exit_count)
                     if (exit_count === cpuCount) {
                         console.log('total', total)
                         db.multipleDisconnect();
@@ -3986,7 +3996,8 @@ if (wallet) {
                 });
             } else {
                 process.on('SIGTERM', function () {
-                    // process.exit();
+                    db.multipleDisconnect();
+                    process.exit();
                 })
                 process.on('message', function (msg) {
                     if (msg.blockindex !== undefined) {
@@ -4008,10 +4019,14 @@ if (wallet) {
                                         res = JSON.parse(res);
                                         if (txs.length !== res.tx.length) {
                                             console.log('missing txs on db - ', blockindex);
-                                            cluster.worker.send({killAll: true});
+                                            if(cluster.worker.isConnected()) {
+                                                cluster.worker.send({killAll: true});
+                                            }
                                         } else {
-                                            cluster.worker.send({total: res.tx.length});
-                                            cluster.worker.send({finished: true});
+                                            if(cluster.worker.isConnected()) {
+                                                cluster.worker.send({total: res.tx.length});
+                                                cluster.worker.send({finished: true});
+                                            }
                                         }
                                     } else {
                                         console.log('block not found in wallet - ', block.blockhash);
