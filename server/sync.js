@@ -4013,28 +4013,35 @@ if (wallet) {
                     console.log('blockindex', blockindex)
                     BlockController.getOne(blockindex, function (block) {
                         if(block) {
-                            TxVinVoutController.getAll2({blockindex: blockindex}, {}, '', '', 0, 0, function (txs) {
-                                wallet_commands.getBlock(wallet, block.blockhash).then(function (res) {
-                                    if (res) {
-                                        res = JSON.parse(res);
-                                        if (txs.length !== res.tx.length) {
-                                            console.log('missing txs on db - ', blockindex);
-                                            if(cluster.worker.isConnected()) {
-                                                cluster.worker.send({killAll: true});
+                            TxController.getAll2({blockindex: blockindex}, {}, '', '', 0, 0, function (txs) {
+                                TxVinVoutController.getAll2({blockindex: blockindex}, {}, '', '', 0, 0, function (txsvinvout) {
+                                    wallet_commands.getBlock(wallet, block.blockhash).then(function (res) {
+                                        if (res) {
+                                            res = JSON.parse(res);
+                                            if (txs.length !== res.tx.length) {
+                                                console.log('missing txs on db - ', blockindex);
+                                                if (cluster.worker.isConnected()) {
+                                                    cluster.worker.send({killAll: true});
+                                                }
+                                            } else if(txsvinvout.length !== res.tx.length) {
+                                                console.log('missing txs vin vout on db - ', blockindex);
+                                                if (cluster.worker.isConnected()) {
+                                                    cluster.worker.send({killAll: true});
+                                                }
+                                            } else {
+                                                if (cluster.worker.isConnected()) {
+                                                    cluster.worker.send({total: res.tx.length});
+                                                    cluster.worker.send({finished: true});
+                                                }
                                             }
                                         } else {
-                                            if(cluster.worker.isConnected()) {
-                                                cluster.worker.send({total: res.tx.length});
-                                                cluster.worker.send({finished: true});
-                                            }
+                                            console.log('block not found in wallet - ', block.blockhash);
+                                            cluster.worker.send({killAll: true});
                                         }
-                                    } else {
-                                        console.log('block not found in wallet - ', block.blockhash);
-                                        cluster.worker.send({killAll: true});
-                                    }
-                                }).catch(function (err) {
-                                    console.log('err', err)
-                                })
+                                    }).catch(function (err) {
+                                        console.log('err', err)
+                                    })
+                                });
                             });
                         } else {
                             console.log('block not found in db - ', blockindex);
