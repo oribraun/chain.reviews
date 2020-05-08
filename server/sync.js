@@ -4020,11 +4020,13 @@ if (wallet) {
                                             res = JSON.parse(res);
                                             if (txs.length !== res.tx.length) {
                                                 console.log('missing txs on db - ', blockindex);
+                                                console.log('need node server/cronJobs/reindex_from_split.js ' + wallet + ' ' + blockindex);
                                                 if (cluster.worker.isConnected()) {
                                                     cluster.worker.send({killAll: true});
                                                 }
                                             } else if(txsvinvout.length !== res.tx.length) {
                                                 console.log('missing txs vin vout on db - ', blockindex);
+                                                console.log('need node server/sync.js ' + wallet + ' save_from_tx_vin_vout_and_addresses ' + blockindex);
                                                 if (cluster.worker.isConnected()) {
                                                     cluster.worker.send({killAll: true});
                                                 }
