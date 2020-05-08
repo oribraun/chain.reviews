@@ -55,6 +55,8 @@ var commands_require_db = [
     'test',
     'find_unconfirmed',
     'find_missing_blocks',
+    'find_orphans_tx_in_address',
+    'find_missing_txs',
 ]
 if(settings[wallet]) {
     if(commands_require_db.indexOf(type) > -1) {
@@ -3804,6 +3806,227 @@ if (wallet) {
                         }
                     }
                 })
+            }
+            break;
+        case 'find_orphans_tx_in_address':
+            if(hash_number != undefined && isNaN(hash_number)) {
+                var sent = 0;
+                var received = 0;
+                var total = 0;
+                var cpuCount = numCPUs;
+                var currentAddress = 0;
+                if (cluster.isMaster) {
+                    console.log(`Master ${process.pid} is running`);
+
+                    // Fork workers.
+                    AddressToUpdateController.getAllAddressUniqueTxs(hash_number, 1, 0,(txs) => {
+                        for (let i = 0; i < cpuCount; i++) {
+                            var worker = cluster.fork();
+                            worker.on('message', function (msg) {
+                                if (msg.killAll) {
+                                    for (var id in cluster.workers) {
+                                        cluster.workers[id].kill();
+                                    }
+                                }
+                                if (msg.sent) {
+                                    sent += parseFloat(msg.sent);
+
+                                }
+                                if (msg.received) {
+                                    received += parseFloat(msg.received);
+                                }
+                                if (msg.total) {
+                                    total += 1;
+                                }
+                                if(msg.finished) {
+                                    if (txs && txs.length) {
+                                        cluster.workers[this.id].send({txid: txs[0]});
+                                        currentAddress++;
+                                        txs.shift();
+                                    } else {
+                                        cluster.workers[this.id].send({kill: true});
+                                    }
+                                }
+                            })
+
+                            if(txs && txs.length) {
+
+                            } else {
+
+                            }
+                            if (txs && txs.length) {
+                                worker.send({txid: txs[0]});
+                                currentAddress++;
+                                txs.shift();
+                            } else {
+                                worker.send({kill: true});
+                            }
+                        }
+                    });
+
+                    var exit_count = 0;
+                    cluster.on('exit', (worker, code, signal) => {
+                        exit_count++;
+                        if (exit_count === cpuCount) {
+                            console.log('sent', sent)
+                            console.log('received', received)
+                            console.log('balance', received - sent)
+                            console.log('total', total)
+                            db.multipleDisconnect();
+                            process.exit();
+                        }
+                        // db.multipleDisconnect();
+                        // process.exit();
+                        console.log(`worker ${worker.process.pid} died`);
+                    });
+                } else {
+                    process.on('SIGTERM', function () {
+                        // process.exit();
+                    })
+                    process.on('message', function(msg) {
+                        if(msg.txid !== undefined) {
+                            startTest(msg.txid);
+                        }
+                        if(msg.kill) {
+                            db.multipleDisconnect();
+                            process.exit();
+                        }
+                    });
+                    function startTest(txid) {
+                        wallet_commands.getRawTransactionFull(wallet, txid).then(function(res) {
+                            if(res) {
+                                // res = JSON.parse(res);
+                                for(var j in res.addreses_to_update) {
+                                    var amount = res.addreses_to_update[j].amount;
+                                    var type = res.addreses_to_update[j].type;
+                                    if(res.addreses_to_update[j].address === hash_number) {
+                                        cluster.worker.send({total: true});
+                                        if(type === 'vin') {
+                                            cluster.worker.send({sent: amount});
+                                        }
+                                        else if(type === 'vout') {
+                                            cluster.worker.send({received: amount});
+                                        }
+                                    }
+                                }
+                                cluster.worker.send({finished: true});
+                            } else {
+                                console.log('txid not found in wallet - ', txid);
+                            }
+                        }).catch(function(err) {
+                            console.log('err', err)
+                        })
+                    }
+                }
+            } else {
+                console.log('please provide an address');
+            }
+            break;
+        case 'find_missing_txs':
+            var total = 0;
+            var cpuCount = numCPUs;
+            var currentBlock = 1;
+            var limit = 0;
+            if(hash_number != undefined && !isNaN(hash_number)) {
+                currentBlock = parseInt(hash_number)
+            }
+            if (cluster.isMaster) {
+                console.log(`Master ${process.pid} is running`);
+
+                // Fork workers.
+                BlockController.estimatedDocumentCount(function (count) {
+                    if(limit && currentBlock + limit < count) {
+                        count = currentBlock + limit;
+                    }
+                    for (let i = 0; i < cpuCount; i++) {
+                        var worker = cluster.fork();
+                        worker.on('message', function (msg) {
+                            if (msg.killAll) {
+                                for (var id in cluster.workers) {
+                                    cluster.workers[id].kill();
+                                }
+                            }
+                            if (msg.total) {
+                                total += msg.total;
+                            }
+                            if (msg.finished) {
+                                if (currentBlock < count) {
+                                    cluster.workers[this.id].send({blockindex: currentBlock});
+                                    currentBlock++;
+                                } else {
+                                    cluster.workers[this.id].send({kill: true});
+                                }
+                            }
+                            if(msg.killAll) {
+                                for (var id in cluster.workers) {
+                                    cluster.workers[id].kill();
+                                }
+                            }
+                        })
+                        if (currentBlock < count) {
+                            worker.send({blockindex: currentBlock});
+                            currentBlock++;
+                        } else {
+                            worker.send({kill: true});
+                        }
+                    }
+                });
+
+                var exit_count = 0;
+                cluster.on('exit', (worker, code, signal) => {
+                    exit_count++;
+                    if (exit_count === cpuCount) {
+                        console.log('total', total)
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                    // db.multipleDisconnect();
+                    // process.exit();
+                    console.log(`worker ${worker.process.pid} died`);
+                });
+            } else {
+                process.on('SIGTERM', function () {
+                    // process.exit();
+                })
+                process.on('message', function (msg) {
+                    if (msg.blockindex !== undefined) {
+                        startTest(msg.blockindex);
+                    }
+                    if (msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+
+                function startTest(blockindex) {
+                    console.log('blockindex', blockindex)
+                    BlockController.getOne(blockindex, function (block) {
+                        if(block) {
+                            TxVinVoutController.getAll2({blockindex: blockindex}, {}, '', '', 0, 0, function (txs) {
+                                wallet_commands.getBlock(wallet, block.blockhash).then(function (res) {
+                                    if (res) {
+                                        res = JSON.parse(res);
+                                        if (txs.length !== res.tx.length) {
+                                            console.log('missing txs on db - ', blockindex);
+                                            cluster.worker.send({killAll: true});
+                                        } else {
+                                            cluster.worker.send({total: res.tx.length});
+                                            cluster.worker.send({finished: true});
+                                        }
+                                    } else {
+                                        console.log('block not found in wallet - ', block.blockhash);
+                                        cluster.worker.send({killAll: true});
+                                    }
+                                }).catch(function (err) {
+                                    console.log('err', err)
+                                })
+                            });
+                        } else {
+                            console.log('block not found in db - ', blockindex);
+                            cluster.worker.send({killAll: true});
+                        }
+                    })
+                }
             }
             break;
         default:
