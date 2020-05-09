@@ -82,7 +82,7 @@ var obj = {
                         }
                         resolve(addresses);
                     } else {
-                        console.log(' vin tx not found from db ', vin.txid);
+                        console.log(' vin tx not found from db ', vin.txid, vin.blockindex);
                         resolve();
                     }
                 })
@@ -209,6 +209,7 @@ var obj = {
                     }
                 }).catch(function(err) {
                     console.log('prepare_vin', err);
+                    reject();
                 })
             }
             if(tx.vin.length) {

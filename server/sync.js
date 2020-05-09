@@ -4835,7 +4835,7 @@ var globalCheckVinVoutCluster = function(tx) {
             })
         })
     }).catch(function(err) {
-        console.log('tx not found on db')
+        console.log('tx not found on db - ', tx.blockindex)
         cluster.worker.send({mongoTimeout: true});
     })
 }
