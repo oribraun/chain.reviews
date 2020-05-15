@@ -8,11 +8,16 @@ var AddressToUpdateSchema = new Schema({
   txid: { type: String, default: '' },
   txid_timestamp: { type: Number, default: 0 },
   txid_type: { type: Number, default: 0, index: true },
+  order: { type: Number, default: 0},
   amount: { type: Number, default: 0 , index: true},
+  balance: { type: Number, default: 0 , index: true},
+  sent: { type: Number, default: 0},
+  received: { type: Number, default: 0},
   type: { type: String, default: '' },
   blockindex: {type: Number, default: 0, index: true},
 }, {id: false, timestamps: true});
 
+AddressToUpdateSchema.index({ order: 1, address: 1 }, { unique: true });
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {

@@ -5,7 +5,9 @@ var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
-    sort[sortBy] = order;
+    if(sortBy) {
+        sort[sortBy] = order;
+    }
     Address[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
@@ -21,10 +23,11 @@ function updateOne(obj, cb) { // update or create
             return cb(err);
         }
         if(address) { // exist
-            address.txs = obj.txs;
             address.received = obj.received;
             address.sent = obj.sent;
             address.balance = obj.balance;
+            address.last_order = obj.last_order;
+            address.last_blockindex = obj.last_blockindex;
             address.save(function (err, tx) {
                 if (err) {
                     return cb(err);
@@ -35,10 +38,11 @@ function updateOne(obj, cb) { // update or create
         } else { // create new
             var newAddress = new Address[db.getCurrentConnection()]({
                 a_id: obj.a_id,
-                txs: obj.txs,
                 received: obj.received,
                 sent: obj.sent,
-                balance: obj.balance
+                balance: obj.balance,
+                last_order: obj.last_order,
+                last_blockindex: obj.last_blockindex
             });
             newAddress.save(function(err) {
                 if (err) {

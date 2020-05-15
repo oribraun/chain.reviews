@@ -29,6 +29,43 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAll3(where, fields, sort, limit, offset, cb) {
+    AddressToUpdate[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).lean().exec( function(err, address) {
+        if(address) {
+            return cb(address);
+        } else {
+            return cb();
+        }
+    });
+}
+
+function getAllUnique(where, fields, sort, limit, offset, cb) {
+    // db.addresstoupdates.aggregate([{$match: {$or: [{order: {$exists: false}}, {order: {$eq: 0}}]}},{$group:{_id:'$address'}}, {$skip:0}, {$limit:20000}])
+    var aggregate = [];
+    aggregate.push({$match: where});
+    aggregate.push({$group:{_id:'$address'}});
+    if(JSON.stringify(fields) !== '{}') {
+        aggregate.push({"$project": fields});
+    }
+    if(JSON.stringify(sort) !== '{}') {
+        aggregate.push({$sort: sort});
+    }
+    if(parseInt(offset)) {
+        aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
+    }
+    if(parseInt(limit)) {
+        aggregate.push({$limit: parseInt(limit)});
+    }
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, addresses) {
+        console.log('err', err)
+        if(addresses) {
+            return cb(addresses);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
 function updateOne(obj, cb) { // update or create
     AddressToUpdate[db.getCurrentConnection()].findOne({_id: obj._id}, function(err, address) {
         if(err) {
@@ -39,12 +76,16 @@ function updateOne(obj, cb) { // update or create
             address.txid = obj.txid;
             address.txid_timestamp = obj.txid_timestamp;
             address.txid_type = obj.txid_type;
+            address.order = obj.order;
             address.amount = obj.amount;
+            address.balance = obj.balance;
+            address.sent = obj.sent;
+            address.received = obj.received;
             address.type = obj.type;
             address.blockindex = obj.blockindex;
             address.save(function (err, tx) {
-                console.log('err', err)
-                console.log('tx', tx)
+                // console.log('err', err)
+                // console.log('tx', tx)
                 if (err) {
                     return cb(err);
                 } else {
@@ -57,7 +98,11 @@ function updateOne(obj, cb) { // update or create
                 txid: obj.txid,
                 txid_timestamp: obj.txid_timestamp,
                 txid_type: obj.txid_type,
+                balance: obj.balance,
+                sent: obj.sent,
+                received: obj.received,
                 amount: obj.amount,
+                order: obj.order,
                 type: obj.type,
                 blockindex: obj.blockindex,
             });
@@ -145,9 +190,36 @@ function getGroupCountForAddresses(addresses, limit, offset, cb) {
     aggregate.push({"$group": {
             "_id": "$address",
             "tx_count": {"$sum": 1},
+            "sent" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: "$amount",
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vin" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+            "received" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: 0,
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vout" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            }
         }
     });
-    aggregate.push({$sort:{tx_count:-1}});
+    aggregate.push({"$project": {
+            "_id": 0,
+            "address": "$_id",
+            "tx_count": 1,
+            "sent": 1,
+            "received": 1,
+            "balance": {"$subtract": ['$received', '$sent']},
+        }
+    });
+    aggregate.push({$sort:{balance:-1}});
     if(parseInt(offset)) {
         aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
     }
@@ -156,8 +228,11 @@ function getGroupCountForAddresses(addresses, limit, offset, cb) {
     }
     aggregate.push({"$project": {
             "_id": 0,
-            "address": "$_id",
+            "address": 1,
             "tx_count": 1,
+            "sent": 1,
+            "received": 1,
+            "balance": {"$subtract": ['$received', '$sent']},
         }
     });
     AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, addresses) {
@@ -251,7 +326,7 @@ function getAddressTxs(address, limit, offset, cb) {
         // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
         // aggregate.push({$limit: count});
         // aggregate.push({ $match: { $and: [ { address: address }, { _id: { $gt: "5e3eb7afca9bdb0e2adaf1c1" } } ] } });
-        // aggregate.push({$sort:{blockindex:-1}});
+        aggregate.push({$sort:{blockindex:1}});
         // aggregate.push({$sort: {blockindex: -1}});
         offset = parseInt(offset);
         limit = parseInt(limit);
@@ -287,7 +362,7 @@ function getAddressTxs(address, limit, offset, cb) {
         aggregate.push({
             "$group": {
                 "_id": "$address",
-                "txs": {"$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount", type: "$type", txid_type: "$txid_type"}},
+                "txs": {"$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount", sent: "$sent", received: "$received", balance: "$balance", type: "$type", txid_type: "$txid_type", blockindex: "$blockindex", order: "$order"}},
             }
         });
         // if(offset * limit > count / 2) {
@@ -316,6 +391,57 @@ function getAddressTxs(address, limit, offset, cb) {
             }
         });
     });
+}
+
+function getAddressTxsByOrder(address, sortBy, order, limit, offset, cb) {
+    this.countTx(address, function(count) {
+        var sort = {};
+        var sortOposite = {};
+        if (sortBy) {
+            sort[sortBy] = order == 'asc' ? 1 : -1;
+            sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+        }
+        var aggregate = [];
+        aggregate.push({$match: {address: address}});
+        // aggregate.push({$match: {total:  {$gt: 0}}});
+        aggregate.push({$sort: sort});
+        if (offset) {
+            // aggregate.push({$skip: offset*limit});
+            aggregate.push({$match: {order: {$lte: count - offset * limit}}});
+        }
+        aggregate.push({$limit: limit});
+
+        aggregate.push({
+            "$unwind": {
+                "path": "$_id",
+                "preserveNullAndEmptyArrays": true
+            }
+        });
+        // aggregate.push({$gt: ["_id", "5e3eb7afca9bdb0e2adaf1c1"]});
+        aggregate.push({
+            "$group": {
+                "_id": "$address",
+                "txs": {"$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount", sent: "$sent", received: "$received", balance: "$balance", type: "$type", txid_type: "$txid_type", blockindex: "$blockindex", order: "$order"}},
+            }
+        });
+        // if(offset * limit > count / 2) {
+        aggregate.push({
+            "$project": {
+                "_id": "$_id",
+                // "txs": { "$slice": [ {$reverseArray: "$txs" }, (parseInt(offset) * parseInt(limit)),  parseInt(limit) ] },
+                "txs": "$txs",
+                // "txs": {$reverseArray: { "$slice": [ "$txs", skip,  limit ] } },
+                // "txs": "$txs",
+            }
+        });
+        AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, address) {
+            if (address && address.length) {
+                return cb(address[0]);
+            } else {
+                return cb(null);
+            }
+        })
+    })
 }
 
 function getAddressTxsPublic(address, limit, cb) {
@@ -536,6 +662,16 @@ function countTx(address, cb) {
     });
 }
 
+function countTxByOrder(address, cb) {
+    AddressToUpdate[db.getCurrentConnection()].find({address : {$eq : address}, order: {$gt: 0}}, {}).countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function countTxInArray(addresses, cb) {
     AddressToUpdate[db.getCurrentConnection()].find({address : {$in : addresses}}, {}).countDocuments({}, function (err, count) {
         if(err) {
@@ -545,6 +681,60 @@ function countTxInArray(addresses, cb) {
         }
     });
 }
+function getClusterDetails(addresses, cb) {
+    var aggregate = [];
+    // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
+    aggregate.push({ $match : { address : {$in : addresses} } });
+    aggregate.push({
+        "$group": {
+            "_id": null,
+            "sent" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: "$amount",
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vin" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+            "received" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: 0,
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vout" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+            "amount" : { "$sum": "$amount" },
+            "count" : { $sum: 1 }
+        }
+    })
+    aggregate.push({
+        "$project": {
+            "sent": "$sent",
+            "received": "$received",
+            "balance": {"$subtract": ['$received', '$sent']},
+            "count": "$count",
+        }
+    })
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, results) {
+        if(results && results.length) {
+            return cb(results[0]);
+        } else {
+            return cb(err);
+        }
+    });
+    // AddressToUpdate[db.getCurrentConnection()].find({address : {$eq : address}}, {amount: true}).exec( function (err, results) {
+    //     if(err) {
+    //         cb()
+    //     } else {
+    //         cb(results);
+    //     }
+    // });
+}
+
 function getAddressDetails(address, cb) {
     var aggregate = [];
     // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
@@ -1119,7 +1309,132 @@ function getByTotalTest(limit, offset, cb) {
     });
 }
 
+function getAllUniqueAddresses(cb) {
+    AddressToUpdate[db.getCurrentConnection()].distinct("address", function(err, addresses){
+        if(addresses) {
+            return cb(addresses);
+        } else {
+            return cb();
+        }
+    });
+}
 
+function getAllAddressUniqueTxs(address, limit, offset, cb) {
+    // var aggregate = [];
+    // aggregate.push({ $match : { address : address } });
+    // aggregate.push({
+    //     "$group": {
+    //         "_id": "$txid",
+    //     }
+    // });
+    // aggregate.push({
+    //     "$project": {
+    //         "_id": 0,
+    //         "txid": "$_id",
+    //     }
+    // });
+    // // if(parseInt(offset)) {
+    // //     aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
+    // // }
+    // // if(parseInt(limit)) {
+    // //     aggregate.push({$limit: parseInt(limit)});
+    // // }
+    // AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
+    //     if(address) {
+    //         return cb(address);
+    //     } else {
+    //         return cb(null);
+    //     }
+    // });
+
+    AddressToUpdate[db.getCurrentConnection()].find({ address : address }).distinct("txid", function(err, results){
+        return cb(results);
+    });
+}
+
+function getAddressDetailsTest(cb) {
+    var aggregate = [];
+    // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
+    // aggregate.push({ $match : { address : address } });
+    aggregate.push({ $limit : 100 });
+    aggregate.push({
+        "$group": {
+            "_id": "$address",
+            "address": {"$first": "$address"},
+            "sent" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: "$amount",
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vin" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+            "received" : { "$sum":
+                    {$cond:
+                            {if: { $eq: [ "$_id", "coinbase" ] },
+                                then: 0,
+                                else: {$cond:
+                                        {if: { $eq: [ "$type", "vout" ] },
+                                            then: "$amount",
+                                            else: 0 }} }}
+            },
+            "amount" : { "$sum": "$amount" },
+            "count" : { $sum: 1 }
+        }
+    })
+    aggregate.push({
+        "$project": {
+            "_id": "$_id",
+            "address": "$address",
+            "sent": "$sent",
+            "received": "$received",
+            "balance": {"$subtract": ['$received', '$sent']},
+            "count": "$count",
+        }
+    })
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, results) {
+        if(results && results.length) {
+            return cb(results);
+        } else {
+            return cb(err);
+        }
+    });
+}
+
+function getAddressMap(cb) {
+    var aggregate = [];
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
+    aggregate.push({ $match : { order : {$gt: 0} } });
+    // aggregate.push({ $match : { address : 'coinbase' } });
+    aggregate.push({
+        "$group": {
+            "_id": "$address",
+            "address": {"$first": "$address"},
+            "received": {"$first": "$received"},
+            "sent": {"$first": "$sent"},
+        }
+    })
+    aggregate.push({$sort:{order:-1}});
+    aggregate.push({
+        "$project": {
+            "_id": "$_id",
+            "address": "$address",
+            "sent": "$sent",
+            "received": "$received",
+            "balance": {"$subtract": ['$received', '$sent']},
+            "count": "$count",
+        }
+    })
+    AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, results) {
+        if(results && results.length) {
+            return cb(results);
+        } else {
+            return cb(err);
+        }
+    });
+}
 function save(obj, cb) { // update or create
     AddressToUpdate[db.getCurrentConnection()].updateOne({_id: obj._id},{$set: {txid_timestamp: obj.txid_timestamp}}, function(err){
         if(err) {
@@ -1156,8 +1471,10 @@ module.exports.getRichlistAndExtraStats = getRichlistAndExtraStats;
 module.exports.getAllTx = getAllTx;
 module.exports.countUniqueTx = countUniqueTx;
 module.exports.countTx = countTx;
+module.exports.countTxByOrder = countTxByOrder;
 module.exports.countTxInArray = countTxInArray;
 module.exports.getAddressDetails = getAddressDetails;
+module.exports.getAddressDetailsTest = getAddressDetailsTest;
 module.exports.getAddressDetailsWithLastestTxs = getAddressDetailsWithLastestTxs;
 module.exports.getCoinbaseSupply = getCoinbaseSupply;
 module.exports.getBalanceSupply = getBalanceSupply;
@@ -1165,10 +1482,17 @@ module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getOneJoinTest = getOneJoinTest;
 module.exports.getOneConcat = getOneConcat;
 module.exports.getAddressTxs = getAddressTxs;
+module.exports.getAddressTxsByOrder = getAddressTxsByOrder;
 module.exports.getAddressTxsPublic = getAddressTxsPublic;
 module.exports.getAddressTxChart = getAddressTxChart;
 module.exports.getAll2 = getAll2;
+module.exports.getAll3 = getAll3;
+module.exports.getAllUnique = getAllUnique;
 module.exports.getByTotalTest = getByTotalTest;
 module.exports.save = save;
 module.exports.saveTxType = saveTxType;
 module.exports.getGroupCountForAddresses = getGroupCountForAddresses;
+module.exports.getAllUniqueAddresses = getAllUniqueAddresses;
+module.exports.getClusterDetails = getClusterDetails;
+module.exports.getAllAddressUniqueTxs = getAllAddressUniqueTxs;
+module.exports.getAddressMap = getAddressMap;
