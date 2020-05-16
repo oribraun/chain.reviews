@@ -2287,9 +2287,20 @@ if (wallet) {
                             updateAddresses(lastAddress);
                         })
                     });
+                    function roundToMaxSafeInt(val) {
+                        if(!Number.isSafeInteger(val)) {
+                            var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
+                            val = Math.round(val / (diff * 10))
+                        }
+                        return val;
+                    }
 
                     function updateAddresses(lastAddress) {
-                        AddressToUpdateController.getAll3({address: address, $or: [{order: {$exists: false}}, {order: {$eq: 0}}]}, {},{blockindex: 1}, 1, 0, function(addr) {
+                        var fromBlockIndex = 0;
+                        if(lastAddress) {
+                            fromBlockIndex = lastAddress.last_blockindex;
+                        }
+                        AddressToUpdateController.getAll3({address: address, blockindex: {$gte: fromBlockIndex} , $or: [{order: {$exists: false}}, {order: {$eq: 0}}]}, {},{blockindex: 1}, 1, 0, function(addr) {
                             if(!addr.length) {
                                 cluster.worker.send({finished: true});
                                 return;
@@ -2297,6 +2308,7 @@ if (wallet) {
                             addr = addr[0];
                             addr.received = lastReceived;
                             addr.sent = lastSent;
+                            addr.amount = roundToMaxSafeInt(addr.amount);
                             if(addr.address === 'coinbase') {
                                 addr.sent += addr.amount;
                             }
