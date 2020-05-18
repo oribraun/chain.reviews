@@ -30,6 +30,7 @@ router.use('/db/:wallet',function(req, res, next){
 var string = "";
 for (var wallet in settings) {
     if(settings[wallet].active) {
+        var symbol = settings[wallet].symbol;
         var txid = settings[wallet].example_txid;
         var hash = settings[wallet].example_hash;
         var dev_address = settings[wallet].dev_address;
@@ -54,7 +55,7 @@ for (var wallet in settings) {
                     .replace(':address', dev_address)
                     .replace(':coin', wallet)
                     .replace(':limit', 10)
-                    .replace(':symbol', wallet.replace('dogecash', 'dogec').toUpperCase() + '_' + 'BTC')
+                    .replace(':symbol', symbol.toUpperCase() + '_' + 'BTC')
                     .replace(':offset', 0)
                     .replace(':txid', txid));
                 addLinkToString(currentRoute);

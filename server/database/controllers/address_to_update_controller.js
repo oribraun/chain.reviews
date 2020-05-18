@@ -39,10 +39,13 @@ function getAll3(where, fields, sort, limit, offset, cb) {
     });
 }
 
-function getAllUnique(where, fields, sort, limit, offset, cb) {
+function getAllUnique(where, fields, sort, limit, offset, limitBigChain, cb) {
     // db.addresstoupdates.aggregate([{$match: {$or: [{order: {$exists: false}}, {order: {$eq: 0}}]}},{$group:{_id:'$address'}}, {$skip:0}, {$limit:20000}])
     var aggregate = [];
     aggregate.push({$match: where});
+    if(limitBigChain) {
+        aggregate.push({$limit: limitBigChain});
+    }
     aggregate.push({$group:{_id:'$address'}});
     if(JSON.stringify(fields) !== '{}') {
         aggregate.push({"$project": fields});

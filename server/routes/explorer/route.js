@@ -30,6 +30,7 @@ router.get('/*', (req, res) => {
             MarketsController.getAll('symbol', 'desc', 0, function(markets) {
                 var data = {
                     wallet: res.locals.wallet,
+                    symbol: settings[res.locals.wallet].symbol,
                     devAddress: settings[res.locals.wallet].dev_address,
                     blockHash: settings[res.locals.wallet].example_hash,
                     txHash: settings[res.locals.wallet].example_txid,
