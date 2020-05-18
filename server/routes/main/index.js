@@ -28,6 +28,7 @@ router.get('/getUsersStats', (req, res) => {
             console.log('stats', stats)
             array.push({
                 wallet: helpers.ucfirst(wallet),
+                symbol: settings[wallet].symbol,
                 explorer: fullUrl + '/explorer/' + wallet,
                 api: fullUrl + '/public-api/db/' + wallet,
                 stats: stats

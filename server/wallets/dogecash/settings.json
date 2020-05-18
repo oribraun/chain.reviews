@@ -1,7 +1,8 @@
 {
     "coin": "dogecash",
-    "cli": "/usr/local/bin/dogecash-cli",
-    "daemon": "/usr/local/bin/dogecashd",
+    "symbol": "DOGEC",
+    "cli": "http://165.22.68.166:3000/api/dogecash",
+    "daemon": "http://165.22.68.166:3000/api/dogecash",
     "example_txid": "229da48a3dc5cb3daf02734b22138210d7c98ea2ce340ff4251a54ab7c79eafa",
     "example_hash": "00000ae6d22cf38ad8bb55538f508bcf84c0ace873e87ef4cc200e366e848412",
     "dev_address": "D9DoSAvUTzh1uNyt7RV6fonK8wYn38wg2i",

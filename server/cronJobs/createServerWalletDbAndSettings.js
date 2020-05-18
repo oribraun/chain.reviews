@@ -16,6 +16,7 @@ if(!url) {
 }
 var default_settings = {
     "coin": "",
+    "symbol": "",
     "cli": url,
     "daemon": url,
     "example_txid": "txid for route examples",

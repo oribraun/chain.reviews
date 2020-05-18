@@ -1,5 +1,6 @@
 {
     "coin": "digibyte",
+    "symbol": "DGB",
     "cli": "http://134.122.89.4:3000/api/digibyte/",
     "daemon": "http://134.122.89.4:3000/api/digibyte/",
     "example_txid": "dd8a4a3b8ecdc14e4142ffb73a5b0c8801030f98dbd818f1b90ac3683b4f2c60",
@@ -32,5 +33,5 @@
         "port": 27017
     },
     "masternode_required": 0,
-    "active": false
+    "active": true
 }
