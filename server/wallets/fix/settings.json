@@ -1,7 +1,8 @@
 {
     "coin": "fix",
-    "cli": "/usr/local/bin/fix-cli",
-    "daemon": "/usr/local/bin/fixd",
+    "symbol": "FIX",
+    "cli": "http://157.230.111.172:3000/api/fix",
+    "daemon": "http://157.230.111.172:3000/api/fix",
     "example_txid": "30d701a30486a3e1791f1a29a7ac452a7adf72e7a3bef98235f9bf935fb34827",
     "example_hash": "000000428366d3a156c38c5061d74317d201781f539460aeeeaae1091de6e4cc",
     "dev_address": "FCoB1M2CxxN1fAezRAZC31AWtMBZ3zSvyF",
