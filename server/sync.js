@@ -2440,12 +2440,12 @@ if (wallet) {
                     var address = currentAddress._id;
                     var lastSent = 0;
                     var lastReceived = 0;
-                    var lastOrder = 0;
+                    var __lastOrder = 0;
                     var lastBlockIndex = 0;
                     AddressController.getOne(address, function(lastAddress) {
                         AddressToUpdateController.getAll3({address: address, order: {$gt: 0}}, {}, {blockindex: -1,order:-1}, 1, 0, function (lastAddressOrder) {
                             if (lastAddressOrder && lastAddressOrder.length) {
-                                lastOrder = lastAddressOrder[0].order;
+                                __lastOrder = lastAddressOrder[0].order;
                                 lastSent = lastAddressOrder[0].sent;
                                 lastReceived = lastAddressOrder[0].received;
                                 lastBlockIndex = lastAddressOrder[0].blockindex;
@@ -2483,8 +2483,8 @@ if (wallet) {
                                 addr.received += parseFloat(amount);
                             }
                             addr.balance = addr.received - addr.sent;
-                            lastOrder++;
-                            addr.order = lastOrder;
+                            __lastOrder++;
+                            addr.order = __lastOrder;
 
                             if(!lastAddress) {
                                 lastAddress = {};
@@ -2507,13 +2507,15 @@ if (wallet) {
                                 if(err) {
                                     console.log('err', err)
                                     console.log('addr', addr)
+                                    console.log('__lastOrder', __lastOrder)
+                                    console.log('lastBlockIndex', lastBlockIndex)
                                     if(err.stack.indexOf('Server selection timed out') > -1 ||
                                         err.stack.indexOf('interrupted at shutdown') > -1) {
                                         cluster.worker.send({mongoTimeout: true});
                                     }
                                     cluster.worker.send({stopAllProccess: true});
                                 } else {
-                                    // console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
+                                    console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
 
                                     AddressController.updateOne(lastAddress, function(err) {
                                         if(err) {
