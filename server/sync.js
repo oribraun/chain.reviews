@@ -2426,9 +2426,9 @@ if (wallet) {
             } else {
                 // Workers can share any TCP connection
                 // In this case it is an HTTP server
-                var lastUpdatedIds = [];
                 process.on('message', function(msg) {
                     if(msg.currentAddress !== undefined) {
+                        console.log('msg.currentAddress', msg.currentAddress)
                         startUpdatingAddress(msg.currentAddress);
                     }
                     if(msg.kill) {
@@ -2471,16 +2471,6 @@ if (wallet) {
                                 return;
                             }
                             addr = addr[0];
-                            if(lastUpdatedIds.indexOf(addr._id) > -1) {
-                                updateAddresses(lastAddress);
-                                return;
-                            }
-                            if(lastUpdatedIds.length === 10) {
-                                lastUpdatedIds.shift();
-                                lastUpdatedIds.push(addr._id);
-                            } else {
-                                lastUpdatedIds.push(addr._id);
-                            }
                             addr.received = lastReceived;
                             addr.sent = lastSent;
                             var amount = roundToMaxSafeInt(addr.amount);
