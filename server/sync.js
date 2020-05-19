@@ -2426,6 +2426,7 @@ if (wallet) {
             } else {
                 // Workers can share any TCP connection
                 // In this case it is an HTTP server
+                var lastUpdatedIds = [];
                 process.on('message', function(msg) {
                     if(msg.currentAddress !== undefined) {
                         startUpdatingAddress(msg.currentAddress);
@@ -2440,12 +2441,12 @@ if (wallet) {
                     var address = currentAddress._id;
                     var lastSent = 0;
                     var lastReceived = 0;
-                    var __lastOrder = 0;
+                    var lastOrder = 0;
                     var lastBlockIndex = 0;
                     AddressController.getOne(address, function(lastAddress) {
                         AddressToUpdateController.getAll3({address: address, order: {$gt: 0}}, {}, {blockindex: -1,order:-1}, 1, 0, function (lastAddressOrder) {
                             if (lastAddressOrder && lastAddressOrder.length) {
-                                __lastOrder = lastAddressOrder[0].order;
+                                lastOrder = lastAddressOrder[0].order;
                                 lastSent = lastAddressOrder[0].sent;
                                 lastReceived = lastAddressOrder[0].received;
                                 lastBlockIndex = lastAddressOrder[0].blockindex;
@@ -2470,6 +2471,15 @@ if (wallet) {
                                 return;
                             }
                             addr = addr[0];
+                            if(lastUpdatedIds.indexOf(addr._id) > -1) {
+                                updateAddresses(lastAddress);
+                            }
+                            if(lastUpdatedIds.length === 10) {
+                                lastUpdatedIds.shift();
+                                lastUpdatedIds.push(addr._id);
+                            } else {
+                                lastUpdatedIds.push(addr._id);
+                            }
                             addr.received = lastReceived;
                             addr.sent = lastSent;
                             var amount = roundToMaxSafeInt(addr.amount);
@@ -2483,8 +2493,8 @@ if (wallet) {
                                 addr.received += parseFloat(amount);
                             }
                             addr.balance = addr.received - addr.sent;
-                            __lastOrder++;
-                            addr.order = __lastOrder;
+                            lastOrder++;
+                            addr.order = lastOrder;
 
                             if(!lastAddress) {
                                 lastAddress = {};
@@ -2507,15 +2517,13 @@ if (wallet) {
                                 if(err) {
                                     console.log('err', err)
                                     console.log('addr', addr)
-                                    console.log('__lastOrder', __lastOrder)
-                                    console.log('lastBlockIndex', lastBlockIndex)
                                     if(err.stack.indexOf('Server selection timed out') > -1 ||
                                         err.stack.indexOf('interrupted at shutdown') > -1) {
                                         cluster.worker.send({mongoTimeout: true});
                                     }
                                     cluster.worker.send({stopAllProccess: true});
                                 } else {
-                                    console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + __lastOrder + ' - ' + addr.txid_timestamp);
+                                    // console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
 
                                     AddressController.updateOne(lastAddress, function(err) {
                                         if(err) {
