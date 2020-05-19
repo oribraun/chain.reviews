@@ -1752,7 +1752,8 @@ if (wallet) {
                                 addr.received += parseFloat(amount);
                             }
                             addr.balance = addr.received - addr.sent;
-                            addr.order = lastOrder + 1;
+                            lastOrder++;
+                            addr.order = lastOrder;
 
                             if(!lastAddress) {
                                 lastAddress = {};
@@ -1763,10 +1764,6 @@ if (wallet) {
                             lastAddress.balance = addr.balance;
                             lastAddress.last_order = addr.order;
                             lastAddress.last_blockindex = addr.blockindex;
-                            lastOrder = addr.order;
-                            lastSent = addr.sent;
-                            lastReceived = addr.received;
-                            lastBlockIndex = addr.blockindex;
                             // console.log('addr', addr)
                             // console.log('lastAddress', lastAddress)
                             // console.log('lastOrder', lastOrder)
@@ -1797,6 +1794,10 @@ if (wallet) {
                                             }
                                             cluster.worker.send({stopAllProccess: true});
                                         } else {
+                                            // lastOrder = addr.order;
+                                            lastSent = addr.sent;
+                                            lastReceived = addr.received;
+                                            lastBlockIndex = addr.blockindex;
                                             updateAddresses(lastAddress);
                                         }
                                     })
@@ -1805,8 +1806,7 @@ if (wallet) {
                             })
                         });
                     }
-                }
-            }
+                }            }
             break;
         case 'save_tx_linear': // 0:52:3.69 - block count 149482
             if (cluster.isMaster) {
@@ -2483,7 +2483,8 @@ if (wallet) {
                                 addr.received += parseFloat(amount);
                             }
                             addr.balance = addr.received - addr.sent;
-                            addr.order = lastOrder + 1;
+                            lastOrder++;
+                            addr.order = lastOrder;
 
                             if(!lastAddress) {
                                 lastAddress = {};
@@ -2494,10 +2495,6 @@ if (wallet) {
                             lastAddress.balance = addr.balance;
                             lastAddress.last_order = addr.order;
                             lastAddress.last_blockindex = addr.blockindex;
-                            lastOrder = addr.order;
-                            lastSent = addr.sent;
-                            lastReceived = addr.received;
-                            lastBlockIndex = addr.blockindex;
                             // console.log('addr', addr)
                             // console.log('lastAddress', lastAddress)
                             // console.log('lastOrder', lastOrder)
@@ -2528,6 +2525,10 @@ if (wallet) {
                                             }
                                             cluster.worker.send({stopAllProccess: true});
                                         } else {
+                                            // lastOrder = addr.order;
+                                            lastSent = addr.sent;
+                                            lastReceived = addr.received;
+                                            lastBlockIndex = addr.blockindex;
                                             updateAddresses(lastAddress);
                                         }
                                     })
