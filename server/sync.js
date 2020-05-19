@@ -2507,6 +2507,7 @@ if (wallet) {
                                 if(err) {
                                     console.log('err', err)
                                     console.log('addr', addr)
+                                    console.log('lastBlockIndex', lastBlockIndex)
                                     if(err.stack.indexOf('Server selection timed out') > -1 ||
                                         err.stack.indexOf('interrupted at shutdown') > -1) {
                                         cluster.worker.send({mongoTimeout: true});

@@ -30,7 +30,7 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
 }
 
 function getAll3(where, fields, sort, limit, offset, cb) {
-    AddressToUpdate[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).lean().exec( function(err, address) {
+    AddressToUpdate[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).lean().readConcern("majority").maxTimeMS(10000).exec( function(err, address) {
         if(address) {
             return cb(address);
         } else {
