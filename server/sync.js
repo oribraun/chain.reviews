@@ -2469,7 +2469,6 @@ if (wallet) {
                                 cluster.worker.send({finished: true});
                                 return;
                             }
-                            var originalAddress = addr[0];
                             addr = addr[0];
                             addr.received = lastReceived;
                             addr.sent = lastSent;
@@ -2508,8 +2507,6 @@ if (wallet) {
                                 if(err) {
                                     console.log('err', err)
                                     console.log('addr', addr)
-                                    console.log('originalAddress', originalAddress)
-                                    console.log('lastBlockIndex', lastBlockIndex)
                                     if(err.stack.indexOf('Server selection timed out') > -1 ||
                                         err.stack.indexOf('interrupted at shutdown') > -1) {
                                         cluster.worker.send({mongoTimeout: true});
@@ -2532,7 +2529,9 @@ if (wallet) {
                                             lastSent = addr.sent;
                                             lastReceived = addr.received;
                                             lastBlockIndex = addr.blockindex;
-                                            updateAddresses(lastAddress);
+                                            setTimeout(function(){
+                                                updateAddresses(lastAddress);
+                                            })
                                         }
                                     })
                                 }
