@@ -2473,6 +2473,7 @@ if (wallet) {
                             addr = addr[0];
                             if(lastUpdatedIds.indexOf(addr._id) > -1) {
                                 updateAddresses(lastAddress);
+                                return;
                             }
                             if(lastUpdatedIds.length === 10) {
                                 lastUpdatedIds.shift();
