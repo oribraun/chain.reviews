@@ -2529,9 +2529,7 @@ if (wallet) {
                                             lastSent = addr.sent;
                                             lastReceived = addr.received;
                                             lastBlockIndex = addr.blockindex;
-                                            setTimeout(function(){
-                                                updateAddresses(lastAddress);
-                                            })
+                                            updateAddresses(lastAddress);
                                         }
                                     })
                                 }
