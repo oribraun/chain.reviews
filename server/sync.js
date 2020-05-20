@@ -1559,8 +1559,7 @@ if (wallet) {
                 }
                 createFile();
                 var currentAddresses = [];
-                var currentlyInProcess = [];
-                var limit = 2000;
+                var limit = 20000;
                 var countAddresses = 0;
                 var offset = 0;
                 var cpuCount = 1;
@@ -1569,13 +1568,12 @@ if (wallet) {
                 var exit_count = 0;
                 var mongoTimeout = false;
                 gettingNextAddressInProgress = true;
-                var startAddressLinerAll = function() {
+                rtAddressLinerAll = function() {
                     AddressToUpdateController.estimatedDocumentCount(function(count) {
                         console.log('count', count)
-                        gettingNextUniqueAddresses(limit, offset, currentlyInProcess, count).then(function (res) {
+                        gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
                             gettingNextAddressInProgress = false;
                             if (res && res.length) {
-                                currentlyInProcess = currentlyInProcess.concat(res.map(function(obj) {return obj._id}));
                                 currentAddresses = currentAddresses.concat(res);
                             }
                             if (currentAddresses.length) {
@@ -1583,53 +1581,46 @@ if (wallet) {
                                     var worker = cluster.fork();
                                     worker.on('message', function (msg) {
                                         if (msg.finished) {
-                                            var index = currentlyInProcess.indexOf(msg.address);
-                                            if(index > -1) {
-                                                currentlyInProcess.splice(index, 1);
-                                                console.log('currentlyInProcess.length', currentlyInProcess.length);
-                                            }
                                             (function (id) {
                                                 clusterQ.push(id);
                                                 if (currentAddresses.length) {
-                                                    if (currentAddresses.length === limit - limit / 10) {
-                                                        if (!gettingNextAddressInProgress) {
-                                                            gettingNextAddressInProgress = true;
-                                                            // offset++;
-                                                            gettingNextUniqueAddresses(limit, offset, currentlyInProcess, count).then(function (res) {
-                                                                // console.log('res.length', res.length)
-                                                                if (res && res.length) {
-                                                                    currentlyInProcess = currentlyInProcess.concat(res.map(function(obj) {return obj._id}));
-                                                                    currentAddresses = currentAddresses.concat(res);
-                                                                }
-                                                                gettingNextAddressInProgress = false;
-                                                                if (currentAddresses.length) {
-                                                                    console.log('clusterQ', clusterQ)
-                                                                    while (clusterQ.length) {
-                                                                        cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                                        clusterQ.shift();
-                                                                        countAddresses++;
-                                                                        currentAddresses.shift();
-                                                                    }
-                                                                } else {
-                                                                    while (clusterQ.length) {
-                                                                        console.log('kill');
-                                                                        cluster.workers[clusterQ[0]].send({kill: true});
-                                                                        clusterQ.shift();
-                                                                    }
-                                                                }
-                                                            });
-                                                        }
-                                                    }
                                                     cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
                                                     clusterQ.shift();
                                                     countAddresses++;
                                                     currentAddresses.shift();
 
                                                 } else {
-                                                    if (!gettingNextAddressInProgress) {
-                                                        cluster.workers[clusterQ[0]].send({kill: true});
-                                                        clusterQ.shift();
+                                                    console.log('clusterQ.length', clusterQ.length);
+                                                    if (clusterQ.length === cpuCount) {
+                                                        gettingNextAddressInProgress = true;
+                                                        // offset++;
+                                                        gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
+                                                            // console.log('res.length', res.length)
+                                                            if (res && res.length) {
+                                                                currentAddresses = currentAddresses.concat(res);
+                                                            }
+                                                            gettingNextAddressInProgress = false;
+                                                            if (currentAddresses.length) {
+                                                                console.log('clusterQ', clusterQ)
+                                                                while (clusterQ.length) {
+                                                                    cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
+                                                                    clusterQ.shift();
+                                                                    countAddresses++;
+                                                                    currentAddresses.shift();
+                                                                }
+                                                            } else {
+                                                                while (clusterQ.length) {
+                                                                    console.log('kill');
+                                                                    cluster.workers[clusterQ[0]].send({kill: true});
+                                                                    clusterQ.shift();
+                                                                }
+                                                            }
+                                                        });
                                                     }
+                                                    // if (!gettingNextAddressInProgress) {
+                                                    //     cluster.workers[clusterQ[0]].send({kill: true});
+                                                    //     clusterQ.shift();
+                                                    // }
                                                 }
                                             })(this.id)
                                         }
@@ -1743,7 +1734,7 @@ if (wallet) {
                     function updateAddresses(lastAddress) {
                         AddressToUpdateController.getAll3({address: address, blockindex: {$gte: lastBlockIndex} , order: {$not:{$gt: 0}}}, {},{blockindex: 1}, 1, 0, function(addr) {
                             if(!addr.length) {
-                                cluster.worker.send({finished: true});
+                                cluster.worker.send({finished: true, address: address});
                                 return;
                             }
                             addr = addr[0];
@@ -2298,8 +2289,7 @@ if (wallet) {
                 }
                 createFile('address');
                 var currentAddresses = [];
-                var currentlyInProcess = [];
-                var limit = 2000;
+                var limit = 20000;
                 var countAddresses = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -2311,10 +2301,9 @@ if (wallet) {
                 var startAddressLinerAll = function() {
                     AddressToUpdateController.estimatedDocumentCount(function(count) {
                         console.log('count', count)
-                        gettingNextUniqueAddresses(limit, offset, currentlyInProcess, count).then(function (res) {
+                        gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
                             gettingNextAddressInProgress = false;
                             if (res && res.length) {
-                                currentlyInProcess = currentlyInProcess.concat(res.map(function(obj) {return obj._id}));
                                 currentAddresses = currentAddresses.concat(res);
                             }
                             if (currentAddresses.length) {
@@ -2322,53 +2311,47 @@ if (wallet) {
                                     var worker = cluster.fork();
                                     worker.on('message', function (msg) {
                                         if (msg.finished) {
-                                            var index = currentlyInProcess.indexOf(msg.address);
-                                            if(index > -1) {
-                                                currentlyInProcess.splice(index, 1);
-                                                console.log('currentlyInProcess.length', currentlyInProcess.length);
-                                            }
                                             (function (id) {
+                                                console.log('currentAddresses.length', currentAddresses.length);
                                                 clusterQ.push(id);
                                                 if (currentAddresses.length) {
-                                                    if (currentAddresses.length === limit - limit / 10) {
-                                                        if (!gettingNextAddressInProgress) {
-                                                            gettingNextAddressInProgress = true;
-                                                            // offset++;
-                                                            gettingNextUniqueAddresses(limit, offset, currentlyInProcess, count).then(function (res) {
-                                                                // console.log('res.length', res.length)
-                                                                if (res && res.length) {
-                                                                    currentlyInProcess = currentlyInProcess.concat(res.map(function(obj) {return obj._id}));
-                                                                    currentAddresses = currentAddresses.concat(res);
-                                                                }
-                                                                gettingNextAddressInProgress = false;
-                                                                if (currentAddresses.length) {
-                                                                    console.log('clusterQ', clusterQ)
-                                                                    while (clusterQ.length) {
-                                                                        cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                                        clusterQ.shift();
-                                                                        countAddresses++;
-                                                                        currentAddresses.shift();
-                                                                    }
-                                                                } else {
-                                                                    while (clusterQ.length) {
-                                                                        console.log('kill');
-                                                                        cluster.workers[clusterQ[0]].send({kill: true});
-                                                                        clusterQ.shift();
-                                                                    }
-                                                                }
-                                                            });
-                                                        }
-                                                    }
                                                     cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
                                                     clusterQ.shift();
                                                     countAddresses++;
                                                     currentAddresses.shift();
 
                                                 } else {
-                                                    if (!gettingNextAddressInProgress) {
-                                                        cluster.workers[clusterQ[0]].send({kill: true});
-                                                        clusterQ.shift();
+                                                    console.log('clusterQ.length', clusterQ.length);
+                                                    if (clusterQ.length === cpuCount) {
+                                                        gettingNextAddressInProgress = true;
+                                                        // offset++;
+                                                        gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
+                                                            // console.log('res.length', res.length)
+                                                            if (res && res.length) {
+                                                                currentAddresses = currentAddresses.concat(res);
+                                                            }
+                                                            gettingNextAddressInProgress = false;
+                                                            if (currentAddresses.length) {
+                                                                console.log('clusterQ', clusterQ)
+                                                                while (clusterQ.length) {
+                                                                    cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
+                                                                    clusterQ.shift();
+                                                                    countAddresses++;
+                                                                    currentAddresses.shift();
+                                                                }
+                                                            } else {
+                                                                while (clusterQ.length) {
+                                                                    console.log('kill');
+                                                                    cluster.workers[clusterQ[0]].send({kill: true});
+                                                                    clusterQ.shift();
+                                                                }
+                                                            }
+                                                        });
                                                     }
+                                                    // if (!gettingNextAddressInProgress) {
+                                                    //     cluster.workers[clusterQ[0]].send({kill: true});
+                                                    //     clusterQ.shift();
+                                                    // }
                                                 }
                                             })(this.id)
                                         }
@@ -5128,9 +5111,9 @@ var getAddresses = function(limit, offset, blockindex) {
     return promise;
 }
 
-var gettingNextUniqueAddresses = function(limit, offset, currentlyInProcess, total) {
+var gettingNextUniqueAddresses = function(limit, offset, total) {
     var promise = new Promise(function(resolve, reject) {
-        getUniqueAddresses(limit, offset, currentlyInProcess, total).then(function (res) {
+        getUniqueAddresses(limit, offset, total).then(function (res) {
             if (res.length) {
                 console.log('got chunks', (offset * limit) + ' - ' + (offset * limit + limit));
                 // currentBlocks = currentBlocks.concat(res);
@@ -5145,15 +5128,12 @@ var gettingNextUniqueAddresses = function(limit, offset, currentlyInProcess, tot
     return promise;
 }
 
-var getUniqueAddresses = function(limit, offset, currentlyInProcess, total) {
+var getUniqueAddresses = function(limit, offset, total) {
     var promise = new Promise(function(resolve, reject) {
         var where = {};
         var fields = {};
         // where = {$or: [{order: {$exists: false}}, {order: {$eq: 0}}]};
         where.order = {$not:{$gt: 0}};
-        if(currentlyInProcess && currentlyInProcess.length) {
-            where.address = {$not: {$in: currentlyInProcess}}
-        }
         // where.address = "WUv8fyfuCWbTzmhvDaSGUfundZunnxGt12";
         // where.address = {$in: [
         //         "SRYkHm3QGCFyje2kP9sEC3wVb9gEA9voEG",
@@ -5166,8 +5146,8 @@ var getUniqueAddresses = function(limit, offset, currentlyInProcess, total) {
         //         // "DSwGy32nTPm8nM5YfobvbvHryHiJSMtL9y",
         //     ]};
         var limitBigChain = total;
-        if(limitBigChain > 10000000) {
-            limitBigChain = 10000000;
+        if(limitBigChain > 1000000) {
+            limitBigChain = 1000000;
         }
         AddressToUpdateController.getAllUnique(where, fields,{}, limit, offset, limitBigChain, function(results) {
             // console.log('results.length', results.length);
