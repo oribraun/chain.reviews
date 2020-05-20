@@ -86,12 +86,14 @@ function updateOne(obj, cb) { // update or create
             address.received = obj.received;
             address.type = obj.type;
             address.blockindex = obj.blockindex;
-            address.save().then(function (address) {
+            address.save(function (err, tx) {
                 // console.log('err', err)
                 // console.log('tx', tx)
-                return cb();
-            }).catch(function(err) {
-                return cb(err);
+                if (err) {
+                    return cb(err);
+                } else {
+                    return cb();
+                }
             });
         } else { // create new
             var newAddress = new AddressToUpdate[db.getCurrentConnection()]({

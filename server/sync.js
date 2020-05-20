@@ -2299,7 +2299,7 @@ if (wallet) {
                 createFile('address');
                 var currentAddresses = [];
                 var currentlyInProcess = [];
-                var limit = 20000;
+                var limit = 2000;
                 var countAddresses = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
