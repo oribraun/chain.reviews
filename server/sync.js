@@ -1568,7 +1568,7 @@ if (wallet) {
                 var exit_count = 0;
                 var mongoTimeout = false;
                 gettingNextAddressInProgress = true;
-                rtAddressLinerAll = function() {
+                var startAddressLinerAll = function() {
                     AddressToUpdateController.estimatedDocumentCount(function(count) {
                         console.log('count', count)
                         gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
@@ -1582,6 +1582,7 @@ if (wallet) {
                                     worker.on('message', function (msg) {
                                         if (msg.finished) {
                                             (function (id) {
+                                                // console.log('currentAddresses.length', currentAddresses.length);
                                                 clusterQ.push(id);
                                                 if (currentAddresses.length) {
                                                     cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
@@ -1590,7 +1591,7 @@ if (wallet) {
                                                     currentAddresses.shift();
 
                                                 } else {
-                                                    console.log('clusterQ.length', clusterQ.length);
+                                                    // console.log('clusterQ.length', clusterQ.length);
                                                     if (clusterQ.length === cpuCount) {
                                                         gettingNextAddressInProgress = true;
                                                         // offset++;
@@ -2312,7 +2313,7 @@ if (wallet) {
                                     worker.on('message', function (msg) {
                                         if (msg.finished) {
                                             (function (id) {
-                                                console.log('currentAddresses.length', currentAddresses.length);
+                                                // console.log('currentAddresses.length', currentAddresses.length);
                                                 clusterQ.push(id);
                                                 if (currentAddresses.length) {
                                                     cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
@@ -2321,7 +2322,7 @@ if (wallet) {
                                                     currentAddresses.shift();
 
                                                 } else {
-                                                    console.log('clusterQ.length', clusterQ.length);
+                                                    // console.log('clusterQ.length', clusterQ.length);
                                                     if (clusterQ.length === cpuCount) {
                                                         gettingNextAddressInProgress = true;
                                                         // offset++;
