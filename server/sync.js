@@ -1650,12 +1650,12 @@ if (wallet) {
                                                     console.log('\n*******************************************************************');
                                                     console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
                                                     console.log('*******************************************************************\n');
-                                                    deleteFile('address');
+                                                    deleteFile();
                                                     db.multipleDisconnect();
                                                     process.exit(1);
                                                 }
                                                 console.log('took - ', helpers.getFinishTime(startTime));
-                                                deleteFile('address');
+                                                deleteFile();
                                                 db.multipleDisconnect();
                                                 process.exit(1);
                                                 // console.log('countAddresses', countAddresses)
@@ -1676,7 +1676,7 @@ if (wallet) {
                                 }
                             } else {
                                 console.log('no new blocks found');
-                                deleteFile('address');
+                                deleteFile();
                                 db.multipleDisconnect();
                                 process.exit();
                                 return;
