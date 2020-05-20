@@ -1575,6 +1575,7 @@ if (wallet) {
                         gettingNextUniqueAddresses(limit, offset, currentlyInProcess, count).then(function (res) {
                             gettingNextAddressInProgress = false;
                             if (res && res.length) {
+                                currentlyInProcess = currentlyInProcess.concat(res.map(function(obj) {return obj._id}));
                                 currentAddresses = currentAddresses.concat(res);
                             }
                             if (currentAddresses.length) {
@@ -1582,10 +1583,12 @@ if (wallet) {
                                     var worker = cluster.fork();
                                     worker.on('message', function (msg) {
                                         if (msg.finished) {
+                                            var index = currentlyInProcess.indexOf(msg.address);
+                                            if(index > -1) {
+                                                currentlyInProcess.splice(index, 1);
+                                                console.log('currentlyInProcess.length', currentlyInProcess.length);
+                                            }
                                             (function (id) {
-                                                if(currentlyInProcess[id]) {
-                                                    delete currentlyInProcess[id];
-                                                }
                                                 clusterQ.push(id);
                                                 if (currentAddresses.length) {
                                                     if (currentAddresses.length === limit - limit / 10) {
@@ -1595,6 +1598,7 @@ if (wallet) {
                                                             gettingNextUniqueAddresses(limit, offset, currentlyInProcess, count).then(function (res) {
                                                                 // console.log('res.length', res.length)
                                                                 if (res && res.length) {
+                                                                    currentlyInProcess = currentlyInProcess.concat(res.map(function(obj) {return obj._id}));
                                                                     currentAddresses = currentAddresses.concat(res);
                                                                 }
                                                                 gettingNextAddressInProgress = false;
@@ -1602,7 +1606,6 @@ if (wallet) {
                                                                     console.log('clusterQ', clusterQ)
                                                                     while (clusterQ.length) {
                                                                         cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                                        currentlyInProcess[clusterQ[0]] = currentAddresses[0]._id;
                                                                         clusterQ.shift();
                                                                         countAddresses++;
                                                                         currentAddresses.shift();
@@ -1618,7 +1621,6 @@ if (wallet) {
                                                         }
                                                     }
                                                     cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                    currentlyInProcess[clusterQ[0]] = currentAddresses[0]._id;
                                                     clusterQ.shift();
                                                     countAddresses++;
                                                     currentAddresses.shift();
@@ -1674,7 +1676,6 @@ if (wallet) {
                                     })
                                     if (currentAddresses.length) {
                                         worker.send({currentAddress: currentAddresses[0]});
-                                        currentlyInProcess[worker.id] = currentAddresses[0]._id;
                                         countAddresses++;
                                         currentAddresses.shift();
                                     } else {
@@ -2313,6 +2314,7 @@ if (wallet) {
                         gettingNextUniqueAddresses(limit, offset, currentlyInProcess, count).then(function (res) {
                             gettingNextAddressInProgress = false;
                             if (res && res.length) {
+                                currentlyInProcess = currentlyInProcess.concat(res.map(function(obj) {return obj._id}));
                                 currentAddresses = currentAddresses.concat(res);
                             }
                             if (currentAddresses.length) {
@@ -2320,10 +2322,12 @@ if (wallet) {
                                     var worker = cluster.fork();
                                     worker.on('message', function (msg) {
                                         if (msg.finished) {
+                                            var index = currentlyInProcess.indexOf(msg.address);
+                                            if(index > -1) {
+                                                currentlyInProcess.splice(index, 1);
+                                                console.log('currentlyInProcess.length', currentlyInProcess.length);
+                                            }
                                             (function (id) {
-                                                if(currentlyInProcess[id]) {
-                                                    delete currentlyInProcess[id];
-                                                }
                                                 clusterQ.push(id);
                                                 if (currentAddresses.length) {
                                                     if (currentAddresses.length === limit - limit / 10) {
@@ -2333,6 +2337,7 @@ if (wallet) {
                                                             gettingNextUniqueAddresses(limit, offset, currentlyInProcess, count).then(function (res) {
                                                                 // console.log('res.length', res.length)
                                                                 if (res && res.length) {
+                                                                    currentlyInProcess = currentlyInProcess.concat(res.map(function(obj) {return obj._id}));
                                                                     currentAddresses = currentAddresses.concat(res);
                                                                 }
                                                                 gettingNextAddressInProgress = false;
@@ -2340,7 +2345,6 @@ if (wallet) {
                                                                     console.log('clusterQ', clusterQ)
                                                                     while (clusterQ.length) {
                                                                         cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                                        currentlyInProcess[clusterQ[0]] = currentAddresses[0]._id;
                                                                         clusterQ.shift();
                                                                         countAddresses++;
                                                                         currentAddresses.shift();
@@ -2356,7 +2360,6 @@ if (wallet) {
                                                         }
                                                     }
                                                     cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                    currentlyInProcess[clusterQ[0]] = currentAddresses[0]._id;
                                                     clusterQ.shift();
                                                     countAddresses++;
                                                     currentAddresses.shift();
@@ -2412,7 +2415,6 @@ if (wallet) {
                                     })
                                     if (currentAddresses.length) {
                                         worker.send({currentAddress: currentAddresses[0]});
-                                        currentlyInProcess[worker.id] = currentAddresses[0]._id;
                                         countAddresses++;
                                         currentAddresses.shift();
                                     } else {
@@ -2429,7 +2431,6 @@ if (wallet) {
                         });
                     })
                 }
-
                 // var addresses = [];
                 // var local_addreses_before_save = [];
                 var updateInProgress = false;
@@ -2480,7 +2481,7 @@ if (wallet) {
                     function updateAddresses(lastAddress) {
                         AddressToUpdateController.getAll3({address: address, blockindex: {$gte: lastBlockIndex} , order: {$not:{$gt: 0}}}, {},{blockindex: 1}, 1, 0, function(addr) {
                             if(!addr.length) {
-                                cluster.worker.send({finished: true});
+                                cluster.worker.send({finished: true, address: address});
                                 return;
                             }
                             addr = addr[0];
