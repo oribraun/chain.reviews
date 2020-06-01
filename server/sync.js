@@ -2622,7 +2622,7 @@ if (wallet) {
                                             }
                                             // console.log('addreses_to_update', addreses_to_update.length)
                                         }
-                                        console.log(`worker ${worker.process.pid} died`);
+                                        console.log(`worker ${worker.process.pid} died - code ${code} , signal - ${signal}`);
                                     })
                                     clusterQ.push(worker.id);
                                     if(!gettingNextInProgress) {
