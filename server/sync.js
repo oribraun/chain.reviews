@@ -6239,14 +6239,14 @@ function updateClusterTxByDay(wallet) {
             // console.log(txByDays[0])
             ClusterTxByDayController.updateOne(txByDays[0], function(err) {
                 if(err) {
-                    console.log('err', err);
+                    console.log('err updateClusterTxByDayOneByOne', err);
                 } else {
                     txByDays.shift();
                     if(txByDays.length) {
                         updateClusterTxByDayOneByOne(clusterId, txByDays)
                     } else {
                         startUpdateCluster(clusters);
-                        console.log('finish updating cluster chart - ' + clusterId)
+                        // console.log('finish updating cluster chart - ' + clusterId)
                     }
                 }
             })
