@@ -685,6 +685,11 @@ function getTransactionsChart(id, date, cb) {
                     // })
                     var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
                     var aggregate = [];
+                    aggregate.push({$match: {"txid_timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
+                    if(date) {
+                        var timestamp = new Date(date).getTime() / 1000;
+                        aggregate.push({$match: {"txid_timestamp": {$gte: timestamp }}});
+                    }
                     aggregate.push({$match: {address: {$in: addresses}}});
                     aggregate.push({$project: {_id:0, txid: 1}});
                     aggregate.push({
@@ -712,12 +717,12 @@ function getTransactionsChart(id, date, cb) {
                         }
                     });
                     aggregate.push({$match: {"txs.total": {$gt: 0}}});
-                    var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
-                    aggregate.push({$match: {"txs.timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
-                    if(date) {
-                        var timestamp = new Date(date).getTime() / 1000;
-                        aggregate.push({$match: {"txs.timestamp": {$gte: timestamp }}});
-                    }
+                    // var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+                    // aggregate.push({$match: {"txs.timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
+                    // if(date) {
+                    //     var timestamp = new Date(date).getTime() / 1000;
+                    //     aggregate.push({$match: {"txs.timestamp": {$gte: timestamp }}});
+                    // }
                     aggregate.push({$project: {
                             "_id": "_id",
                             "total": "$txs.total",
