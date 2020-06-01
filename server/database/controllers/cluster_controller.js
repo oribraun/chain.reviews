@@ -810,7 +810,7 @@ function getTransactionsChart(id, date, cb) {
                         }});
                     AddressToUpdate[db.getCurrentConnection()].aggregate(
                         aggregate
-                    ).option({ allowDiskUse: true, maxTimeMS: 5*60*1000 }).exec( function(err, txs) {
+                    ).option({ allowDiskUse: true, maxTimeMS: 10*60*1000 }).exec( function(err, txs) {
                         if(txs) {
                             return cb(txs);
                         } else {
