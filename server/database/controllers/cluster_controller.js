@@ -541,10 +541,14 @@ function getAllClustersWithAddressAndTxsCount(id, limit, offset,  cb) {
             var promises = [];
             for(var i = 0; i < clusters.length; i++) {
                 (function(i){
+                    var addresses = clusters[i].addresses;
+                    delete clusters[i].addresses;
                     promises.push(new Promise(function(resolve, reject) {
-                        AddressToUpdateController.countTxInArray(clusters[i].addresses, function (tx_count) {
-                            clusters[i].tx_count = tx_count;
-                            delete clusters[i].addresses;
+                        AddressToUpdateController.getClusterDetails(addresses, function (details) {
+                            clusters[i].tx_count = details.count;
+                            clusters[i].tx_sent = details.sent;
+                            clusters[i].tx_received = details.received;
+                            clusters[i].tx_balance = details.balance;
                             resolve();
                         })
                     }))

@@ -19,6 +19,7 @@ var PeersController = require('./../../database/controllers/peers_controller');
 var MarketController = require('./../../database/controllers/markets_controller');
 var TxByDayController = require('./../../database/controllers/tx_by_day_controller');
 var ClusterController = require('./../../database/controllers/cluster_controller');
+var ClusterTxByDayController = require('./../../database/controllers/cluster_tx_by_day_controller');
 
 // var wallet = process.argv[2];
 
@@ -26,6 +27,7 @@ router.get('/', (req, res) => {
     var string = "";
     var wallet = res.locals.wallet;
     var currentRoute;
+    var symbol = settings[wallet].symbol;
     var txid = settings[wallet].example_txid;
     var hash = settings[wallet].example_hash;
     var dev_address = settings[wallet].dev_address;
@@ -39,7 +41,7 @@ router.get('/', (req, res) => {
                 .replace(':coin', wallet)
                 .replace(':limit', 10)
                 .replace(':offset', 0)
-                .replace(':symbol', wallet.replace('dogecash', 'dogec').toUpperCase() + '_BTC')
+                .replace(':symbol', symbol.toUpperCase() + '_BTC')
                 .replace(':txid', txid));
             string += "<a href='" + currentRoute + "' target='_blank'>" + currentRoute + "</a>";
             string += '<br>';
@@ -713,11 +715,11 @@ router.get('/getAllClustersWithAddressAndTxsCount/:limit/:offset', (req, res) =>
         res.send(JSON.stringify(response, null, 2));
     })
 })
-// router.get('/getClusterDetails/:clusterId', (req, res) => {
+// router.get('/getClusterChart/:clusterId', (req, res) => {
 //     const response = helpers.getGeneralResponse();
-//     ClusterController.getAllClustersWithAddressAndTxsCount(req.params['clusterId'].toString(), 1, 0, function(results) {
+//     ClusterTxByDayController.getAllForChart(req.params['clusterId'].toString(), "d", -1, 0, function(results) {
 //         if(results) {
-//             response.data = results[0];
+//             response.data = results;
 //         } else {
 //             response.err = 1;
 //             response.errMessage = 'no cluster found';
