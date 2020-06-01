@@ -21,7 +21,7 @@ var model = {
     },
     getTicker: function(from_coin, to_coin) {
         to_coin = to_coin.toUpperCase();
-        from_coin = from_coin.replace('dogecash', 'dogec').toUpperCase();
+        from_coin = from_coin.toUpperCase();
         var url = bash + 'ticker?symbol=' + from_coin + '_' + to_coin;
         var promise = new Promise(function(resolve, reject) {
             request({uri: url, json: true}, function (error, response, body) {
@@ -57,7 +57,7 @@ var model = {
     },
     getTrades: function(from_coin, to_coin, limit) {
         to_coin = to_coin.toUpperCase();
-        from_coin = from_coin.replace('dogecash', 'dogec').toUpperCase();
+        from_coin = from_coin.toUpperCase();
         var url = bash + 'trades?symbol=' + from_coin + '_' + to_coin + '&limit=' + limit;
         var promise = new Promise(function(resolve, reject) {
             request({uri: url, json: true}, function (error, response, body) {
@@ -83,7 +83,7 @@ var model = {
     },
     getDepth: function(from_coin, to_coin, limit) {
         to_coin = to_coin.toUpperCase();
-        from_coin = from_coin.replace('dogecash', 'dogec').toUpperCase();
+        from_coin = from_coin.toUpperCase();
         var url = bash + 'depth?symbol=' + from_coin + '_' + to_coin + '&limit=' + limit;
         var promise = new Promise(function(resolve, reject) {
             request({uri: url, json: true}, function (error, response, body) {

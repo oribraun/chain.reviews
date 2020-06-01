@@ -1,5 +1,6 @@
 {
     "coin": "bitcoin",
+    "symbol": "BTC",
     "cli": "http://142.93.102.231:3000/api/bitcoin/",
     "daemon": "http://142.93.102.231:3000/api/bitcoin/",
     "example_txid": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",

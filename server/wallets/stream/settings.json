@@ -1,7 +1,8 @@
 {
     "coin": "stream",
-    "cli": "/usr/local/bin/streamitcoin-cli",
-    "daemon": "/usr/local/bin/streamitcoind",
+    "symbol": "STREAM",
+    "cli": "http://167.172.178.57:3000/api/stream",
+    "daemon": "http://167.172.178.57:3000/api/stream",
     "example_txid": "6da635a5e0a2c84ffa6c38bbf8d14d4e06ac5200208016cae6902058693565ec",
     "example_hash": "0000007a908705930fee484830350f346293488ac6f6fa76d2c28eef904dd383",
     "dev_address": "SkQnQWjQ9p45A2HZoPSLZ63jQe5BmvojLW",

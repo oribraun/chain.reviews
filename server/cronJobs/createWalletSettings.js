@@ -10,6 +10,7 @@ if(!wallet) {
 }
 var default_settings = {
     "coin": "",
+    "symbol": "",
     "cli": "path to cli",
     "daemon": "path to daemon",
     "example_txid": "txid for route examples",

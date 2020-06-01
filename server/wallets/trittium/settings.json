@@ -1,5 +1,6 @@
 {
     "coin": "trittium",
+    "symbol": "TRTT",
     "cli": "/usr/local/bin/trittium-cli",
     "daemon": "/usr/local/bin/trittiumd",
     "example_txid": "70090a65008415200c3419e91cf4ba2751213e3406c653d804d2521afb4ee0f4",

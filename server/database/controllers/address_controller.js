@@ -1,11 +1,14 @@
 var Address = require('../models/address');
+var AddressToUpdate = require('../models/address_to_update');
 var TxVinVout = require('../models/txVinVout');
 const helpers = require('../../helpers');
 var db = require('./../db');
 
 function getAll(sortBy, order, limit, cb) {
     var sort = {};
-    sort[sortBy] = order;
+    if(sortBy) {
+        sort[sortBy] = order;
+    }
     Address[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec( function(err, tx) {
         if(tx) {
             return cb(tx);
@@ -21,10 +24,11 @@ function updateOne(obj, cb) { // update or create
             return cb(err);
         }
         if(address) { // exist
-            address.txs = obj.txs;
             address.received = obj.received;
             address.sent = obj.sent;
             address.balance = obj.balance;
+            address.last_order = obj.last_order;
+            address.last_blockindex = obj.last_blockindex;
             address.save(function (err, tx) {
                 if (err) {
                     return cb(err);
@@ -35,10 +39,11 @@ function updateOne(obj, cb) { // update or create
         } else { // create new
             var newAddress = new Address[db.getCurrentConnection()]({
                 a_id: obj.a_id,
-                txs: obj.txs,
                 received: obj.received,
                 sent: obj.sent,
-                balance: obj.balance
+                balance: obj.balance,
+                last_order: obj.last_order,
+                last_blockindex: obj.last_blockindex
             });
             newAddress.save(function(err) {
                 if (err) {
@@ -75,6 +80,64 @@ function deleteOne(a_id, cb) {
 function deleteAll(cb) {
     Address[db.getCurrentConnection()].deleteMany({},function(err, numberRemoved){
         return cb(numberRemoved)
+    })
+}
+
+function updateAllWhereGte(blockindex, cb) {
+    var __this = this;
+    Address[db.getCurrentConnection()].find({last_blockindex: { $gte: blockindex }}, function(err, addresses){
+        if(addresses && addresses.length) {
+            var list = [];
+            for (var i in addresses) {
+                list.push(addresses[i].a_id)
+            }
+            console.log('list', list)
+            // AddressToUpdate[db.getCurrentConnection()].find({address: {$in: list}}).sort({order: -1}).limit(list.length).exec(function(err, results) {
+            AddressToUpdate[db.getCurrentConnection()].aggregate(
+                [
+                    {$match: {address: {$in: list}}},
+                    {$match: {blockindex: {$lt: blockindex}}},
+                    {$sort: {order: -1}},
+                    {$group: {
+                        "_id": "$address",
+                        // "a_id": "$address",
+                        "received": {"$first": "$received"},
+                        "sent": {"$first": "$sent"},
+                        "balance": {"$first": "$balance"},
+                        "last_order": {"$first": "$order"},
+                        "last_blockindex": {"$first": "$blockindex"},
+                    }},
+                    {$project: {
+                        "_id": 0,
+                        "a_id": "$_id",
+                        "received": 1,
+                        "sent": 1,
+                        "balance": 1,
+                        "last_order": 1,
+                        "last_blockindex": 1,
+                    }}
+                ]
+            ).allowDiskUse(true).exec(function(err, results) {
+                var length = results.length;
+                function update() {
+                    if(results && results.length) {
+                        __this.updateOne(results[0], function () {
+                            results.shift();
+                            update()
+                        })
+                    } else {
+                        return cb(length);
+                    }
+                }
+                if(results && results.length) {
+                    update()
+                } else {
+                    return cb(length);
+                }
+            })
+        } else {
+            return cb()
+        }
     })
 }
 
@@ -467,3 +530,4 @@ module.exports.updateAddress1 = updateAddress1;
 module.exports.createAddress1 = createAddress1;
 module.exports.getOneWithTx = getOneWithTx;
 module.exports.getAllDuplicate = getAllDuplicate;
+module.exports.updateAllWhereGte = updateAllWhereGte;
