@@ -20,6 +20,7 @@ var MarketController = require('./../../database/controllers/markets_controller'
 var CoinMarketCapController = require('./../../database/controllers/coin_market_cap_controller');
 var TxByDayController = require('./../../database/controllers/tx_by_day_controller');
 var ClusterController = require('./../../database/controllers/cluster_controller');
+var ClusterTxByDayController = require('./../../database/controllers/cluster_tx_by_day_controller');
 
 // var wallet = process.argv[2];
 
@@ -251,22 +252,34 @@ router.post('/getAddressTxs', (req, res) => {
         res.send(JSON.stringify(response, null, 2));
         // db.disconnect();
     })
+    // AddressToUpdateController.getAddressTxsByOrder(req.body['address'],'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    //     if(results) {
+    //         response.data = results.txs;
+    //     } else {
+    //         response.err = 1;
+    //         response.errMessage = 'no tx found';
+    //     }
+    //     res.send(JSON.stringify(response, null, 2));
+    // })
 })
 
 router.post('/getAddressDetails', (req, res) => {
     const response = helpers.getGeneralResponse();
-    AddressToUpdateController.getAddressDetails(req.body['address'], function(results) {
-        ClusterController.getClusterByAddress(req.body['address'], function (clusters) {
-            if (results) {
-                if(clusters) {
-                    results.clusters = clusters;
+    AddressController.getOne(req.body['address'], function(addressSum) {
+        AddressToUpdateController.getAddressDetails(req.body['address'], function (results) {
+            ClusterController.getClusterByAddress(req.body['address'], function (clusters) {
+                if (results) {
+                    if (clusters) {
+                        results.clusters = clusters;
+                    }
+                    results.addressSum = addressSum;
+                    response.data = results;
+                } else {
+                    response.err = 1;
+                    response.errMessage = 'no address found';
                 }
-                response.data = results;
-            } else {
-                response.err = 1;
-                response.errMessage = 'no address found';
-            }
-            res.send(JSON.stringify(response, null, 2));
+                res.send(JSON.stringify(response, null, 2));
+            });
         });
     });
 })
@@ -997,6 +1010,18 @@ router.post('/getClusterTxs', (req, res) => {
         } else {
             response.err = 1;
             response.errMessage = 'no txs found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+router.post('/getClusterChart', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    ClusterTxByDayController.getAllForChart(req.body['clusterId'].toString(), "d", -1, 0, function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no cluster found';
         }
         res.send(JSON.stringify(response, null, 2));
     })

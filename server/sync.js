@@ -94,6 +94,7 @@ if(settings[wallet]) {
         var TxByDayController = require('./database/controllers/tx_by_day_controller');
         var ClusterController = require('./database/controllers/cluster_controller');
         var ClusterTxByDayController = require('./database/controllers/cluster_tx_by_day_controller');
+        var ClustersBlockController = require('./database/controllers/clusters_block_controller');
 
     }
 } else {
@@ -2655,8 +2656,8 @@ if (wallet) {
                                         gettingNextChunkInProgress = true;
                                         console.log('getting next chunk');
                                         getNextChunk(0, count).then(function () {
-                                            getNextForAllClusters();
                                             gettingNextChunkInProgress = false;
+                                            getNextForAllClusters();
                                         });
                                     }
                                 } else {
@@ -2689,6 +2690,7 @@ if (wallet) {
                         function getNextChunk(limit, count) {
                             return new Promise(function(resolve, reject){
                                 gettingNextAddressesToOrderCursor(limit, count).then(function (cursor) {
+                                    console.log('renew cursor')
                                     main_cursor = cursor;
                                     resolve();
                                 });
@@ -3427,6 +3429,7 @@ if (wallet) {
                             TxController.deleteAllWhereGte(currentBlock, function (numberRemoved) {
                                 TxVinVoutController.deleteAllWhereGte(currentBlock, function(numberDeleted) {
                                     AddressToUpdateController.deleteAllWhereGte(currentBlock, function (numberDeleted2) {
+                                        // ClustersBlockController.updateOne({name:"reindex_block",block:currentBlock}, function(){})
                                         console.log('blocks deleted', numberRemoved);
                                         for (let i = 0; i < numCPUs; i++) {
                                             var worker = cluster.fork();
@@ -4722,7 +4725,7 @@ if (wallet) {
             if(limitBigChain > 10000000) {
                 limitBigChain = 10000000;
             }
-            AddressToUpdateController.getAllUniqueStream(where, fields,{}, 0, offset, limitBigChain, function(cursor) {
+            AddressToUpdateController.getAllUniqueCursor(where, fields,{}, 0, offset, limitBigChain, function(cursor) {
                 function getNext() {
                     cursor.next(function(error, doc) {
                         console.log(doc);
@@ -5738,10 +5741,10 @@ var gettingNextAddressesToOrderCursor = function(limit, total) {
         //     "SZgnRmQkH8xkBHNRHaiVAVo5YUaBHTa2tL",
         // ]};
         var limitBigChain = total;
-        if (limitBigChain > 10000000) {
-            limitBigChain = 10000000;
+        if (limitBigChain > 5000000) {
+            limitBigChain = 5000000;
         }
-        AddressToUpdateController.getAllUniqueStream(where, fields, {}, limit, offset, limitBigChain, function (cursor) {
+        AddressToUpdateController.getAllUniqueCursor(where, fields, {}, limit, offset, limitBigChain, function (cursor) {
             resolve(cursor);
             // function getNext() {
             //     cursor.next(function (error, doc) {
