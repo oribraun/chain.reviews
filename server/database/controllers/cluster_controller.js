@@ -810,12 +810,13 @@ function getTransactionsChart(id, date, cb) {
                         }});
                     AddressToUpdate[db.getCurrentConnection()].aggregate(
                         aggregate
-                    ).option({ allowDiskUse: true, maxTimeMS: 3*60*1000 }).exec( function(err, txs) {
+                    ).option({ allowDiskUse: true, maxTimeMS: 5*60*1000 }).exec( function(err, txs) {
                         if(txs) {
                             return cb(txs);
                         } else {
                             if(err) {
-                                console.log('err', err);
+                                console.log('err clusterId', id);
+                                console.log('err getTransactionsChart', err);
                             }
                             return cb();
                         }
