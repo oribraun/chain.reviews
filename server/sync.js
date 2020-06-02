@@ -2718,6 +2718,11 @@ if (wallet) {
                     }
                 });
 
+                // process.on('SIGABRT', function () {
+                //     process.stdout.write('GOT SIGABORT\n')
+                //     process.exit(1)
+                // })
+
                 var startUpdatingAddress = function(currentAddress) {
                     var address = currentAddress._id;
                     // console.log('currentAddress', currentAddress);
@@ -6246,7 +6251,7 @@ function updateClusterTxByDay(wallet) {
                         updateClusterTxByDayOneByOne(clusterId, txByDays)
                     } else {
                         startUpdateCluster(clusters);
-                        // console.log('finish updating cluster chart - ' + clusterId)
+                        console.log('finish updating cluster chart - ' + clusterId)
                     }
                 }
             })

@@ -691,7 +691,7 @@ function getTransactionsChart(id, date, cb) {
                         var timestamp = new Date(date).getTime() / 1000;
                         aggregate.push({$match: {"txid_timestamp": {$gte: timestamp }}});
                     }
-                    aggregate.push({$limit: 100000});
+                    aggregate.push({$limit: 1000000});
                     aggregate.push({$match: {address: {$in: addresses}}});
                     aggregate.push({$project: {_id:0, txid: 1}});
                     aggregate.push({
