@@ -873,7 +873,7 @@ function getTransactionsChart2(id, date, cb) {
                 var timestamp = new Date(date).getTime();
                 var next_timestamp = new Date(date).getTime() + (30*24*60*60*1000);
                 aggregate.push({$match: {"txid_timestamp": {$gte: timestamp / 1000 }}});
-                aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp / 1000 }}});
+                // aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp / 1000 }}});
             }
             // aggregate.push({$limit: 1000000});
             console.log('addresses', addresses.length)
