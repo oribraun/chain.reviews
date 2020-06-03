@@ -310,6 +310,24 @@ function getClusterTxsCount(id, cb) {
     });
 }
 
+function getClusterTxsCountFromDate(id, date, limit, cb) {
+    var objID = mongoose.Types.ObjectId(id);
+    Cluster[db.getCurrentConnection()].find({_id: objID}, {addresses: 1}).exec(function(err, cluster) {
+        if(cluster) {
+            var addresses = cluster[0].addresses;
+            var timestamp = -1;
+            if(date) {
+                timestamp = new Date(date).getTime() + (24*60*60*1000)
+            }
+            AddressToUpdate[db.getCurrentConnection()].find({txid_timestamp: {$gte: timestamp / 1000 }, address: {$in: addresses}}, {}).limit(limit).countDocuments().exec(function (err, count) {
+                return cb(count);
+            });
+        } else {
+            return cb(null);
+        }
+    })
+}
+
 function getClusterTxsCount2(id, cb) {
     var objID = mongoose.Types.ObjectId(id);
     Cluster[db.getCurrentConnection()].find({_id: objID}, {addresses: 1}).exec(function(err, cluster) {
@@ -691,7 +709,7 @@ function getTransactionsChart(id, date, cb) {
                         var timestamp = new Date(date).getTime() / 1000;
                         var next_timestamp = new Date(date).getTime() + 30*24*60*1000 / 1000;
                         aggregate.push({$match: {"txid_timestamp": {$gte: timestamp }}});
-                        aggregate.push({$match: {"txid_timestamp": {$lte: next_timestamp }}});
+                        aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp }}});
                     }
                     // aggregate.push({$limit: 1000000});
                     aggregate.push({$match: {address: {$in: addresses}}});
@@ -854,6 +872,7 @@ module.exports.getClusterTxs = getClusterTxs;
 module.exports.getClusterAddresses = getClusterAddresses;
 module.exports.getClusterTxsCount = getClusterTxsCount;
 module.exports.getClusterTxsCount2 = getClusterTxsCount2;
+module.exports.getClusterTxsCountFromDate = getClusterTxsCountFromDate;
 module.exports.getAllClusters = getAllClusters;
 module.exports.getAllClustersWithAddressCount = getAllClustersWithAddressCount;
 module.exports.getAllClustersWithTxsCount = getAllClustersWithTxsCount;
