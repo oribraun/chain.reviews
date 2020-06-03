@@ -6210,10 +6210,21 @@ function updateClusterTxByDay(wallet) {
             // console.log('clusterId', clusterId)
             clusters.shift();
             ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 2, function(data) {
+                var currentDate = new Date(new Date().setHours(0,0,0,0));
+                var currentDateString = currentDate.getFullYear() + "-" + ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" + ("0" + currentDate.getDate()).slice(-2);
+
+                var previousDate = new Date(new Date(currentDate.getTime() - 24*60*1000).setHours(0,0,0,0))
+                var previousDateString = previousDate.getFullYear() + "-" + ("0"+(previousDate.getMonth()+1)).slice(-2) + "-" + ("0" + previousDate.getDate()).slice(-2);
                 if(data.length) {
                     var lastDate = data[0].d
+                    // console.log('lastDate', lastDate)
+                    // console.log('new Date(lastDate)', new Date(lastDate))
+                    // console.log('currentDateString', currentDateString)
+                    // console.log('previousDateString', previousDateString)
                     if(data.length > 1) {
-                        lastDate = data[1].d
+                        if(data[1].d === previousDate) {
+                            lastDate = data[1].d
+                        }
                     }
                     // console.log('data',lastDate);
                     updateClusterTxByDay(clusterId, lastDate);

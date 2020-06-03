@@ -6,7 +6,7 @@ var db = require('./../db');
 var AddressToUpdateSchema = new Schema({
   address: { type: String, index: true},
   txid: { type: String, default: '' },
-  txid_timestamp: { type: Number, default: 0 },
+  txid_timestamp: { type: Number, default: 0, index: true },
   txid_type: { type: Number, default: 0, index: true },
   order: { type: Number, default: 0},
   amount: { type: Number, default: 0 , index: true},
