@@ -4647,22 +4647,36 @@ if (wallet) {
         case 'updateoneclusterstxbyday': {
             if(hash_number != undefined && hash_number) {
                 var clusterId = hash_number;
-                ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 2, function(data) {
+                ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 1, function(data) {
                     var lastDate = '';
+                    var currentDate = new Date(new Date().setHours(0,0,0,0));
+                    var currentDateString = currentDate.getFullYear() + "-" + ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" + ("0" + currentDate.getDate()).slice(-2);
+
+                    var previousDate = new Date(new Date(currentDate.getTime() - 24*60*60*1000).setHours(0,0,0,0))
+                    var previousDateString = previousDate.getFullYear() + "-" + ("0"+(previousDate.getMonth()+1)).slice(-2) + "-" + ("0" + previousDate.getDate()).slice(-2);
+
                     if(data.length) {
-                        lastDate = data[0].d
-                        if(data.length > 1) {
-                            lastDate = data[1].d
+                        lastDate = data[0].d;
+                        if(lastDate === currentDateString) {
+                            lastDate = previousDateString;
                         }
                     }
-                    ClusterController.getTransactionsChart(clusterId, lastDate, function (txByDays) {
-                        if (txByDays && txByDays.length) {
-                            updateOneClusterTxByDayOneByOne(clusterId, txByDays);
+                    console.log('lastDate', lastDate)
+                    ClusterController.getClusterTxsCountFromDate(clusterId, lastDate, 1,function(count) {
+                        if(count) {
+                            ClusterController.getTransactionsChart(clusterId, lastDate, function (txByDays) {
+                                if (txByDays && txByDays.length) {
+                                    updateOneClusterTxByDayOneByOne(clusterId, txByDays);
+                                } else {
+                                    console.log('finish updating cluster chart - ' + clusterId)
+                                    db.multipleDisconnect();
+                                }
+                            })
                         } else {
                             console.log('finish updating cluster chart - ' + clusterId)
                             db.multipleDisconnect();
                         }
-                    })
+                    });
                     function updateOneClusterTxByDayOneByOne(clusterId, txByDays) {
                         // console.log(txByDays[0])
                         ClusterTxByDayController.updateOne(txByDays[0], function(err) {
@@ -6209,22 +6223,18 @@ function updateClusterTxByDay(wallet) {
             var clusterId = clusters[0];
             // console.log('clusterId', clusterId)
             clusters.shift();
-            ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 2, function(data) {
+            ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 1, function(data) {
                 var currentDate = new Date(new Date().setHours(0,0,0,0));
                 var currentDateString = currentDate.getFullYear() + "-" + ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" + ("0" + currentDate.getDate()).slice(-2);
 
-                var previousDate = new Date(new Date(currentDate.getTime() - 24*60*1000).setHours(0,0,0,0))
+                var previousDate = new Date(new Date(currentDate.getTime() - 24*60*60*1000).setHours(0,0,0,0))
                 var previousDateString = previousDate.getFullYear() + "-" + ("0"+(previousDate.getMonth()+1)).slice(-2) + "-" + ("0" + previousDate.getDate()).slice(-2);
                 if(data.length) {
-                    var lastDate = data[0].d
-                    // console.log('lastDate', lastDate)
-                    // console.log('new Date(lastDate)', new Date(lastDate))
-                    // console.log('currentDateString', currentDateString)
-                    // console.log('previousDateString', previousDateString)
-                    if(data.length > 1) {
-                        if(data[1].d === previousDate) {
-                            lastDate = data[1].d
-                        }
+                    var lastDate = data[0].d;
+                    if(lastDate === currentDateString) {
+                        console.log('lastDate', lastDate)
+                        lastDate = previousDateString;
+                        console.log('previousDateString', previousDateString)
                     }
                     // console.log('data',lastDate);
                     updateClusterTxByDay(clusterId, lastDate);
@@ -6241,14 +6251,21 @@ function updateClusterTxByDay(wallet) {
         }
 
         function updateClusterTxByDay(clusterId, dateString) {
-            ClusterController.getTransactionsChart(clusterId, dateString, function(txByDays) {
-                if(txByDays && txByDays.length) {
-                    updateClusterTxByDayOneByOne(clusterId, txByDays);
+            ClusterController.getClusterTxsCountFromDate(clusterId, dateString, 1,function(count) {
+                if(count) {
+                    ClusterController.getTransactionsChart(clusterId, dateString, function (txByDays) {
+                        if (txByDays && txByDays.length) {
+                            updateClusterTxByDayOneByOne(clusterId, txByDays);
+                        } else {
+                            // console.log('no tx found - ', clusterId);
+                            startUpdateCluster(clusters);
+                        }
+                    })
                 } else {
-                    // console.log('no tx found - ', clusterId);
                     startUpdateCluster(clusters);
+                    console.log('finish updating cluster chart - ' + clusterId)
                 }
-            })
+            });
         }
 
         function updateClusterTxByDayOneByOne(clusterId, txByDays) {
