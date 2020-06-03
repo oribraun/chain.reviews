@@ -707,7 +707,7 @@ function getTransactionsChart(id, date, cb) {
                     // aggregate.push({$match: {"txid_timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
                     if(date) {
                         var timestamp = new Date(date).getTime();
-                        var next_timestamp = new Date(date).getTime() + (1*24*60*60*1000);
+                        var next_timestamp = new Date(date).getTime() + (30*24*60*60*1000);
                         aggregate.push({$match: {"txid_timestamp": {$gte: timestamp / 1000 }}});
                         aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp / 1000 }}});
                     }
@@ -859,6 +859,138 @@ function getTransactionsChart(id, date, cb) {
         }
     })
 }
+function getTransactionsChart2(id, date, cb) {
+
+    var objID = mongoose.Types.ObjectId(id);
+    Cluster[db.getCurrentConnection()].find({_id: objID}, {addresses: 1}).exec(function(err, cluster) {
+        if(cluster) {
+            var addresses = cluster[0].addresses;
+            var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+            var aggregate = [];
+            var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+            // aggregate.push({$match: {"txid_timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
+            if(date) {
+                var timestamp = new Date(date).getTime();
+                var next_timestamp = new Date(date).getTime() + (30*24*60*60*1000);
+                aggregate.push({$match: {"txid_timestamp": {$gte: timestamp / 1000 }}});
+                aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp / 1000 }}});
+            }
+            // aggregate.push({$limit: 1000000});
+            console.log('addresses', addresses.length)
+            aggregate.push({$match: {address: {$in: addresses}}});
+            aggregate.push({$project: {_id:0, txid: 1, amount:1, txid_timestamp: 1, blockindex: 1}});
+
+            aggregate.push({$project: {
+                    "_id": "_id",
+                    "amount": "$amount",
+                    "blockindex": "$blockindex",
+                    "date1": {
+                        $dateToParts: { date: {
+                                "$add": [
+                                    new Date(new Date(0).getTime() + new Date().getTimezoneOffset()*60*1000),
+                                    {"$multiply": ["$txid_timestamp", 1000]}
+                                ]
+                            }
+                        }
+                    },
+                    "date2": {
+                        $dateToParts: { date: {
+                                "$add": [
+                                    new Date(0), // GTM+2
+                                    {"$multiply": ["$txid_timestamp", 1000]}
+                                ]
+                            }
+                        }
+                    },
+                    "date": {
+                        $dateToString: {
+                            date: {
+                                "$add": [
+                                    new Date(0), // GTM+2
+                                    {"$multiply": ["$txid_timestamp", 1000]}
+                                ]
+                            },
+                            format: "%Y-%m-%d"
+                        }
+                    },
+                    "year": {
+                        "$year": {
+                            "$add": [
+                                new Date(0),
+                                {"$multiply": ["$txid_timestamp", 1000]}
+                            ]
+                        }
+                    },
+                    "month": {
+                        "$month": {
+                            "$add": [
+                                new Date(0),
+                                {"$multiply": ["$txid_timestamp", 1000]}
+                            ]
+                        }
+                    },
+                    "day": {
+                        "$dayOfMonth": {
+                            "$add": [
+                                new Date(0),
+                                {"$multiply": ["$txid_timestamp", 1000]}
+                            ]
+                        }
+                    },
+                    "week": {
+                        "$isoWeek": {
+                            "$add": [
+                                new Date(0),
+                                {"$multiply": ["$txid_timestamp", 1000]}
+                            ]
+                        }
+                    },
+                    "timestamp": "$txid_timestamp"
+                }});
+            aggregate.push({$match: {year: {$gt: 1970}}});
+            aggregate.push({$group: {
+                    "_id": {
+                        "year": "$year",
+                        "month": "$month",
+                        "day": "$day"
+                        // "week": "$week"
+                    },
+                    "week": {$first: "$week"},
+                    "date": {$first: "$date"},
+                    "timestamp": {$first: "$timestamp"},
+                    "count" : { "$sum" : 1 },
+                    "totalAmountADay" : { "$sum" : {$cond:
+                                {if: { $eq: [ "$type", "vout" ] },
+                                    then: "$amount",
+                                    else: 0 }} }
+                }});
+            aggregate.push({$sort:{timestamp:1}});
+            aggregate.push({$project: {
+                    "_id": 0,
+                    "cid": id,
+                    "date": "$date",
+                    "week": "$week",
+                    "count": "$count",
+                    "totalAmountADay": "$totalAmountADay",
+                }});
+            AddressToUpdate[db.getCurrentConnection()].aggregate(
+                aggregate
+            ).option({ allowDiskUse: true, maxTimeMS: 10*60*1000 }).exec( function(err, txs) {
+                if(txs) {
+                    return cb(txs);
+                } else {
+                    if(err) {
+                        console.log('err clusterId', id);
+                        console.log('err getTransactionsChart', err);
+                    }
+                    return cb();
+                }
+            });
+        } else {
+            return cb(null);
+        }
+    })
+}
 
 module.exports.getAll = getAll;
 module.exports.getAll2 = getAll2;
@@ -880,5 +1012,6 @@ module.exports.getAllClustersWithTxsCount = getAllClustersWithTxsCount;
 module.exports.getAllClustersWithAddressAndTxsCount = getAllClustersWithAddressAndTxsCount;
 module.exports.getClusterByAddress = getClusterByAddress;
 module.exports.getTransactionsChart = getTransactionsChart;
+module.exports.getTransactionsChart2 = getTransactionsChart2;
 module.exports.getAllForCluster = getAllForCluster;
 module.exports.getAllClustersIds = getAllClustersIds;
