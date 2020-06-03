@@ -4665,7 +4665,7 @@ if (wallet) {
                     ClusterController.getClusterTxsCountFromDate(clusterId, lastDate, 1,function(count) {
                         if(count) {
                             console.log('count', count)
-                            ClusterController.getTransactionsChart(clusterId, lastDate, function (txByDays) {
+                            ClusterController.getTransactionsChart2(clusterId, lastDate, function (txByDays) {
                                 if (txByDays && txByDays.length) {
                                     updateOneClusterTxByDayOneByOne(clusterId, txByDays);
                                 } else {
@@ -6254,7 +6254,7 @@ function updateClusterTxByDay(wallet) {
         function updateClusterTxByDay(clusterId, dateString) {
             ClusterController.getClusterTxsCountFromDate(clusterId, dateString, 1,function(count) {
                 if(count) {
-                    ClusterController.getTransactionsChart(clusterId, dateString, function (txByDays) {
+                    ClusterController.getTransactionsChart2(clusterId, dateString, function (txByDays) {
                         if (txByDays && txByDays.length) {
                             updateClusterTxByDayOneByOne(clusterId, txByDays);
                         } else {
