@@ -706,10 +706,10 @@ function getTransactionsChart(id, date, cb) {
                     var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
                     // aggregate.push({$match: {"txid_timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
                     if(date) {
-                        var timestamp = new Date(date).getTime() / 1000;
-                        var next_timestamp = new Date(date).getTime() + 30*24*60*1000 / 1000;
-                        aggregate.push({$match: {"txid_timestamp": {$gte: timestamp }}});
-                        aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp }}});
+                        var timestamp = new Date(date).getTime();
+                        var next_timestamp = new Date(date).getTime() + (7*24*60*60*1000);
+                        aggregate.push({$match: {"txid_timestamp": {$gte: timestamp / 1000 }}});
+                        aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp / 1000 }}});
                     }
                     // aggregate.push({$limit: 1000000});
                     aggregate.push({$match: {address: {$in: addresses}}});

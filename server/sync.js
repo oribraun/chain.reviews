@@ -4664,6 +4664,7 @@ if (wallet) {
                     console.log('lastDate', lastDate)
                     ClusterController.getClusterTxsCountFromDate(clusterId, lastDate, 1,function(count) {
                         if(count) {
+                            console.log('count', count)
                             ClusterController.getTransactionsChart(clusterId, lastDate, function (txByDays) {
                                 if (txByDays && txByDays.length) {
                                     updateOneClusterTxByDayOneByOne(clusterId, txByDays);
