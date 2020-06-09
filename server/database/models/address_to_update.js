@@ -18,6 +18,7 @@ var AddressToUpdateSchema = new Schema({
 }, {id: false, timestamps: true});
 
 AddressToUpdateSchema.index({ order: 1, address: 1 }, { unique: true, partialFilterExpression: { order: { $gt: 0 }}});
+AddressToUpdateSchema.index({blockindex: -1});
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {
