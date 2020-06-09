@@ -2565,6 +2565,7 @@ if (wallet) {
                 var gettingNextInProgress = false;
                 var gettingNextChunkInProgress = false;
                 var startedClusters = 0;
+                var gotNewData = false;
                 var startAddressLinerAll = function() {
                     AddressToUpdateController.estimatedDocumentCount(function(count) {
                         console.log('count', count)
@@ -2578,6 +2579,9 @@ if (wallet) {
                                                 // console.log('countAddresses', countAddresses)
                                                 clusterQ.push(id);
                                                 startedClusters--;
+                                                if(activeAddresses[id]) {
+                                                    delete activeAddresses[id];
+                                                }
                                                 if(!gettingNextInProgress) {
                                                     getNextForAllClusters();
                                                 }
@@ -2641,6 +2645,7 @@ if (wallet) {
                                     clusterQ.shift();
                                     countAddresses++;
                                     startedClusters++;
+                                    gotNewData = true;
                                     // console.log('address._id', address._id);
                                 } else {
                                     console.log('duplicate address - ', address._id)
@@ -2651,23 +2656,36 @@ if (wallet) {
                             }).catch(function(){
                                 gettingNextInProgress = false;
                                 console.log('startedClusters', startedClusters);
-                                if(startedClusters) {
+                                if(startedClusters && gotNewData) {
                                     if(!gettingNextChunkInProgress) {
                                         gettingNextChunkInProgress = true;
                                         console.log('getting next chunk');
                                         getNextChunk(0, count).then(function () {
                                             gettingNextChunkInProgress = false;
+                                            gotNewData = false;
                                             getNextForAllClusters();
                                         });
                                     }
                                 } else {
                                     console.log('finish - ', clusterQ.length)
-                                    if(clusterQ.length === cpuCount) {
-                                        while (clusterQ.length) {
-                                            cluster.workers[clusterQ[0]].send({kill: true});
-                                            clusterQ.shift();
+                                    var currentClustersToKill = [];
+                                    for(var i = 0; i < clusterQ.length; i++) {
+                                        if(!activeAddresses[clusterQ[i]]) {
+                                            currentClustersToKill.push(clusterQ[i])
                                         }
                                     }
+                                    while (currentClustersToKill.length) {
+                                        if(cluster.workers[currentClustersToKill[0]]) {
+                                            cluster.workers[currentClustersToKill[0]].send({kill: true});
+                                        }
+                                        currentClustersToKill.shift();
+                                    }
+                                    // if(clusterQ.length === cpuCount) {
+                                    //     while (clusterQ.length) {
+                                    //         cluster.workers[clusterQ[0]].send({kill: true});
+                                    //         clusterQ.shift();
+                                    //     }
+                                    // }
                                 }
                             })
                         }
@@ -2803,7 +2821,7 @@ if (wallet) {
                                     }
                                     cluster.worker.send({stopAllProccess: true});
                                 } else {
-                                    // console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
+                                    console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
 
                                     AddressController.updateOne(lastAddress, function(err) {
                                         if(err) {
