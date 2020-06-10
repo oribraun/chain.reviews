@@ -1521,6 +1521,12 @@ function saveTxType(obj, cb) { // update or create
         }
     })
 }
+
+function resetOrder(addresses, cb) {
+    AddressToUpdate[db.getCurrentConnection()].updateMany({address: {$in: addresses}}, {$set: {order:0, sent:0, received:0, balance:0}},function(err, numberRemoved){
+        return cb(numberRemoved)
+    })
+}
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -1566,3 +1572,4 @@ module.exports.getAllUniqueAddresses = getAllUniqueAddresses;
 module.exports.getClusterDetails = getClusterDetails;
 module.exports.getAllAddressUniqueTxs = getAllAddressUniqueTxs;
 module.exports.getAddressMap = getAddressMap;
+module.exports.resetOrder = resetOrder;
