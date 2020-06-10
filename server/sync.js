@@ -2694,7 +2694,7 @@ if (wallet) {
                             return new Promise(function(resolve, reject) {
                                 main_cursor.next(function (error, nextAddress) {
                                     if (error) {
-                                        console.log('cursor error', error);
+                                        // console.log('cursor error', error);
                                         reject();
                                     }
                                     if (nextAddress) {
