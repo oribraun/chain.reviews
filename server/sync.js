@@ -1555,140 +1555,176 @@ if (wallet) {
             if (cluster.isMaster) {
                 var startTime = new Date();
                 console.log(`Master ${process.pid} is running`);
-                if(fileExist()) {
+                if(fileExist('address')) {
                     console.log('reindex is in progress');
                     db.multipleDisconnect();
                     process.exit(1)
                     return;
                 }
-                createFile();
-                var currentAddresses = [];
-                var limit = 20000;
+                createFile('address');
+                var limit = 0;
                 var countAddresses = 0;
                 var offset = 0;
                 var cpuCount = 1;
                 var clusterQ = [];
-                var gettingNextAddressInProgress = false;
+                var activeAddresses = [];
+                var main_cursor;
                 var exit_count = 0;
                 var mongoTimeout = false;
-                gettingNextAddressInProgress = true;
+                var gettingNextInProgress = false;
+                var gettingNextChunkInProgress = false;
+                var startedClusters = 0;
+                var gotNewData = false;
                 var startAddressLinerAll = function() {
                     AddressToUpdateController.estimatedDocumentCount(function(count) {
                         console.log('count', count)
-                        gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
-                            gettingNextAddressInProgress = false;
-                            if (res && res.length) {
-                                currentAddresses = currentAddresses.concat(res);
-                            }
-                            if (currentAddresses.length) {
-                                for (let i = 0; i < cpuCount; i++) {
-                                    var worker = cluster.fork();
-                                    worker.on('message', function (msg) {
-                                        if (msg.finished) {
-                                            (function (id) {
-                                                // console.log('currentAddresses.length', currentAddresses.length);
-                                                clusterQ.push(id);
-                                                if (currentAddresses.length) {
-                                                    cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                    clusterQ.shift();
-                                                    countAddresses++;
-                                                    currentAddresses.shift();
-
-                                                } else {
-                                                    // console.log('clusterQ.length', clusterQ.length);
-                                                    if (clusterQ.length === cpuCount) {
-                                                        gettingNextAddressInProgress = true;
-                                                        // offset++;
-                                                        gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
-                                                            // console.log('res.length', res.length)
-                                                            if (res && res.length) {
-                                                                currentAddresses = currentAddresses.concat(res);
-                                                            }
-                                                            gettingNextAddressInProgress = false;
-                                                            if (currentAddresses.length) {
-                                                                console.log('clusterQ', clusterQ)
-                                                                while (clusterQ.length) {
-                                                                    cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                                    clusterQ.shift();
-                                                                    countAddresses++;
-                                                                    currentAddresses.shift();
-                                                                }
-                                                            } else {
-                                                                while (clusterQ.length) {
-                                                                    console.log('kill');
-                                                                    cluster.workers[clusterQ[0]].send({kill: true});
-                                                                    clusterQ.shift();
-                                                                }
-                                                            }
-                                                        });
-                                                    }
-                                                    // if (!gettingNextAddressInProgress) {
-                                                    //     cluster.workers[clusterQ[0]].send({kill: true});
-                                                    //     clusterQ.shift();
-                                                    // }
-                                                }
-                                            })(this.id)
-                                        }
-                                        if (msg.mongoTimeout) {
-                                            mongoTimeout = true;
-                                            for(var id in cluster.workers) {
-                                                cluster.workers[id].send({kill: true});
+                        getNextChunk(0, count, activeAddresses).then(function () {
+                            for (let i = 0; i < cpuCount; i++) {
+                                var worker = cluster.fork();
+                                worker.on('message', function (msg) {
+                                    if (msg.finished) {
+                                        (function (id) {
+                                            // console.log('currentAddresses.length', currentAddresses.length);
+                                            // console.log('countAddresses', countAddresses)
+                                            clusterQ.push(id);
+                                            startedClusters--;
+                                            if(activeAddresses[id]) {
+                                                delete activeAddresses[id];
                                             }
-                                        }
-                                        if (msg.stopAllProccess) {
-                                            mongoTimeout = true;
-                                            for(var id in cluster.workers) {
-                                                cluster.workers[id].send({kill: true});
+                                            if(!gettingNextInProgress) {
+                                                getNextForAllClusters();
                                             }
+                                        })(this.id)
+                                    }
+                                    if (msg.mongoTimeout) {
+                                        mongoTimeout = true;
+                                        for(var id in cluster.workers) {
+                                            cluster.workers[id].send({kill: true});
                                         }
-                                    })
-                                    worker.on('exit', (code, signal) => {
-                                        exit_count++;
-                                        if (exit_count === cpuCount) {
-                                            if (!updateInProgress) {
-                                                // console.log('local_addreses_before_save', local_addreses_before_save.length);
-                                                // updateDbAddreess(local_addreses_before_save, function() {
-                                                //     endReindex();
-                                                // });
-                                                if(mongoTimeout) {
-                                                    console.log('\n*******************************************************************');
-                                                    console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
-                                                    console.log('*******************************************************************\n');
-                                                    deleteFile();
-                                                    db.multipleDisconnect();
-                                                    process.exit(1);
-                                                }
-                                                console.log('took - ', helpers.getFinishTime(startTime));
-                                                deleteFile();
+                                    }
+                                    if (msg.stopAllProccess) {
+                                        mongoTimeout = true;
+                                        for(var id in cluster.workers) {
+                                            cluster.workers[id].send({kill: true});
+                                        }
+                                    }
+                                })
+                                worker.on('exit', (code, signal) => {
+                                    exit_count++;
+                                    if (exit_count === cpuCount) {
+                                        if (!updateInProgress) {
+                                            // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                            // updateDbAddreess(local_addreses_before_save, function() {
+                                            //     endReindex();
+                                            // });
+                                            if(mongoTimeout) {
+                                                console.log('\n*******************************************************************');
+                                                console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                console.log('*******************************************************************\n');
+                                                deleteFile('address');
                                                 db.multipleDisconnect();
                                                 process.exit(1);
-                                                // console.log('countAddresses', countAddresses)
-                                                // console.log('took ', helpers.getFinishTime(startTime));
-                                                // endReindex();
                                             }
-                                            // console.log('addreses_to_update', addreses_to_update.length)
+                                            console.log('took - ', helpers.getFinishTime(startTime));
+                                            deleteFile('address');
+                                            db.multipleDisconnect();
+                                            process.exit(1);
+                                            // console.log('countAddresses', countAddresses)
+                                            // console.log('took ', helpers.getFinishTime(startTime));
+                                            // endReindex();
                                         }
-                                        console.log(`worker ${worker.process.pid} died`);
-                                    })
-                                    if (currentAddresses.length) {
-                                        worker.send({currentAddress: currentAddresses[0]});
-                                        countAddresses++;
-                                        currentAddresses.shift();
-                                    } else {
-                                        worker.send({kill: true});
+                                        // console.log('addreses_to_update', addreses_to_update.length)
                                     }
+                                    console.log(`worker ${worker.process.pid} died - code ${code} , signal - ${signal}`);
+                                })
+                                clusterQ.push(worker.id);
+                                if(!gettingNextInProgress) {
+                                    getNextForAllClusters();
                                 }
-                            } else {
-                                console.log('no new blocks found');
-                                deleteFile();
-                                db.multipleDisconnect();
-                                process.exit();
-                                return;
                             }
                         });
+
+                        function getNextForAllClusters() {
+                            gettingNextInProgress = true;
+                            getNext().then(function(address) {
+                                gettingNextInProgress = false;
+                                if(activeAddresses.indexOf(address._id) === -1) {
+                                    cluster.workers[clusterQ[0]].send({currentAddress: address});
+                                    activeAddresses[clusterQ[0]] = address._id;
+                                    clusterQ.shift();
+                                    countAddresses++;
+                                    startedClusters++;
+                                    gotNewData = true;
+                                    // console.log('address._id', address._id);
+                                } else {
+                                    console.log('duplicate address - ', address._id)
+                                }
+                                if(clusterQ.length) {
+                                    getNextForAllClusters();
+                                }
+                            }).catch(function(){
+                                gettingNextInProgress = false;
+                                console.log('startedClusters', startedClusters);
+                                if(startedClusters && gotNewData) {
+                                    if(!gettingNextChunkInProgress) {
+                                        gettingNextChunkInProgress = true;
+                                        console.log('getting next chunk');
+                                        getNextChunk(0, count).then(function () {
+                                            gettingNextChunkInProgress = false;
+                                            gotNewData = false;
+                                            getNextForAllClusters();
+                                        });
+                                    }
+                                } else {
+                                    console.log('finish - ', clusterQ.length)
+                                    var currentClustersToKill = [];
+                                    for(var i = 0; i < clusterQ.length; i++) {
+                                        if(!activeAddresses[clusterQ[i]]) {
+                                            currentClustersToKill.push(clusterQ[i])
+                                        }
+                                    }
+                                    while (currentClustersToKill.length) {
+                                        if(cluster.workers[currentClustersToKill[0]]) {
+                                            cluster.workers[currentClustersToKill[0]].send({kill: true});
+                                        }
+                                        currentClustersToKill.shift();
+                                    }
+                                    // if(clusterQ.length === cpuCount) {
+                                    //     while (clusterQ.length) {
+                                    //         cluster.workers[clusterQ[0]].send({kill: true});
+                                    //         clusterQ.shift();
+                                    //     }
+                                    // }
+                                }
+                            })
+                        }
+
+                        function getNext() {
+                            return new Promise(function(resolve, reject) {
+                                main_cursor.next(function (error, nextAddress) {
+                                    if (error) {
+                                        // console.log('cursor error', error);
+                                        reject();
+                                    }
+                                    if (nextAddress) {
+                                        resolve(nextAddress);
+                                    } else {
+                                        reject();
+                                    }
+                                });
+                            });
+                        }
+                        function getNextChunk(limit, count) {
+                            return new Promise(function(resolve, reject){
+                                gettingNextAddressesToOrderCursor(limit, count).then(function (cursor) {
+                                    console.log('renew cursor')
+                                    main_cursor = cursor;
+                                    resolve();
+                                });
+                            })
+                        }
                     })
                 }
-
                 // var addresses = [];
                 // var local_addreses_before_save = [];
                 var updateInProgress = false;
@@ -1709,8 +1745,16 @@ if (wallet) {
                     }
                 });
 
+                // process.on('SIGABRT', function () {
+                //     process.stdout.write('GOT SIGABORT\n')
+                //     process.exit(1)
+                // })
+
                 var startUpdatingAddress = function(currentAddress) {
                     var address = currentAddress._id;
+                    // console.log('currentAddress', currentAddress);
+                    // cluster.worker.send({finished: true});
+                    // return;
                     var lastSent = 0;
                     var lastReceived = 0;
                     var lastOrder = 0;
@@ -1728,10 +1772,16 @@ if (wallet) {
                     });
                     function roundToMaxSafeInt(val) {
                         if(!Number.isSafeInteger(val)) {
+                            console.log('val', val)
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
                                 val = Math.round(val / (diff * 10))
+                                for(var i = 0; i < diff; i++) {
+                                    val = val * 10;
+                                }
                             }
+                            console.log('diff', diff)
+                            console.log('rounded val', val)
                         }
                         return val;
                     }
@@ -1786,7 +1836,7 @@ if (wallet) {
                                     }
                                     cluster.worker.send({stopAllProccess: true});
                                 } else {
-                                    // console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
+                                    console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
 
                                     AddressController.updateOne(lastAddress, function(err) {
                                         if(err) {
@@ -2461,6 +2511,9 @@ if (wallet) {
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
                                 val = Math.round(val / (diff * 10))
+                                for(var i = 0; i < diff; i++) {
+                                    val = val * 10;
+                                }
                             }
                         }
                         return val;
@@ -5767,8 +5820,8 @@ var getUniqueAddresses = function(limit, offset, total) {
         //         // "DSwGy32nTPm8nM5YfobvbvHryHiJSMtL9y",
         //     ]};
         var limitBigChain = total;
-        if(limitBigChain > 1000000) {
-            limitBigChain = 1000000;
+        if(limitBigChain > 500000) {
+            limitBigChain = 500000;
         }
         AddressToUpdateController.getAllUnique(where, fields,{}, limit, offset, limitBigChain, function(results) {
             // console.log('results.length', results.length);
