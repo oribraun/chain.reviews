@@ -119,7 +119,7 @@ function startUpdateVinVout() {
     });
 }
 function startUpdateAddresses() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/chain.review/server/sync.js', wallet, 'update_addresses_order_and_sum'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['/var/www/html/chain.review/server/sync.js', wallet, 'update_address_balance_cursor'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
