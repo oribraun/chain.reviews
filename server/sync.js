@@ -5596,9 +5596,9 @@ function updateRichlistAndExtraStats() {
     var startTime = new Date();
     RichlistController.getOne(settings[wallet].coin, function(richlist) {
         // console.log('updating richlist');
-        AddressToUpdateController.getRichlistAndExtraStats('received', 'desc', 100, settings[wallet].dev_address, function(results){
+        AddressController.getRichlistAndExtraStats('received', 'desc', 100, settings[wallet].dev_address, function(results){
             var received = results.data;
-            AddressToUpdateController.getRichlistAndExtraStats('balance', 'desc', 100, settings[wallet].dev_address, function(results){
+            AddressController.getRichlistAndExtraStats('balance', 'desc', 100, settings[wallet].dev_address, function(results){
                 var active_wallets_count = results.countActive;
                 var total_wallets_count = results.countUnique;
                 var dev_wallet_balance = results.devAddressBalance;
