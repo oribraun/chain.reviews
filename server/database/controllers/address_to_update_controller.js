@@ -1003,7 +1003,7 @@ function getRichlistAndExtraStats(sortBy, order, limit, dev_address, cb) {
     sort[sortBy] = order == 'desc' ? -1 : 1;
     var aggregate = [];
     aggregate.push({$match: {amount: {$gt: 0}}});
-    aggregate.push({$match: {_id: {$ne: "coinbase"}}});
+    aggregate.push({$match: {address: {$ne: "coinbase"}}});
     // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
     // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
     aggregate.push({
