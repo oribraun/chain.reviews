@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var Cluster = require('../models/cluster');
 var AddressToUpdate = require('../models/address_to_update');
 var AddressToUpdateController = require('../controllers/address_to_update_controller');
+var AddressController = require('../controllers/address_controller');
 var TxVinVout = require('../models/txVinVout');
 var db = require('./../db');
 
@@ -569,6 +570,13 @@ function getAllClustersWithAddressAndTxsCount(id, limit, offset,  cb) {
                             clusters[i].tx_balance = details.balance;
                             resolve();
                         })
+                        // AddressController.getClusterDetails(addresses, function (details) {
+                        //     clusters[i].tx_count = details.count;
+                        //     clusters[i].tx_sent = details.sent;
+                        //     clusters[i].tx_received = details.received;
+                        //     clusters[i].tx_balance = details.balance;
+                        //     resolve();
+                        // })
                     }))
                 })(i)
             }
@@ -669,9 +677,11 @@ function getClusterAddresses(id, limit, offset, cb) {
 
     Cluster[db.getCurrentConnection()].findOne({ _id : objID }, function(err, results) {
         if(results) {
-            AddressToUpdateController.getGroupCountForAddresses(results.addresses, limit, offset, function(res) {
-                return cb(res);
-            })
+            AddressController.getGroupCountForAddresses(results.addresses, limit, offset, function(res2) {
+                AddressToUpdateController.getGroupCountForAddresses(results.addresses, limit, offset, function (res) {
+                    return cb(res, res2);
+                })
+            });
         } else {
             return cb();
         }
