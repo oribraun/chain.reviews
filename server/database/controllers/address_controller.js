@@ -616,6 +616,61 @@ function findAllWrongOrder(cb) {
     });
 }
 
+function getRichlistAndExtraStats(sortBy, order, limit, dev_address, cb) {
+    var sort = {};
+    sort[sortBy] = order == 'desc' ? -1 : 1;
+    var aggregate = [];
+    aggregate.push({$match: {a_id: {$ne: "coinbase"}}});
+    // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
+    aggregate.push({
+        "$project": {
+            "_id": "$a_id",
+            // "sent": "$sent",
+            "received": "$received",
+            "balance": "$balance",
+        }
+    })
+    aggregate.push({$sort:sort});
+    aggregate.push({
+        "$group": {
+            "_id": null,
+            "countUnique": {$sum: 1},
+            "countActive": {$sum: {$cond: { if: { $gt: [ "$balance", 0 ] }, then: 1, else: 0}}},
+            "devAddressBalance": {$sum: {$cond: { if: { $eq: [ "$_id", dev_address ] }, then: "$balance", else: 0}}},
+            "received_data": {$push: {"_id": "$_id", "received": "$received"}},
+            "balance_data": {$push: {"_id": "$_id", "balance": "$balance"}},
+        }
+    });
+    if(sortBy === 'received') {
+        aggregate.push({
+            "$project": {
+                "_id": 0,
+                "countActive": "$countActive",
+                "data": {"$slice": ["$received_data", 0, parseInt(limit)]},
+            }
+        });
+    }
+    if(sortBy === 'balance') {
+        aggregate.push({
+            "$project": {
+                "_id": 0,
+                "countActive": "$countActive",
+                "countUnique": "$countUnique",
+                "devAddressBalance": "$devAddressBalance",
+                "data": {"$slice": ["$balance_data", 0, parseInt(limit)]},
+            }
+        });
+    }
+    Address[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
+        if(address && address.length) {
+            return cb(address[0]);
+        } else {
+            return cb(err);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -635,3 +690,4 @@ module.exports.updateAllWhereGte = updateAllWhereGte;
 module.exports.getClusterDetails = getClusterDetails;
 module.exports.getGroupCountForAddresses = getGroupCountForAddresses;
 module.exports.findAllWrongOrder = findAllWrongOrder;
+module.exports.getRichlistAndExtraStats = getRichlistAndExtraStats;
