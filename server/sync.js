@@ -5862,7 +5862,7 @@ var gettingNextAddressesToOrderCursor = function(limit, total) {
         // ]};
         var limitBigChain = total;
         if (limitBigChain > 5000000) {
-            limitBigChain = 5000000;
+            limitBigChain = 1000000;
         }
         AddressToUpdateController.getAllUniqueCursor(where, fields, {}, limit, offset, limitBigChain, function (cursor) {
             resolve(cursor);
