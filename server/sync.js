@@ -2754,7 +2754,7 @@ if (wallet) {
                                     else if (nextAddress) {
                                         resolve(nextAddress);
                                     } else {
-                                        reject();
+                                        reject('finished');
                                     }
                                 });
                             });
@@ -2882,7 +2882,7 @@ if (wallet) {
                                     cluster.worker.send({stopAllProccess: true});
                                 } else {
                                     console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
-                                    console.log('process.memoryUsage()',process.memoryUsage());
+                                    // console.log('process.memoryUsage()',process.memoryUsage());
                                     AddressController.updateOne(lastAddress, function(err) {
                                         if(err) {
                                             console.log('err1', err);

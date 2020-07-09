@@ -131,7 +131,7 @@ function getAllUniqueCursor(where, fields, sort, limit, offset, limitBigChain, c
     // });
     // var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor().option({'noCursorTimeout': true}).exec();
     // var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor().addCursorFlag('noCursorTimeout', true).exec();
-    var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor({batchSize: 1000}).addCursorFlag('noCursorTimeout', true).exec();
+    var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor().addCursorFlag('noCursorTimeout', true).exec();
     return cb(cursor);
 }
 
