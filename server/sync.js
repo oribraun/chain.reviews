@@ -2707,9 +2707,10 @@ if (wallet) {
                                 if(clusterQ.length) {
                                     getNextForAllClusters();
                                 }
-                            }).catch(function(){
+                            }).catch(function(error){
                                 gettingNextInProgress = false;
                                 console.log('startedClusters', startedClusters);
+                                console.log('error', error);
                                 if(startedClusters && gotNewData) {
                                     if(!gettingNextChunkInProgress) {
                                         gettingNextChunkInProgress = true;
@@ -2748,13 +2749,12 @@ if (wallet) {
                             return new Promise(function(resolve, reject) {
                                 main_cursor.next(function (error, nextAddress) {
                                     if (error) {
-                                        // console.log('cursor error', error);
-                                        reject();
+                                        reject(error);
                                     }
-                                    if (nextAddress) {
+                                    else if (nextAddress) {
                                         resolve(nextAddress);
                                     } else {
-                                        reject();
+                                        reject('finished');
                                     }
                                 });
                             });
@@ -2882,7 +2882,7 @@ if (wallet) {
                                     cluster.worker.send({stopAllProccess: true});
                                 } else {
                                     console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
-
+                                    // console.log('process.memoryUsage()',process.memoryUsage());
                                     AddressController.updateOne(lastAddress, function(err) {
                                         if(err) {
                                             console.log('err1', err);
