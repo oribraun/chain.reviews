@@ -2711,7 +2711,7 @@ if (wallet) {
                                 gettingNextInProgress = false;
                                 console.log('startedClusters', startedClusters);
                                 console.log('error', error);
-                                if(startedClusters && gotNewData) {
+                                if((startedClusters && gotNewData) || error !== 'finished') {
                                     if(!gettingNextChunkInProgress) {
                                         gettingNextChunkInProgress = true;
                                         console.log('getting next chunk');
