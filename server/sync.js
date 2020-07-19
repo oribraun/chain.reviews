@@ -1267,7 +1267,7 @@ if (wallet) {
                     //TODO
                     // check last 6 db blocks exist in wallet
                     var checkLatestBlocksInWallet = function() {
-                        BlockController.getAll('blockindex', 'desc', 6, function (latestTx) {
+                        BlockController.getAll('blockindex', 'desc', 8, function (latestTx) {
                             function startCheckingBlock(i) {
                                 wallet_commands.getBlock(wallet, latestTx[i].blockhash).then((block) => {
                                     block = JSON.parse(block);
