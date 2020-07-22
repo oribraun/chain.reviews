@@ -46,6 +46,11 @@ try {
 }
 $db = $mongo->selectDB($database);
 
+include_once "common.php";
+
+include_once "reindex.php";
+Reindex($db);
+
 include_once "clusters.php";
 ParseBlocksForClusters($db);
 
@@ -54,6 +59,9 @@ MergeClusters($db);
 
 include_once "internal_transactions.php";
 InternalTransactions($db);
+
+include_once "cluster_transactions.php";
+ClusterTransactions($db);
 
 echo "finished\n";
 unlink($file);
