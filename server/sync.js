@@ -3512,73 +3512,74 @@ if (wallet) {
                             TxController.deleteAllWhereGte(currentBlock, function (numberRemoved) {
                                 TxVinVoutController.deleteAllWhereGte(currentBlock, function(numberDeleted) {
                                     AddressToUpdateController.deleteAllWhereGte(currentBlock, function (numberDeleted2) {
-                                        // ClustersBlockController.updateOne({name:"reindex_block",block:currentBlock}, function(){})
-                                        console.log('blocks deleted', numberRemoved);
-                                        for (let i = 0; i < numCPUs; i++) {
-                                            var worker = cluster.fork();
-                                            worker.on('message', function (msg) {
-                                                if (msg.finished) {
-                                                    (function (id, block) {
-                                                        if (block <= allBlocksCount) {
-                                                            cluster.workers[id].send({blockNum: block});
-                                                        } else {
+                                        ClustersBlockController.updateOne({name:"reindex_block",block:currentBlock}, function() {
+                                            console.log('blocks deleted', numberRemoved);
+                                            for (let i = 0; i < numCPUs; i++) {
+                                                var worker = cluster.fork();
+                                                worker.on('message', function (msg) {
+                                                    if (msg.finished) {
+                                                        (function (id, block) {
+                                                            if (block <= allBlocksCount) {
+                                                                cluster.workers[id].send({blockNum: block});
+                                                            } else {
+                                                                cluster.workers[id].send({kill: true});
+                                                            }
+                                                        })(this.id, currentBlock++)
+                                                    }
+                                                    if (msg.blockNotFound) {
+                                                        blockNotFound = msg.blockNumber;
+                                                        for (var id in cluster.workers) {
                                                             cluster.workers[id].send({kill: true});
                                                         }
-                                                    })(this.id, currentBlock++)
-                                                }
-                                                if (msg.blockNotFound) {
-                                                    blockNotFound = msg.blockNumber;
-                                                    for (var id in cluster.workers) {
-                                                        cluster.workers[id].send({kill: true});
                                                     }
-                                                }
-                                                if (msg.walletDisconnected) {
-                                                    walletDisconnected = true;
-                                                    cluster.workers[this.id].send({kill: true});
-                                                }
-                                                if (msg.mongoTimeout) {
-                                                    mongoTimeout = true;
-                                                    for (var id in cluster.workers) {
-                                                        cluster.workers[id].send({kill: true});
+                                                    if (msg.walletDisconnected) {
+                                                        walletDisconnected = true;
+                                                        cluster.workers[this.id].send({kill: true});
                                                     }
+                                                    if (msg.mongoTimeout) {
+                                                        mongoTimeout = true;
+                                                        for (var id in cluster.workers) {
+                                                            cluster.workers[id].send({kill: true});
+                                                        }
+                                                    }
+                                                })
+                                                worker.on('exit', (code, signal) => {
+                                                    exit_count++;
+                                                    if (exit_count === numCPUs) {
+                                                        var exit_code = 0;
+                                                        if (walletDisconnected) {
+                                                            console.log('\n*******************************************************************');
+                                                            console.log('******wallet was disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                            console.log('*******************************************************************\n');
+                                                            exit_code = 1;
+                                                        }
+                                                        if (mongoTimeout) {
+                                                            console.log('\n*******************************************************************');
+                                                            console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                            console.log('*******************************************************************\n');
+                                                            exit_code = 1;
+                                                        }
+                                                        if (blockNotFound) {
+                                                            console.log('\n*******************************************************************');
+                                                            console.log('****** block not found, please reindex again from block - ' + blockNotFound + '******')
+                                                            console.log('*******************************************************************\n');
+                                                            exit_code = 1;
+                                                        }
+                                                        console.log('took - ', helpers.getFinishTime(startTime));
+                                                        deleteFile();
+                                                        db.multipleDisconnect();
+                                                        process.exit(exit_code);
+                                                    }
+                                                    console.log(`worker ${worker.process.pid} died`);
+                                                })
+                                                if (currentBlock <= allBlocksCount) {
+                                                    worker.send({blockNum: currentBlock});
+                                                    currentBlock++;
+                                                } else {
+                                                    worker.send({kill: true});
                                                 }
-                                            })
-                                            worker.on('exit', (code, signal) => {
-                                                exit_count++;
-                                                if (exit_count === numCPUs) {
-                                                    var exit_code = 0;
-                                                    if (walletDisconnected) {
-                                                        console.log('\n*******************************************************************');
-                                                        console.log('******wallet was disconnected, please reindex again from block - ' + startedFromBlock + '******')
-                                                        console.log('*******************************************************************\n');
-                                                        exit_code = 1;
-                                                    }
-                                                    if (mongoTimeout) {
-                                                        console.log('\n*******************************************************************');
-                                                        console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
-                                                        console.log('*******************************************************************\n');
-                                                        exit_code = 1;
-                                                    }
-                                                    if (blockNotFound) {
-                                                        console.log('\n*******************************************************************');
-                                                        console.log('****** block not found, please reindex again from block - ' + blockNotFound + '******')
-                                                        console.log('*******************************************************************\n');
-                                                        exit_code = 1;
-                                                    }
-                                                    console.log('took - ', helpers.getFinishTime(startTime));
-                                                    deleteFile();
-                                                    db.multipleDisconnect();
-                                                    process.exit(exit_code);
-                                                }
-                                                console.log(`worker ${worker.process.pid} died`);
-                                            })
-                                            if (currentBlock <= allBlocksCount) {
-                                                worker.send({blockNum: currentBlock});
-                                                currentBlock++;
-                                            } else {
-                                                worker.send({kill: true});
                                             }
-                                        }
+                                        });
                                     });
                                 });
                             });
