@@ -6,6 +6,7 @@ function MergeClusters($db)
 {
     $clusters_collection = $db->clusters;
     $clusters_internal_transactions_collection = $db->clusters_internal_transactions;
+    $clusters_transactions_collection = $db->clusters_transactions;
 
     while (($clusters_to_merge_count = $clusters_collection->count(['update' => true])) > 0) {
         echo "Merge clusters - {$clusters_to_merge_count} left\n";
@@ -71,6 +72,21 @@ function MergeClusters($db)
                 ], [
                     'multiple' => true
                 ]);
+
+                $clusters_transactions_collection->update(
+                    ['cin' => $cluster['_id']],
+                    ['$set' => ['cin' => $cluster_to_update['_id']]],
+                    ['multiple' => true]
+                );
+                $clusters_transactions_collection->update(
+                    ['couts' => $cluster['_id']],
+                    [
+                        '$addToSet' => ['couts' => $cluster_to_update['_id']],
+                        '$pull'     => ['couts' => $cluster['_id']],
+                    ],
+                    ['multiple' => true]
+                );
+
                 $clusters_collection->remove(['_id' => $cluster['_id']]);
             }
         }

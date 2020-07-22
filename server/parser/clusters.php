@@ -1,13 +1,10 @@
 <?php
 
-include_once "common.php";
-
 function ParseBlocksForClusters($db)
 {
-    //$db->clusters_addresses->createIndex(['address' => 1]);
     $db->clusters->createIndex(['addresses' => 1]);
     $db->clusters->createIndex(['update' => 1]);
-
+    $db->clusters_addresses->createIndex(['address' => 1]);
 
     $clusters_block_collection = $db->clusters_block;
 
@@ -43,10 +40,8 @@ function ParseBlocksForClusters($db)
                 }
             }
 
-            if (!empty($vouts)) {
-                foreach ($vouts as $address) {
-                    UpdateAddress($db, $address, $transaction['timestamp']);
-                }
+            foreach ($vouts as $address) {
+                AddNewAddress($db, $address, $current_block);
             }
 
             if (!empty($transaction['vin'])) {
@@ -62,11 +57,14 @@ function ParseBlocksForClusters($db)
                 }
                 $vins = array_unique($vins);
 
+                if (!empty($vins)) {
+                    foreach ($vins as $address) {
+                        AddNewAddress($db, $address, $current_block);
+                    }
+                }
+
                 if (count($vins) > 1) {
                     AddClusterConnection($db, $vins);
-                    foreach ($vins as $address) {
-                        UpdateAddress($db, $address, $transaction['timestamp']);
-                    }
                 }
             }
         }
