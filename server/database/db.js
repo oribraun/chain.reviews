@@ -66,7 +66,8 @@ var db = {
         dbString = dbString + '/' + dbSettings.database;
         // console.log(dbString)
         var options = {
-            socketTimeoutMS: 10*60*1000, // 10 minute timeout
+            socketTimeoutMS: 20*60*1000, // 10 minute timeout
+            connectTimeoutMS: 20*60*1000, // 10 minute timeout
             keepAlive: true,
             useNewUrlParser: true,
             useUnifiedTopology: true,
