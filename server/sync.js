@@ -5820,7 +5820,8 @@ var getUniqueAddresses = function(limit, offset, total) {
         var where = {};
         var fields = {};
         // where = {$or: [{order: {$exists: false}}, {order: {$eq: 0}}]};
-        where.order = {$not:{$gt: 0}};
+        // where.order = {$not:{$gt: 0}};
+        where.order = {$eq: 0};
         // where.address = "WUv8fyfuCWbTzmhvDaSGUfundZunnxGt12";
         // where.address = {$in: [
         //         "SRYkHm3QGCFyje2kP9sEC3wVb9gEA9voEG",
