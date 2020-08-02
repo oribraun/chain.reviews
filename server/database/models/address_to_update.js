@@ -21,6 +21,7 @@ AddressToUpdateSchema.index({ order: 1, address: 1 }, { unique: true, partialFil
 AddressToUpdateSchema.index({address: 1, blockindex: 1, order: 1}, {background:true});
 AddressToUpdateSchema.index({address: 1, blockindex: -1, order: -1}, {background:true});
 AddressToUpdateSchema.index({blockindex: -1});
+AddressToUpdateSchema.index({ order: 1 },{ partialFilterExpression: { order: { $eq: 0}}});
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {
