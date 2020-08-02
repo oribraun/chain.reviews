@@ -5851,7 +5851,8 @@ var gettingNextAddressesToOrderCursor = function(limit, total) {
         var where = {};
         var fields = {};
         // where.blockindex = {$not: {$gt: 100}};
-        where.order = {$not: {$gt: 0}};
+        // where.order = {$not: {$gt: 0}};
+        where.order = {$eq: 0};
         // where.address = {$in: [
         //     "SNKH6MMiZahBVV5CkNvo6gW9iTZ38Rdg59",
         //     "SZC8B1scnzTeVk9bqGCJFhXEHH2sJpYK95",
