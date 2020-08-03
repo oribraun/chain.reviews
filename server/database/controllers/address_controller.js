@@ -58,7 +58,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function getOne(hash, cb) {
-    Address[db.getCurrentConnection()].findOne({a_id: hash}, function(err, address) {
+    Address[db.getCurrentConnection()].findOne({a_id: hash}).lean().exec(function(err, address) {
         if(address) {
             return cb(address);
         } else {
