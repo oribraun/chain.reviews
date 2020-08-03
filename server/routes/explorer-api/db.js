@@ -265,14 +265,16 @@ router.post('/getAddressTxs', (req, res) => {
 
 router.post('/getAddressDetails', (req, res) => {
     const response = helpers.getGeneralResponse();
-    AddressController.getOne(req.body['address'], function(addressSum) {
-        AddressToUpdateController.getAddressDetails(req.body['address'], function (results) {
+    AddressController.getOne(req.body['address'], function(results) {
+        // AddressToUpdateController.getAddressDetails(req.body['address'], function (results) {
             ClusterController.getClusterByAddress(req.body['address'], function (clusters) {
                 if (results) {
                     if (clusters) {
                         results.clusters = clusters;
                     }
-                    results.addressSum = addressSum;
+                    results.count = results.last_order;
+                    results.address = results.a_id;
+                    // results.addressSum = results;
                     response.data = results;
                 } else {
                     response.err = 1;
@@ -280,7 +282,7 @@ router.post('/getAddressDetails', (req, res) => {
                 }
                 res.send(JSON.stringify(response, null, 2));
             });
-        });
+        // });
     });
 })
 
