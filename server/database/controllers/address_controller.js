@@ -715,11 +715,11 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
         where._id = 0;
         where.a_id = 1;
         where[sortBy] = 1;
-        Address[db.getCurrentConnection()].find({},where).sort(sort).limit(limit).exec({}, function (err, data) {
+        Address[db.getCurrentConnection()].find({},where).sort(sort).limit(limit).exec({}, function (err, results) {
             if (err) {
                 reject()
             } else {
-                data.data = data;
+                data.data = results;
                 resolve();
             }
         });
