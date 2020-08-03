@@ -20,9 +20,9 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
     if(sortBy) {
         sort[sortBy] = order == 'asc' ? 1 : -1;
     }
-    AddressToUpdate[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, tx) {
-        if(tx) {
-            return cb(tx);
+    AddressToUpdate[db.getCurrentConnection()].find(where, fields).sort(sort).skip(parseInt(offset) * parseInt(limit)).limit(limit).exec( function(err, addresses) {
+        if(addresses) {
+            return cb(addresses);
         } else {
             return cb();
         }
