@@ -5610,6 +5610,10 @@ function updateRichlist() {
 function updateRichlistAndExtraStats() {
     var startTime = new Date();
     RichlistController.getOne(settings[wallet].coin, function(richlist) {
+        if(!richlist) {
+            richlist = {};
+            richlist.coin = settings[wallet].coin;
+        }
         // console.log('updating richlist');
         AddressController.getRichlistAndExtraStats2('received', 'desc', 100, settings[wallet].dev_address, function(results){
             var received = results.data;
