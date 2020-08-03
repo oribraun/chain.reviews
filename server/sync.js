@@ -2694,12 +2694,14 @@ if (wallet) {
                             getNext().then(function(address) {
                                 gettingNextInProgress = false;
                                 if(activeAddresses.indexOf(address._id) === -1) {
-                                    cluster.workers[clusterQ[0]].send({currentAddress: address});
-                                    activeAddresses[clusterQ[0]] = address._id;
+                                    if(cluster.workers[clusterQ[0]]) {
+                                        cluster.workers[clusterQ[0]].send({currentAddress: address});
+                                        activeAddresses[clusterQ[0]] = address._id;
+                                        countAddresses++;
+                                        startedClusters++;
+                                        gotNewData = true;
+                                    }
                                     clusterQ.shift();
-                                    countAddresses++;
-                                    startedClusters++;
-                                    gotNewData = true;
                                     // console.log('address._id', address._id);
                                 } else {
                                     console.log('duplicate address - ', address._id)
@@ -5609,18 +5611,18 @@ function updateRichlistAndExtraStats() {
     var startTime = new Date();
     RichlistController.getOne(settings[wallet].coin, function(richlist) {
         // console.log('updating richlist');
-        AddressController.getRichlistAndExtraStats('received', 'desc', 100, settings[wallet].dev_address, function(results){
+        AddressController.getRichlistAndExtraStats2('received', 'desc', 100, settings[wallet].dev_address, function(results){
             var received = results.data;
-            AddressController.getRichlistAndExtraStats('balance', 'desc', 100, settings[wallet].dev_address, function(results){
+            AddressController.getRichlistAndExtraStats2('balance', 'desc', 100, settings[wallet].dev_address, function(results){
                 var active_wallets_count = results.countActive;
                 var total_wallets_count = results.countUnique;
                 var dev_wallet_balance = results.devAddressBalance;
                 var balance = results.data;
                 if(received && received.length) {
-                    richlist.received = received.map(function (o) {return {received: o.received, a_id: o._id}});
+                    richlist.received = received.map(function (o) {return {received: o.received, a_id: o.a_id}});
                 }
                 if(balance && balance.length) {
-                    richlist.balance = balance.map(function(o){ return {balance: o.balance, a_id: o._id}});
+                    richlist.balance = balance.map(function(o){ return {balance: o.balance, a_id: o.a_id}});
                 }
                 StatsController.getOne(settings[wallet].coin, function(stats) {
                     stats.active_wallets_count = active_wallets_count;

@@ -671,6 +671,64 @@ function getRichlistAndExtraStats(sortBy, order, limit, dev_address, cb) {
     });
 }
 
+function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
+    var sort = {};
+    sort[sortBy] = order == 'desc' ? -1 : 1;
+    var promises = [];
+    var data = {};
+    promises.push(new Promise((resolve, reject) => {
+        Address[db.getCurrentConnection()].countDocuments({}, function (err, countUnique) {
+            if(err) {
+                reject()
+            } else {
+                data.countUnique = countUnique;
+                resolve();
+            }
+        });
+    }))
+    promises.push(new Promise((resolve, reject) => {
+        Address[db.getCurrentConnection()].find({balance: {$gt: 0}}).countDocuments({}, function (err, countActive) {
+            if(err) {
+                reject()
+            } else {
+                data.countActive = countActive;
+                resolve();
+            }
+        });
+    }))
+    promises.push(new Promise((resolve, reject) => {
+        Address[db.getCurrentConnection()].find({a_id: {$eq: dev_address}}).exec({}, function (err, address) {
+            if(err) {
+                reject()
+            } else {
+                if(address && address[0]) {
+                    data.devAddressBalance = address[0].balance;
+                } else {
+                    data.devAddressBalance = 0;
+                }
+                resolve();
+            }
+        });
+    }))
+    promises.push(new Promise((resolve, reject) => {
+        var where = {}
+        where._id = 0;
+        where.a_id = 1;
+        where[sortBy] = 1;
+        Address[db.getCurrentConnection()].find({},where).sort(sort).limit(limit).exec({}, function (err, data) {
+            if (err) {
+                reject()
+            } else {
+                data.data = data;
+                resolve();
+            }
+        });
+    }))
+    Promise.all(promises).then((response) => {
+        cb(data);
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -691,3 +749,4 @@ module.exports.getClusterDetails = getClusterDetails;
 module.exports.getGroupCountForAddresses = getGroupCountForAddresses;
 module.exports.findAllWrongOrder = findAllWrongOrder;
 module.exports.getRichlistAndExtraStats = getRichlistAndExtraStats;
+module.exports.getRichlistAndExtraStats2 = getRichlistAndExtraStats2;
