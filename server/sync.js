@@ -57,6 +57,7 @@ var commands_require_db = [
     'updateclusterstxbyday',
     'updateoneclusterstxbyday',
     'test',
+    'fix_address_order',
     'find_unconfirmed',
     'find_missing_blocks',
     'find_orphans_tx_in_address',
@@ -94,6 +95,7 @@ if(settings[wallet]) {
         var TxByDayController = require('./database/controllers/tx_by_day_controller');
         var ClusterController = require('./database/controllers/cluster_controller');
         var ClusterTxByDayController = require('./database/controllers/cluster_tx_by_day_controller');
+        var ClustersBlockController = require('./database/controllers/clusters_block_controller');
 
     }
 } else {
@@ -1265,7 +1267,7 @@ if (wallet) {
                     //TODO
                     // check last 6 db blocks exist in wallet
                     var checkLatestBlocksInWallet = function() {
-                        BlockController.getAll('blockindex', 'desc', 6, function (latestTx) {
+                        BlockController.getAll('blockindex', 'desc', 8, function (latestTx) {
                             function startCheckingBlock(i) {
                                 wallet_commands.getBlock(wallet, latestTx[i].blockhash).then((block) => {
                                     block = JSON.parse(block);
@@ -1553,140 +1555,176 @@ if (wallet) {
             if (cluster.isMaster) {
                 var startTime = new Date();
                 console.log(`Master ${process.pid} is running`);
-                if(fileExist()) {
+                if(fileExist('address')) {
                     console.log('reindex is in progress');
                     db.multipleDisconnect();
                     process.exit(1)
                     return;
                 }
-                createFile();
-                var currentAddresses = [];
-                var limit = 20000;
+                createFile('address');
+                var limit = 0;
                 var countAddresses = 0;
                 var offset = 0;
                 var cpuCount = 1;
                 var clusterQ = [];
-                var gettingNextAddressInProgress = false;
+                var activeAddresses = [];
+                var main_cursor;
                 var exit_count = 0;
                 var mongoTimeout = false;
-                gettingNextAddressInProgress = true;
+                var gettingNextInProgress = false;
+                var gettingNextChunkInProgress = false;
+                var startedClusters = 0;
+                var gotNewData = false;
                 var startAddressLinerAll = function() {
                     AddressToUpdateController.estimatedDocumentCount(function(count) {
                         console.log('count', count)
-                        gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
-                            gettingNextAddressInProgress = false;
-                            if (res && res.length) {
-                                currentAddresses = currentAddresses.concat(res);
-                            }
-                            if (currentAddresses.length) {
-                                for (let i = 0; i < cpuCount; i++) {
-                                    var worker = cluster.fork();
-                                    worker.on('message', function (msg) {
-                                        if (msg.finished) {
-                                            (function (id) {
-                                                // console.log('currentAddresses.length', currentAddresses.length);
-                                                clusterQ.push(id);
-                                                if (currentAddresses.length) {
-                                                    cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                    clusterQ.shift();
-                                                    countAddresses++;
-                                                    currentAddresses.shift();
-
-                                                } else {
-                                                    // console.log('clusterQ.length', clusterQ.length);
-                                                    if (clusterQ.length === cpuCount) {
-                                                        gettingNextAddressInProgress = true;
-                                                        // offset++;
-                                                        gettingNextUniqueAddresses(limit, offset, count).then(function (res) {
-                                                            // console.log('res.length', res.length)
-                                                            if (res && res.length) {
-                                                                currentAddresses = currentAddresses.concat(res);
-                                                            }
-                                                            gettingNextAddressInProgress = false;
-                                                            if (currentAddresses.length) {
-                                                                console.log('clusterQ', clusterQ)
-                                                                while (clusterQ.length) {
-                                                                    cluster.workers[clusterQ[0]].send({currentAddress: currentAddresses[0]});
-                                                                    clusterQ.shift();
-                                                                    countAddresses++;
-                                                                    currentAddresses.shift();
-                                                                }
-                                                            } else {
-                                                                while (clusterQ.length) {
-                                                                    console.log('kill');
-                                                                    cluster.workers[clusterQ[0]].send({kill: true});
-                                                                    clusterQ.shift();
-                                                                }
-                                                            }
-                                                        });
-                                                    }
-                                                    // if (!gettingNextAddressInProgress) {
-                                                    //     cluster.workers[clusterQ[0]].send({kill: true});
-                                                    //     clusterQ.shift();
-                                                    // }
-                                                }
-                                            })(this.id)
-                                        }
-                                        if (msg.mongoTimeout) {
-                                            mongoTimeout = true;
-                                            for(var id in cluster.workers) {
-                                                cluster.workers[id].send({kill: true});
+                        getNextChunk(0, count, activeAddresses).then(function () {
+                            for (let i = 0; i < cpuCount; i++) {
+                                var worker = cluster.fork();
+                                worker.on('message', function (msg) {
+                                    if (msg.finished) {
+                                        (function (id) {
+                                            // console.log('currentAddresses.length', currentAddresses.length);
+                                            // console.log('countAddresses', countAddresses)
+                                            clusterQ.push(id);
+                                            startedClusters--;
+                                            if(activeAddresses[id]) {
+                                                delete activeAddresses[id];
                                             }
-                                        }
-                                        if (msg.stopAllProccess) {
-                                            mongoTimeout = true;
-                                            for(var id in cluster.workers) {
-                                                cluster.workers[id].send({kill: true});
+                                            if(!gettingNextInProgress) {
+                                                getNextForAllClusters();
                                             }
+                                        })(this.id)
+                                    }
+                                    if (msg.mongoTimeout) {
+                                        mongoTimeout = true;
+                                        for(var id in cluster.workers) {
+                                            cluster.workers[id].send({kill: true});
                                         }
-                                    })
-                                    worker.on('exit', (code, signal) => {
-                                        exit_count++;
-                                        if (exit_count === cpuCount) {
-                                            if (!updateInProgress) {
-                                                // console.log('local_addreses_before_save', local_addreses_before_save.length);
-                                                // updateDbAddreess(local_addreses_before_save, function() {
-                                                //     endReindex();
-                                                // });
-                                                if(mongoTimeout) {
-                                                    console.log('\n*******************************************************************');
-                                                    console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
-                                                    console.log('*******************************************************************\n');
-                                                    deleteFile();
-                                                    db.multipleDisconnect();
-                                                    process.exit(1);
-                                                }
-                                                console.log('took - ', helpers.getFinishTime(startTime));
-                                                deleteFile();
+                                    }
+                                    if (msg.stopAllProccess) {
+                                        mongoTimeout = true;
+                                        for(var id in cluster.workers) {
+                                            cluster.workers[id].send({kill: true});
+                                        }
+                                    }
+                                })
+                                worker.on('exit', (code, signal) => {
+                                    exit_count++;
+                                    if (exit_count === cpuCount) {
+                                        if (!updateInProgress) {
+                                            // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                            // updateDbAddreess(local_addreses_before_save, function() {
+                                            //     endReindex();
+                                            // });
+                                            if(mongoTimeout) {
+                                                console.log('\n*******************************************************************');
+                                                console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                console.log('*******************************************************************\n');
+                                                deleteFile('address');
                                                 db.multipleDisconnect();
                                                 process.exit(1);
-                                                // console.log('countAddresses', countAddresses)
-                                                // console.log('took ', helpers.getFinishTime(startTime));
-                                                // endReindex();
                                             }
-                                            // console.log('addreses_to_update', addreses_to_update.length)
+                                            console.log('took - ', helpers.getFinishTime(startTime));
+                                            deleteFile('address');
+                                            db.multipleDisconnect();
+                                            process.exit(1);
+                                            // console.log('countAddresses', countAddresses)
+                                            // console.log('took ', helpers.getFinishTime(startTime));
+                                            // endReindex();
                                         }
-                                        console.log(`worker ${worker.process.pid} died`);
-                                    })
-                                    if (currentAddresses.length) {
-                                        worker.send({currentAddress: currentAddresses[0]});
-                                        countAddresses++;
-                                        currentAddresses.shift();
-                                    } else {
-                                        worker.send({kill: true});
+                                        // console.log('addreses_to_update', addreses_to_update.length)
                                     }
+                                    console.log(`worker ${worker.process.pid} died - code ${code} , signal - ${signal}`);
+                                })
+                                clusterQ.push(worker.id);
+                                if(!gettingNextInProgress) {
+                                    getNextForAllClusters();
                                 }
-                            } else {
-                                console.log('no new blocks found');
-                                deleteFile();
-                                db.multipleDisconnect();
-                                process.exit();
-                                return;
                             }
                         });
+
+                        function getNextForAllClusters() {
+                            gettingNextInProgress = true;
+                            getNext().then(function(address) {
+                                gettingNextInProgress = false;
+                                if(activeAddresses.indexOf(address._id) === -1) {
+                                    cluster.workers[clusterQ[0]].send({currentAddress: address});
+                                    activeAddresses[clusterQ[0]] = address._id;
+                                    clusterQ.shift();
+                                    countAddresses++;
+                                    startedClusters++;
+                                    gotNewData = true;
+                                    // console.log('address._id', address._id);
+                                } else {
+                                    console.log('duplicate address - ', address._id)
+                                }
+                                if(clusterQ.length) {
+                                    getNextForAllClusters();
+                                }
+                            }).catch(function(){
+                                gettingNextInProgress = false;
+                                console.log('startedClusters', startedClusters);
+                                if(startedClusters && gotNewData) {
+                                    if(!gettingNextChunkInProgress) {
+                                        gettingNextChunkInProgress = true;
+                                        console.log('getting next chunk');
+                                        getNextChunk(0, count).then(function () {
+                                            gettingNextChunkInProgress = false;
+                                            gotNewData = false;
+                                            getNextForAllClusters();
+                                        });
+                                    }
+                                } else {
+                                    console.log('finish - ', clusterQ.length)
+                                    var currentClustersToKill = [];
+                                    for(var i = 0; i < clusterQ.length; i++) {
+                                        if(!activeAddresses[clusterQ[i]]) {
+                                            currentClustersToKill.push(clusterQ[i])
+                                        }
+                                    }
+                                    while (currentClustersToKill.length) {
+                                        if(cluster.workers[currentClustersToKill[0]]) {
+                                            cluster.workers[currentClustersToKill[0]].send({kill: true});
+                                        }
+                                        currentClustersToKill.shift();
+                                    }
+                                    // if(clusterQ.length === cpuCount) {
+                                    //     while (clusterQ.length) {
+                                    //         cluster.workers[clusterQ[0]].send({kill: true});
+                                    //         clusterQ.shift();
+                                    //     }
+                                    // }
+                                }
+                            })
+                        }
+
+                        function getNext() {
+                            return new Promise(function(resolve, reject) {
+                                main_cursor.next(function (error, nextAddress) {
+                                    if (error) {
+                                        // console.log('cursor error', error);
+                                        reject();
+                                    }
+                                    if (nextAddress) {
+                                        resolve(nextAddress);
+                                    } else {
+                                        reject();
+                                    }
+                                });
+                            });
+                        }
+                        function getNextChunk(limit, count) {
+                            return new Promise(function(resolve, reject){
+                                gettingNextAddressesToOrderCursor(limit, count).then(function (cursor) {
+                                    console.log('renew cursor')
+                                    main_cursor = cursor;
+                                    resolve();
+                                });
+                            })
+                        }
                     })
                 }
-
                 // var addresses = [];
                 // var local_addreses_before_save = [];
                 var updateInProgress = false;
@@ -1707,8 +1745,16 @@ if (wallet) {
                     }
                 });
 
+                // process.on('SIGABRT', function () {
+                //     process.stdout.write('GOT SIGABORT\n')
+                //     process.exit(1)
+                // })
+
                 var startUpdatingAddress = function(currentAddress) {
                     var address = currentAddress._id;
+                    // console.log('currentAddress', currentAddress);
+                    // cluster.worker.send({finished: true});
+                    // return;
                     var lastSent = 0;
                     var lastReceived = 0;
                     var lastOrder = 0;
@@ -1726,10 +1772,16 @@ if (wallet) {
                     });
                     function roundToMaxSafeInt(val) {
                         if(!Number.isSafeInteger(val)) {
+                            console.log('val', val)
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
                                 val = Math.round(val / (diff * 10))
+                                for(var i = 0; i < diff; i++) {
+                                    val = val * 10;
+                                }
                             }
+                            // console.log('diff', diff)
+                            // console.log('rounded val', val)
                         }
                         return val;
                     }
@@ -1784,7 +1836,7 @@ if (wallet) {
                                     }
                                     cluster.worker.send({stopAllProccess: true});
                                 } else {
-                                    // console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
+                                    console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
 
                                     AddressController.updateOne(lastAddress, function(err) {
                                         if(err) {
@@ -2459,6 +2511,9 @@ if (wallet) {
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
                                 val = Math.round(val / (diff * 10))
+                                for(var i = 0; i < diff; i++) {
+                                    val = val * 10;
+                                }
                             }
                         }
                         return val;
@@ -2564,6 +2619,7 @@ if (wallet) {
                 var gettingNextInProgress = false;
                 var gettingNextChunkInProgress = false;
                 var startedClusters = 0;
+                var gotNewData = false;
                 var startAddressLinerAll = function() {
                     AddressToUpdateController.estimatedDocumentCount(function(count) {
                         console.log('count', count)
@@ -2577,6 +2633,9 @@ if (wallet) {
                                                 // console.log('countAddresses', countAddresses)
                                                 clusterQ.push(id);
                                                 startedClusters--;
+                                                if(activeAddresses[id]) {
+                                                    delete activeAddresses[id];
+                                                }
                                                 if(!gettingNextInProgress) {
                                                     getNextForAllClusters();
                                                 }
@@ -2621,7 +2680,7 @@ if (wallet) {
                                             }
                                             // console.log('addreses_to_update', addreses_to_update.length)
                                         }
-                                        console.log(`worker ${worker.process.pid} died`);
+                                        console.log(`worker ${worker.process.pid} died - code ${code} , signal - ${signal}`);
                                     })
                                     clusterQ.push(worker.id);
                                     if(!gettingNextInProgress) {
@@ -2640,6 +2699,7 @@ if (wallet) {
                                     clusterQ.shift();
                                     countAddresses++;
                                     startedClusters++;
+                                    gotNewData = true;
                                     // console.log('address._id', address._id);
                                 } else {
                                     console.log('duplicate address - ', address._id)
@@ -2647,26 +2707,40 @@ if (wallet) {
                                 if(clusterQ.length) {
                                     getNextForAllClusters();
                                 }
-                            }).catch(function(){
+                            }).catch(function(error){
                                 gettingNextInProgress = false;
                                 console.log('startedClusters', startedClusters);
-                                if(startedClusters) {
+                                console.log('error', error);
+                                if((startedClusters && gotNewData) || error !== 'finished') {
                                     if(!gettingNextChunkInProgress) {
                                         gettingNextChunkInProgress = true;
                                         console.log('getting next chunk');
                                         getNextChunk(0, count).then(function () {
-                                            getNextForAllClusters();
                                             gettingNextChunkInProgress = false;
+                                            gotNewData = false;
+                                            getNextForAllClusters();
                                         });
                                     }
                                 } else {
                                     console.log('finish - ', clusterQ.length)
-                                    if(clusterQ.length === cpuCount) {
-                                        while (clusterQ.length) {
-                                            cluster.workers[clusterQ[0]].send({kill: true});
-                                            clusterQ.shift();
+                                    var currentClustersToKill = [];
+                                    for(var i = 0; i < clusterQ.length; i++) {
+                                        if(!activeAddresses[clusterQ[i]]) {
+                                            currentClustersToKill.push(clusterQ[i])
                                         }
                                     }
+                                    while (currentClustersToKill.length) {
+                                        if(cluster.workers[currentClustersToKill[0]]) {
+                                            cluster.workers[currentClustersToKill[0]].send({kill: true});
+                                        }
+                                        currentClustersToKill.shift();
+                                    }
+                                    // if(clusterQ.length === cpuCount) {
+                                    //     while (clusterQ.length) {
+                                    //         cluster.workers[clusterQ[0]].send({kill: true});
+                                    //         clusterQ.shift();
+                                    //     }
+                                    // }
                                 }
                             })
                         }
@@ -2675,13 +2749,12 @@ if (wallet) {
                             return new Promise(function(resolve, reject) {
                                 main_cursor.next(function (error, nextAddress) {
                                     if (error) {
-                                        console.log('cursor error', error);
-                                        reject();
+                                        reject(error);
                                     }
-                                    if (nextAddress) {
+                                    else if (nextAddress) {
                                         resolve(nextAddress);
                                     } else {
-                                        reject();
+                                        reject('finished');
                                     }
                                 });
                             });
@@ -2689,6 +2762,7 @@ if (wallet) {
                         function getNextChunk(limit, count) {
                             return new Promise(function(resolve, reject){
                                 gettingNextAddressesToOrderCursor(limit, count).then(function (cursor) {
+                                    console.log('renew cursor')
                                     main_cursor = cursor;
                                     resolve();
                                 });
@@ -2716,6 +2790,11 @@ if (wallet) {
                     }
                 });
 
+                // process.on('SIGABRT', function () {
+                //     process.stdout.write('GOT SIGABORT\n')
+                //     process.exit(1)
+                // })
+
                 var startUpdatingAddress = function(currentAddress) {
                     var address = currentAddress._id;
                     // console.log('currentAddress', currentAddress);
@@ -2738,10 +2817,16 @@ if (wallet) {
                     });
                     function roundToMaxSafeInt(val) {
                         if(!Number.isSafeInteger(val)) {
+                            console.log('val', val)
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
                                 val = Math.round(val / (diff * 10))
+                                for(var i = 0; i < diff; i++) {
+                                    val = val * 10;
+                                }
                             }
+                            // console.log('diff', diff)
+                            // console.log('rounded val', val)
                         }
                         return val;
                     }
@@ -2796,8 +2881,8 @@ if (wallet) {
                                     }
                                     cluster.worker.send({stopAllProccess: true});
                                 } else {
-                                    // console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
-
+                                    console.log('address updated - ' +  address + ' - block '  + lastAddress.last_blockindex + ' order ' + lastOrder + ' - ' + addr.txid_timestamp);
+                                    // console.log('process.memoryUsage()',process.memoryUsage());
                                     AddressController.updateOne(lastAddress, function(err) {
                                         if(err) {
                                             console.log('err1', err);
@@ -3427,72 +3512,74 @@ if (wallet) {
                             TxController.deleteAllWhereGte(currentBlock, function (numberRemoved) {
                                 TxVinVoutController.deleteAllWhereGte(currentBlock, function(numberDeleted) {
                                     AddressToUpdateController.deleteAllWhereGte(currentBlock, function (numberDeleted2) {
-                                        console.log('blocks deleted', numberRemoved);
-                                        for (let i = 0; i < numCPUs; i++) {
-                                            var worker = cluster.fork();
-                                            worker.on('message', function (msg) {
-                                                if (msg.finished) {
-                                                    (function (id, block) {
-                                                        if (block <= allBlocksCount) {
-                                                            cluster.workers[id].send({blockNum: block});
-                                                        } else {
+                                        ClustersBlockController.updateOne({name:"reindex_block",block:currentBlock}, function() {
+                                            console.log('blocks deleted', numberRemoved);
+                                            for (let i = 0; i < numCPUs; i++) {
+                                                var worker = cluster.fork();
+                                                worker.on('message', function (msg) {
+                                                    if (msg.finished) {
+                                                        (function (id, block) {
+                                                            if (block <= allBlocksCount) {
+                                                                cluster.workers[id].send({blockNum: block});
+                                                            } else {
+                                                                cluster.workers[id].send({kill: true});
+                                                            }
+                                                        })(this.id, currentBlock++)
+                                                    }
+                                                    if (msg.blockNotFound) {
+                                                        blockNotFound = msg.blockNumber;
+                                                        for (var id in cluster.workers) {
                                                             cluster.workers[id].send({kill: true});
                                                         }
-                                                    })(this.id, currentBlock++)
-                                                }
-                                                if (msg.blockNotFound) {
-                                                    blockNotFound = msg.blockNumber;
-                                                    for (var id in cluster.workers) {
-                                                        cluster.workers[id].send({kill: true});
                                                     }
-                                                }
-                                                if (msg.walletDisconnected) {
-                                                    walletDisconnected = true;
-                                                    cluster.workers[this.id].send({kill: true});
-                                                }
-                                                if (msg.mongoTimeout) {
-                                                    mongoTimeout = true;
-                                                    for (var id in cluster.workers) {
-                                                        cluster.workers[id].send({kill: true});
+                                                    if (msg.walletDisconnected) {
+                                                        walletDisconnected = true;
+                                                        cluster.workers[this.id].send({kill: true});
                                                     }
+                                                    if (msg.mongoTimeout) {
+                                                        mongoTimeout = true;
+                                                        for (var id in cluster.workers) {
+                                                            cluster.workers[id].send({kill: true});
+                                                        }
+                                                    }
+                                                })
+                                                worker.on('exit', (code, signal) => {
+                                                    exit_count++;
+                                                    if (exit_count === numCPUs) {
+                                                        var exit_code = 0;
+                                                        if (walletDisconnected) {
+                                                            console.log('\n*******************************************************************');
+                                                            console.log('******wallet was disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                            console.log('*******************************************************************\n');
+                                                            exit_code = 1;
+                                                        }
+                                                        if (mongoTimeout) {
+                                                            console.log('\n*******************************************************************');
+                                                            console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                            console.log('*******************************************************************\n');
+                                                            exit_code = 1;
+                                                        }
+                                                        if (blockNotFound) {
+                                                            console.log('\n*******************************************************************');
+                                                            console.log('****** block not found, please reindex again from block - ' + blockNotFound + '******')
+                                                            console.log('*******************************************************************\n');
+                                                            exit_code = 1;
+                                                        }
+                                                        console.log('took - ', helpers.getFinishTime(startTime));
+                                                        deleteFile();
+                                                        db.multipleDisconnect();
+                                                        process.exit(exit_code);
+                                                    }
+                                                    console.log(`worker ${worker.process.pid} died`);
+                                                })
+                                                if (currentBlock <= allBlocksCount) {
+                                                    worker.send({blockNum: currentBlock});
+                                                    currentBlock++;
+                                                } else {
+                                                    worker.send({kill: true});
                                                 }
-                                            })
-                                            worker.on('exit', (code, signal) => {
-                                                exit_count++;
-                                                if (exit_count === numCPUs) {
-                                                    var exit_code = 0;
-                                                    if (walletDisconnected) {
-                                                        console.log('\n*******************************************************************');
-                                                        console.log('******wallet was disconnected, please reindex again from block - ' + startedFromBlock + '******')
-                                                        console.log('*******************************************************************\n');
-                                                        exit_code = 1;
-                                                    }
-                                                    if (mongoTimeout) {
-                                                        console.log('\n*******************************************************************');
-                                                        console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
-                                                        console.log('*******************************************************************\n');
-                                                        exit_code = 1;
-                                                    }
-                                                    if (blockNotFound) {
-                                                        console.log('\n*******************************************************************');
-                                                        console.log('****** block not found, please reindex again from block - ' + blockNotFound + '******')
-                                                        console.log('*******************************************************************\n');
-                                                        exit_code = 1;
-                                                    }
-                                                    console.log('took - ', helpers.getFinishTime(startTime));
-                                                    deleteFile();
-                                                    db.multipleDisconnect();
-                                                    process.exit(exit_code);
-                                                }
-                                                console.log(`worker ${worker.process.pid} died`);
-                                            })
-                                            if (currentBlock <= allBlocksCount) {
-                                                worker.send({blockNum: currentBlock});
-                                                currentBlock++;
-                                            } else {
-                                                worker.send({kill: true});
                                             }
-                                        }
+                                        });
                                     });
                                 });
                             });
@@ -3914,10 +4001,16 @@ if (wallet) {
                     });
                     function roundToMaxSafeInt(val) {
                         if(!Number.isSafeInteger(val)) {
+                            console.log('val', val)
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
                                 val = Math.round(val / (diff * 10))
+                                for(var i = 0; i < diff; i++) {
+                                    val = val * 10;
+                                }
                             }
+                            // console.log('diff', diff)
+                            // console.log('rounded val', val)
                         }
                         return val;
                     }
@@ -4639,22 +4732,37 @@ if (wallet) {
         case 'updateoneclusterstxbyday': {
             if(hash_number != undefined && hash_number) {
                 var clusterId = hash_number;
-                ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 2, function(data) {
+                ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 1, function(data) {
                     var lastDate = '';
+                    var currentDate = new Date(new Date().setHours(0,0,0,0));
+                    var currentDateString = currentDate.getFullYear() + "-" + ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" + ("0" + currentDate.getDate()).slice(-2);
+
+                    var previousDate = new Date(new Date(currentDate.getTime() - 24*60*60*1000).setHours(0,0,0,0))
+                    var previousDateString = previousDate.getFullYear() + "-" + ("0"+(previousDate.getMonth()+1)).slice(-2) + "-" + ("0" + previousDate.getDate()).slice(-2);
+
                     if(data.length) {
-                        lastDate = data[0].d
-                        if(data.length > 1) {
-                            lastDate = data[1].d
+                        lastDate = data[0].d;
+                        if(lastDate === currentDateString) {
+                            lastDate = previousDateString;
                         }
                     }
-                    ClusterController.getTransactionsChart(clusterId, lastDate, function (txByDays) {
-                        if (txByDays && txByDays.length) {
-                            updateOneClusterTxByDayOneByOne(clusterId, txByDays);
+                    console.log('lastDate', lastDate)
+                    ClusterController.getClusterTxsCountFromDate(clusterId, lastDate, 1,function(count) {
+                        if(count) {
+                            console.log('count', count)
+                            ClusterController.getTransactionsChart2(clusterId, lastDate, function (txByDays) {
+                                if (txByDays && txByDays.length) {
+                                    updateOneClusterTxByDayOneByOne(clusterId, txByDays);
+                                } else {
+                                    console.log('finish updating cluster chart - ' + clusterId)
+                                    db.multipleDisconnect();
+                                }
+                            })
                         } else {
                             console.log('finish updating cluster chart - ' + clusterId)
                             db.multipleDisconnect();
                         }
-                    })
+                    });
                     function updateOneClusterTxByDayOneByOne(clusterId, txByDays) {
                         // console.log(txByDays[0])
                         ClusterTxByDayController.updateOne(txByDays[0], function(err) {
@@ -4714,6 +4822,22 @@ if (wallet) {
             }
             break;
         }
+        case 'fix_address_order':
+            AddressController.findAllWrongOrder(function (addresses) {
+                var addressesToUpdate = []
+                for(var i in addresses) {
+                    // console.log('address', addresses[i].address);
+                    addressesToUpdate.push(addresses[i].address)
+                    // console.log('current_order', addresses[i].last_order);
+                    // console.log('should_be', addresses[i].addr[0].order);
+                }
+                // var addressesToUpdate = ["F7fckugAq8pWKRy1yQk4D1yBwpx9jGm2aU", "FM72mobcFtBBDFim6NXqGc3gSUknHFmb2W", "FQuUaQTrFj1XyEQJ8H3SZxZeLM7e5fc7Dr","FUpwEoxFUGBJ5LwHLxCzG7hGn15Vrxtchi","FT3cyBneQxuSnEwCwtzaeTbuxRf4EuDcQy","FDhocA5LdL7s3XuQzMNU25XTkN95gfbCP5","FPyWH7NjCt7gn7BCeHZerACe33Z2eopa1o","F9miPwRPgxLXgYWgNNCZbXUhM2pZrd43PE","FLJtRAHqbKvMYx968B4ncuaBjZbdftBiAX","F8PtBK1Au5wdbJL595PbcFsB4DMUS5qede","FEzJ6USbWvQ4ZMH3B3qR9Kktti43gEo1UJ","FSCtedxmZihTck1qEpcrrzhhJsUQD8sdLH","FThHfAAyAVz1jBuZBseZb7EDs2ovRTTgcr","FPnqX85zXsJuN1WChPa8FbPF4XZZJQQ8pi","FQPMrVsr6Yg2D5yPe9jnhRvJ3nkfT1sZoq","FDWfhiTbaAP5z4GUaHhCcuyeN8GdrfLtDn","FGf1zMeqCeXwetdw3VCksvpDZGGoAMFKe7","FP1DpMJ73bogRtRbKbjCxWjTHgTCgfoBT3","FSpE7sNT1a6WHtU6oRYXZ3fQ89WRSL34D9","FGvxvfTFn2WwwqeymCghvVfQrvaLsre5sH","FR3MwHDLTy3Cuuqfq5aadk2VpAYHCQKTPo","FDacEdQAomMdQ9PaAVmdv5jhpqXFZgRiFm","F81gVZcYFuXBbHJ64333sv3BTLpff2JiXr","FES6wpjUn63GcSZ4ugAYxcsRx28HZzFYME","FPhcFTs3mwvrMLmWfHzrJFkBuehA9Qivz8","FPWoSV3EonUUyMfqpAhuZivAVuUDPvDQSp","F5x9keRpEKnp9MtzDLRFhzYC7Wddmy6r6d","FEaunYemm7nrsmKAwRf8Q2QebtzmuRVSjm","F96dCRA9RGyvQ7NNKao6PNdB2YshoCWzud","FTCks9nQUGCvRr1jo11jfzHZmmpki3Tj2k","FTwJvJXofYGszB2E3fJ8TjWeD5ciExkQRQ","FKh7NZ36oZ6hCPnHd9eMjjDL1n3bbMs3cS","FPjSUhoLfukxtfJwMzF9M8kCnB4jr8sWcb","FEwsrZdz23vywpwcgJrKXFuPJdNtFyc2RN","F82Fs1H7Vm3jbbYnRYPDsWq73uhWA1AF8j","FU1KkWFVWkCgPjB4Lg54nrRsPUpmGQTLSS","FCHebuVz4yp1jxfnsEWyxWfTm9EZfXz3D2","FN5kJH9qLgwWwuJX3184TttjK5LLrwfiDo","FMLuSU38QmzshQ1WG35a3ExH6Yzxj2uaZu","FKmB2JjXEfzZPCakSXyBPWgc97PnUSDbxD","FHV7uS2E7ht9yeBPgTGcDC5yFF49893LWx","FEcS2Ytks9uxNtNsa2srTn54vTjKacAmx3","FB82v5vbEzCDSdEn9RiTuJ4SPfksYG59tn","FTdismeXuLwyPbYkXxUDYPkTqHuc3uKTrr","FFAa2M8HWFFNJAujhHRQM3cMHBbUTT45Cq","FQsFCduJd5U7s8sDQiWZAGHuBwuFQyq8ah","F7M14wHaxy9k4yMMak7747cBmza7pPoZdm","FE13Q2w9bNdkod3D2Xh77CE4rcpXLMtUy2","FBzxXu27Q5XCHjur5mauhSEhDbk5LHUN12","FLcSdo1iH2UEq5wBDpm3zgCc4W1j8bJczU","FKJdM6AoHTRHXRSQStGd31oWTCzWUkZxKh","FQs4CTvkjmn9EeDzMmMha65XykJRTgiDvs","FB26wcTCe7ySGC5nwLGvCAiGsqmeptXzNX","FSuHzbhJoLPqNmWjJ49mX5iy4CnBYFitGR","FP6QfXvNNJGJWMrutf8QMm1m5uN1r37i2Z","FBJn6xDvRLtXpUZxxxn9Uvk2Bjs3pkKfGj","FCz6Z2tUuAgnaMsrQP2Mv1SrnehQhmm2NJ","FHhF6kpTX8pTPoPsTvQze5yag4tmTXcRoY","FPNWwZ2xLL461pDxyamvcLp9e2bbfGyVnF","FCcbjDHMJCSMHR5JAmbFPRFEmU6CEX1Fvw","F7N2vstV9QQuFNtG51VX9sJ4HAYHqtdgXd","F8unPkM4LQ39iBCk9v136CMsLnb8meMq6P","FSVrooyksHtFWEcrzv1qPzPvrCchTg8tJP","F7ZrBhGpd6jcWBeRMvBBatekTMTPZn8cQP","FMycXsgUHTiQPPfFxmCtxFfkBcrjna2S6B","FN8a11ogWtXKMhrB8vpRUfzy5icyNtphDJ","F73naf71udnXvJUjTppYg4LopfxQfBkbBn","FSzfNR2S5KF6wvjR63Pvc2nT4oWNXU5Pg7","FMC4RbjY5HPCVYKeW8BnUDczgaUb3fYCyL","FMmUbKf4SL8UN6MyVnngLsCfEzec5t1oRW","FAsPiv7rvGHKX46gjFJHACW29NZnQKoJ2w","FDLFtamcWrBwJZ1D5aAdVAJmjRbxe7bWLM","FJvKoiLJf8e4RYm7WAVojXiERpQru6EdMx","FHmBYwzkNHSzKDrRzc9J4723PQEZxHrtm7","F7nxhcGFP3EJiKFDxBaXK2DiaZg84gnV45","FR1szQECWv3zjJRmhXDkxW9MKngeGTNZrN","FAZfDhG2LADxZJ1gKLcUWAtA3MQwFnjwzx","FKyz2NvtavoBUscctN2GevG2rPfDT48aY8","FDQc9ziU6oZpzf9WWwf2tVmeBxtnPg5LUv","FEDXygEx5zc8BK1PC7R86DihJnHztjMFuY","FK1qTDQR9NfGxGLMRnNdJpWYDmVPfhdfnX","FV9F1Jw78HLqwMfMaR3DM7eyySWoAkC7oC","FDesb6bMfSYLxkgMj7t5fdyJdrcgycWevd","FJaS6pc7BbYx2HGDMse4Y48KbDCYHFbpeX","F6jw7sMACxTr9AcPze23grc2YL4hrgXZpn","FDFXJU4g7tsrgv2hvAAuMBbQpJisyKaEKv","FNUyu6TDZR5yW2GKeyBftdqmy5br5Ubjyy","F7U2TJiWjMmCbr8jRQN3Cfdveg6CkKDJTU","FDcgwuHp4hN7TBWAn7iVMQLDQ6Jz2c37HG","FD2cDiqEREAq1vYg4xeqUoLB77G7G2rrwL","FLwbFdC6iTXGp5o8RvuUP3kd7s2XaHy2u7","FEMYaRQXmbDJmpdmw5kNPdgCKq1ts1q2rA","FRDhSyAmFjBxFStn3WmupbnrZkCGyy1dhx","F9isyWXETtorkF2rU6oK91XL34zQALy6vj","FHaVy2F78iui74tifkbVEwr294WXVJSn4C","FH9qDM7aUJ64j5gkF2QCivjRxDb9BQXmTS","FGXGEHAAPfMp5xaH9zNTjm32UCxaekaBEu","FUZuCJEfLtoeh2vkTLC2caZGxUrHVQM62a","FJNCMWXKkVh4FbfeRzwUL5k5Fc8dip1KDr","FGYRXpEG8nJWEtSwvnEGvnYkGZpZwxpcMg","FU2kWWmcYKLFqDSoPSMfUeh86Q5Z6bsRXo","F8DGnR9Tcvg8FsyRRP6pW42yBvJjaKGrXv","F7ZNoFxRznjTM6LvVxB8T2rxVrXm14DMJt","F7JSxy54mZ3AkaM88xY5UQxzxkxgPcSais","FSgbSay213c4WBWomp99ABhrt7PfiieJHc","FF1bd2uL6FZnRCefHh94yZguvK3tsbbpAH","F8LLPJfcBjc1ThPxpE1RWo1MoEQrzPre5i","FBg9VZLU42yeKWRZhHoyhV4ZKoaC97XisF","FBWcGpyNkqvo6iH5LiCgLun42nRtJDDprq","FRaTc8QYn4FweXCf7DMRZdbsKqDBvimnFY","FGFqLRKScgVFPS29snMBrzPNP1xF4ecoQ8","FEM8okYd6Kiku3safdDKUENhNoj1jD6igz","F7L9gTfJA9ENjG3GFSNFGGa8cMM6bLyqeX","FM1E74KxjC9kLF6ACX99sHLbjU1nkWGAB6","FLLFRHrm5sRRaWpoUzRyJ47cU3XAJHbSYL","FGuU1e1LpESioSFhqVmm9jdeVEQJg1yftY","FCR1LDXZRU1ApbvwLDit81rKTNC2N7pAnK","F8DEwo44gCEdJur5StzUatyQFCYVMVH5gh","FPKBugFEe3e48t2wK9Vxk7HftustNgYa1H","F8EsKpVHBcVRo1Q2y8GSkgGUVzKHCeGiAK","FQLLRXaT3uuSL9MYjryFCTn7EGJL53ALCX","F7LjfYrJXmhGXfPA9bVbZK6Zyt2zdqyF4i","F7XoH2kG3ue6GAYKu88QaDydJj4zQYkTQG","FSRxaiWx3qB6PjTgYC3TYzLTvGcdxREozf","FBxkBFHs44dCvuACfjREPAeGYykR19CWZA","FRdmHFGez3EHZZwK4frzzDaRJDsEacbdZ1","FLwBe31FYgcKj3xfGp2rtfH1kjwHRdUYfw","F8aXPi5rus8V8mysf7Jjx1LP3djShtdk6K","FDq2PWx4VUtQFVXuagtQMms94UpmoBaqi5","F5yV7wt478CxEhpzZam9LYkk2ctGHpFeSy","FK9WYmKM4AEGpiCSp783wg1aj45Rpkmc63","FDijd9RDCvvamsXKi5kFBdFjkPfv56vqaG","FHYzvuj7SDGz2NGrXSMbkh8J1BQqvWhHwb","FEB3KF3h5q2m1UkaMbrDVsjea72oDdPH8J","FKZyVzCJTiWQoxFnnpu5owJHyD8w3VJPM3","FQoCgLgkR4oH5JNDHR3ZokrfsR1DSiJUL7","FAWDKJVvqNEbCmej2tarL9tgrD1QZA6N36","FUnmfHkrJwGBpEB28u6yvATAQLtT2XSyZ2","FLMujn2z8whBetnbQ52AAmdQ4Wn9NGvdrt","FMx5fXg7qF2tcRoJxHQN9SKF54qAMAR6ye","FCbTpUnSQCwrrnGvxpYoBqjFGx54Z4E6H6","FTLYKDHHhVfHTZ9MX8FPn6jDUYuHcheaMQ","FM1eBEdpeZTARi2Y7pvuiDsXBaYKLywTKk","FC2G8iaXSDkoQQD17xRw48o8fJXE4XdgmS","FCK7ULeGWpc8wznHPEgosGXUDAsiAyD6Xe","FP34edNH8AEJBUeUHqvN2Gcz7bKQspknXG","FPeKnsycSBiPESbzcv52UCwchzNn5g5qpd","FMnhs3JRUiNv9Q3JwFW95gPge9nwf512f8","F73LxmZpX1CbRoGg6HBcyHLRUEdmZsFVRu","F7JRtRC2QrHDGjDzXdg6zJbS2Um5CbFwjX","F6EU9gjCoGPPiCsh9GuxLdwJZh7qZZtnXT","FUuPoZSPfaWzB5ergjbfdBp5nJm7tiQYRn","FMYf8bAZkTMnfpLZvvCJfphC9urGwa1Gmt","FJgcmJ2B1FCWZPWyfF1iGBuRQ2iYDDnkdm","FUSx9mpB8rZJT1uWqsUGXT2mAWEvSVMQFk","FKPKWkR6cYwnfjxf3xstpmDzaA1AqmvMwk","F8ZKT6fAeT3ppMBqcsTxCKcoLs5vcLFrkx","FMVUvG1UnYxiGyJHjmfHtvziXDKmLDKa68","FJZpJJPrfXMiq9PJsddSpvHzNP1tV7aNJn","FE1Gg6apZnGd2aufkQNKEPrfskE41Xd4H7","FExuMCRgRAaP6SfnYcZeuq718RDRVgcNh8","FQFNeTaaihyy89aaPo83iQh5gSDorSzxaL","FAWZPasbf8wxjX29rKVRqYz4L5H8PwYccU","FQufhfox2rFFhevWYEwN3okqY3P5EtaCTc","FMQVAtdQMv7tX4uEkzqdBtxApNXfZHSucv","FNKy4tUfi9PohkLRCW6FU74vcDc3q4omW6","FFVjCFa9Du8WufMaMQ4u68xfMMvXEgKr7u","FMkBogbhqYz8yDYYxbVGAwyrXSQk3eYkZc","FGQbTcs6yhNhLrAR71ZjvVTskEYpPum2zv","FHKHWhV9n2adYA1S8FbAXDFTtEdYwcHiqG","FC7fxUKbV3MqJaof3hg1iDbUp7nVS32dkW","FG9XuvxrqRiT2hmLfQruFSDpRwDdfbjy2o","FGYe3Mvb14WvJECzXFu8C7jxrT5h1YYt61","FRRgSfrDd7rLffGRxfaRhrtAuTvo8qiZMJ","FTXVu2XNjAnwxEJp7V3defKNrM5joQBFbJ","FDTocQFuMygvE4RJTcd4dtgFQRA9BRopmz","FHA4kXheoS8ChrNUiKZZjhcniVZUPRt1Qm","FS2NF9dWavWghCMRBY7vgx2rrsYtbRpr72","FKxv9i7ZBhzWxd7BSJwPdpGvKbXVp1AMmo","F9vMfWuGb1c2u8A5geYcQ4hao2P9QoAm7z","FV3nbY5uxGkiUh2FVqtREdArXVPur6fWmw","F74HALDPfBKQvyCHZAXCW3YhxxMZLYobmz","FFHiPMea5p66JJj2juemYwrYznVD4md7Jx","FKSh9EgNAnWoQWBpbTDhT2gLRnwpyvLB4J","FQKKt16Fw4Hh6M7n7mBkxmoZqB689sW1AZ","FSbfshEQuEWyDDiSTRY91kbS9xX3EGWnjG","FLjziWA9u9rW4gjGLYV4c92pT2nxKrpsp8","FAtqXTT5v8YnQ7DMFqLu71hTrYCxY4hd39","FSjWJBB5WRdJSr3XrsLDenWgmdcfbLZTuk","FRsdGmMoqknY6opATvodWayzB2FYjbAcqx","FHdXD7H8sMb8PLcCj6TuACjQtsqCYLouMj","FDVLSJMy9dE6uG6jqRjWErCcKSKCWz39TD","F6zfC5x5c5WQpEW8ag32FBsHxnyrSJeqiT","FGiCgGVbQNyb5SjT1VZgKPiFyrvAHgfdnv","FANVLwECrHEdpFFx5PWVHfUuV6dsSHnvqo","FSSAv85xH7GssKzaTSqbQvruGMCL2PRUr5","FDRWUunLq1b6WLriVbwqc2JEcEGKk6MEBT","FSczbPFkparLJRVN7y1nwgBzwRwyhJ2xSp","FJC9rGvTW9ELQBBhxVG9dCFKeh43xvGjQw","FU63yZb3HkT9jixMvMH6P9FxdZuZTWUGi5","F9EPf79Q9PDQWSYKDUWsuAXZ5cixqRLSRp","F8EmB3n31Kxy6JxEmz4tsVehLUJzuAzMnu","FBDjPJE3Q9eU56dQ7a6Bdsc5kGmGwqR3Y8","FBHdSisN3cn1Gkd7eqKhqf4r2LXQ1Sp2Sr","FMAugb9C47rtPEsrsZKWqynB1K4ftLtFT6","FLwyK3y6p26dswHoURmp9L9BSk1PAuxD3R","FB7DdKEbaM8bnB4NH7aL3x8UWrKVMKFx63","F7GcbF44jc2TDp7EaZi1zGFtXrUbtgK788","FGSanARzybzaw2YexNxxBFNDiBxkFo2q9D","FMMsW3NEQUiz819nD61gE3BfkBdG5PuDAc","FCjb4t2uEbm7tMUP38BPMi5YLs4EuP6njs","F9Hw8CxEgDpT4LgKt7X5WJ4ofLfbQhsULU","FKRzAvAufuDGJ34cA3K7MWoQ6Ejz2vw25Y","FAchM3A178eTKzfMso9HPEJXVFvSnzrCQT","FG6fENHT9fHKsrGNPjA8QftoHnLzdzryHV","FDmxEHU1x1eBeFUxg2ZJQiW1xUL2WxFWdQ","FLwxzLVbJPsCBHEDcSDS7mhDsdvE1PFyQw","FFMcv6F9a1EqakZmeNCq9CSrankJHMDaVe","FKvAmbxqdBeSR2hJQ1q3aENd6fgegJ4SR5","FLHiFSowhvjV2HpcjMB2qS8aYGVB7NPUv6","FDfW5Br71d9FDVf1MGHERxMaEd8LwsDk3M","FJJc9f3F1yUxokS2FKMo5ELFkZFDPGrqk1","FTMJ27TnHChbMd5EC9bUCHqEy9nLF5r5mm","FLB5N2NpzHoLZpGCuwsSpJ6N585yVqy1Fj","F8oVdCTREvE4Cz9CjsEZUARHCeU7GmAVkW","FBJagTZResxitfYUhmQUFYstTSQuEygxWa","FE7Z7fpqF2vSzQTZRxcmLdaE9J1aHG9Kmg","F7y1cjPudKzQJHmVUnTziNyksmm74Tidw1","FSDDf8htgR7V8W3z8LTg9yyFUZzgb4Mncr","F6MSgFE91Za98PGwfetmMUZWYfnsWrh5pa","F9qreQR9aSW6QBvTaC17Zy3ava8DFp8xNy","FJEN7cwPgpDrZsoMxaSPBNfs2HUQU9cbAA","F88BLaENqwdBjwea81YDzsnsYgxPM7XFfj","FQcckfHJzjXKC4B69qyPWJPK4m9gwJKRhi","FReXp1iPERHi2hYSoU2RpnLbXuxzbfeMi2","FQYSp8ovP9HRoF4bzhjEtHUFDKYk8He6A2","FLrFsR9WDn84QMDwXaC1s8WH8omDCvt7Q7","F8Az11y4Cp3m9MHjExhadorddadG6SAdJX","F8s15DTybmUyRPHAot6oXnAXSwPXpvoZDr","FJMiozwSBxGFrA67eL65DpKbPZSfCoRhLT","FT94ZqxSY3XESPY6fhDvwmsz5Ww69g5unb","F76wsMdxcbjn6Vpy957NcuXbMQgznezXme","FP5e8hnVqDfauv4qyG359zEE72YKmw4S6D","F7vpWcR9QpwVGsQskQ2etSaqkgGPkMAWQZ","F8VeQSzEDpAWTpEsTkwiRBgYbDUK4DxDhx","FR8NAb3YmFFqzmuURFnHKvXg7c7F2kz3t3","F8YT78sXkxgnASQnxjjJS9gqQAnLHWdzJ5","FHAhDBxGGGZsNXn8mixn2SPCKTtSTQptPm","F9WiuFGmhRVed7VQqrHJKiMqkKv7HyutbE","FG8afuTTWbece1wgwPaEyS3XWqsg66ANHu","FKdqqYWU8ZVwpgLZXjgf1UWVKT7YiPJHH1","FNWChCDqPNDTcpuBfRFNWNg5Pnoga9rTtk","FE8kk2gkX1CNhFnYrY7WkkRzpn4jGwY7FV","FJh77UamgHw2t6yinSobcQJxdTKFPJ7jQ3","FDr4EqEdKYNq8uWKB6SzK7BMPiCX2cqR4V","F75Gc77nuQvY9uFwusk6SFwpsa9vH5nFTV","FNnqLYqpynMZs7Ukb5ADwt2BuJtgr3cUGC","FTNj1NbM3yoDLRheRwZMEbQfRFXECJEGVN","F6z3bEqrCJbKHVjyWmbb75js9dGWmpxrtt","F5wAYLcWbmqqmsj8rcFzkADZki4QQ1MKhW","FRZReUEagYi4reA6MZo52tz6fPfuoPb8cR","FRvCZnbewBsQNVaFBLyVrFc8Dinio1qwDt","FBpXtBMohv1RgtEbZrmaw64Hmwzbx7wAtL","FKrvYGkTTYCz2Ck29d4as72fLfRH1fkoJc","F6zSa9pHjS5sD42ppzSCVdxwT1TjzYseJ9","FA8EHwfJvi8c52oVsg2t3yZYQ6r9TP5SZk","FTxjGeFJgqQgf5J1mVZRJQ312GRsHCcssE","FS3d96pkKmdmFMdfd8oMNfbv4uPRtakgXy","F7NCREJmR4i8PzJrijH5VhSkeL3HH8Qc71","F8YMAmLMkZvCxVR7J6SSTGJMvGUUcDVWBZ","FFFaD6Jz9S8qybLoUNrfww7HrL15ZcDYe3","FBQHKiSjt3rPnXmmJ7T2n73em39VCHaPj8","FCuqeHseCzwnob2zS9Qet66VvrQVeaPK2B","F9FNcAD4WMHen96E8xbjqd91VGY9KCVRRC","FCt7REUTewiuHWbSACsLX8bG8AD1cXKbar","FTwSgvxo4jtMo11AqgmBDzQVzFdFQHekrh","FBve3NnGgwbDcAg3uqNkCtR14M1d4U554m","FTqhJomnr7ubtvbXvjQQ9ppuDBvhxHXkdA","FHvbqQUV6QtJMLUpa1BPATVEcNvABATmRV","FK1xxraB89v9odfv96tXdZ2cmMsq9kY88j","F9fURiHpsYAMbFeRcHdKj5evTCVgyGWuY9","FUPMyk6Uy4tdiAxkzsUMzqSU1msKLdfic4","FQeMy3VCHvTCoAtxNmkxvaMEs8ResYHHdP","FGEvBZETQr2QVHHRdhq2tq45rnGZZVzw9r","FTJnTFJMm4nSgGWMAx3XndGTrvQC5NevMY","FQ984xFGZ2Pw2T9aqukeFYHwh5ga6cmmUd","FQL9JkY6FDYpQsDPEs857ySxVxuzEzSmda","F8kTqb5nq8191iRYCNBYrcznhzzzgK4PXh","FJTBbUAEzWBQnEvubuKeZuPyG3kF2U22bd","FLH95nsKeTnouD11YVJsq9xCF1AEEz56zk","FDedncy1eFHYaGLkmxRi19jQ56RFsMRtx9","FHDaS25BkM8tUTPvtHsQGRKf6DqsdGBQ1m","F8739RfZ4SSyt8o9NR2htKivWWY2QtzVNJ","F9ZVQhQFBxNDNKU54B9KsirRC3uFjuShWX","FP8YPuJPZdWq9DJ6umEem6e6hid19jadJk","FLZQUkg7DnWjoG5daeP5YFjUgka1KMgvL2","FL86TM9221QP4QCXh3uXfX8TefeRm9hTQ9","FNipFXpXpL8TmkXv777VBD7XXE8yd3v99t","FDcsvGFUhhPjHPaRyZPd6X1uJkjFpxUTSp","FQjVsVoXWicZRwgL8wFud4v1HNYEdfuqrR","F7VAph7SqgpRAm6UxQp4aTR7dFtvqVKvZz","FMKsvpXbSG32JCph2pLdjB1yw9vG7C59tK","FFLjcMcuhPiRvjqQPVCBqx9wuZP54HinEi","FCknxhJHoZug8r5SUqrg1LpGF3DkfT3eAp","FGrM1TrtQCsKyLhkz59DYioruhQw25sPTd","F7PYxqCMfaA1i4RKQV3iYDwZhycccBF4En","FEpxR1yF7NnCfe8caWvupQtkxFUnyc3nh4","F8wdWomEvMWbz5U2bP11HaJfaS7XuBPRYj","FTCRq39XLnrebak96QDiEybKwDmW1UBof1","FEKXJSgkMXC1Ryd7fvqQAWqgXrGkKBEuCp","FCQFuHNyNtuPSFMHGTak6VFLN9KasD6KMM","FV7bibU66WrDdEwe1QorW3v9YzBygLEaFp","FDYeYRV698nUi2q7iLC3TmU7QYUdFtBcij","FUBnUjysDRQwi9ApzaqK1XeVUxufVLXRnT","FJZJvfcT6QKQ5aKsnfnNeB24MS9dd4HhP9","FGWRmFBhWAuUj5ZyBy1eQiV25Dbziw7cWJ","FUjqAC5Z6Eup3hHzen8hj9GVPYs5Fv7BYA","FT4F8KQNMzLd3et2ivnm8GXbKYTHNfZpnj","FTP4L8VaH5qcLnZ9gj7ipWNuXWTMWDTW7B","FKA7FND7Fy62qPdBR9GBmeHs8aGSuGdghY","FQ6AvdetY56yWcmk8URodHR4bJWyAxwJnx","F6pkfN4e4K5i8264xFR3212aKeE6AkjH68","FPihhjc6CYk7hehzF5zAEcGbxSHUFF7RQf","FTHVkC2CBYHYteKpZuhodNHTG4FFnfpjJ7","FUG5s3EuwaQ3iGX5F4ZEU3uho3WCgcYGig","FDeQfXthNwJfjN6janRdnEfG4iNRnYhcmh","FJw1LQyV9xmY4Df5Go29wL6zWyA78D2r2M","F82Tyw9ooy3cpZvH2qsfzpywrDpqRP7mSd","FSUkV5UcvSS113eH5REy2EaGD45QMwaMUf","FMuzprrRitx3D9GoBzmuZXCnDRKtbH4ciJ","FDVPAgupxfrkX4RD3CN9bZoJ1YKRMf72ru","FEeTuYiA4ARQZmL3BZsiCDjwNBnDw1DKZN","FCWQD3FUxnDEdepm2SnDoMQUrXC45evvK3","FL3zM76HUW9u7VLVb9BkvEcLLaNCPF8dBf","F93JfsTvjJ74cYnk6nmiXgphQRSYYtgHvx","FQwxshFJfJqk5KXJTJg3zmdUC9WVSdJnwu","FM3mjVhK5X2uV1t8Fy31SW17qch8oTgvZF","FLgcAuaqHyhuSpFLKQK92tDY6BgGcM928v","FSeitzuQz12R6FWQFC4DzdfuoqLVYF94FH","FG2mvMPUi8gXv9dVu7AAWkcCpcv1phnnWH","FMhYu6XNw9a9HBjVWxvVwZeae9z7yzwvjC","FHvSeoYyXVMKihw1AzrmZwDi8GFfwErHP2","FLLzDL5KN755RqvKPrA2QgkiBYmEHWAhdp","FS8UQvxWJGzgHk6mzibhE6dtZ43whf17xg","FJ1mUGSG99wF2xiuTxt5icdXCS4cCsMMh8","FA7NKJrWgcEvtnb9HgZoMqr7ya43kF4d51","FCArd8eJz9cCFwtZQT2z7XuNRwPaW4cnTr","FUEVkAscbqSRvc7EDF7bFcbPbLtPmeiYuz","FBFEM2uV9svdQBR1Gx1Rqufy4KPR2apwVr","F6zFjyeeBBc3cgRLmuNVAWgQFJS7HtiBNb","F7V5ciMg6hhbFDGqgAjdCKVbBHtCB5BqZB","FBcfvgnJy5BvVxQgV21Q3xEJ6FB9qG8Qo2","FJFwVpqmWxsi2Hmo1V1KKMPT38khtWcfEM","FGbjb7uCwuQJRyhNAFEvWuhdkY8BUhGMV3","FCAaKRFT9yetqAnichNC1yjBDsiAVzuJVP","FLXe9TX5Fqu3pwjJUXmcVng6hdjBKjEyLJ","F75Q931mj4bGD2Dtfqc1DNKRsQpg4pR7MY","FDTNpgtSFR8odx8peieBSfdEyqvXX5xDqn","FDtoX73i2Pp75udcJCEVBj1KiEf7arHuMG","FHksACUaxxbpnv9um5u1jBvcXzTrjMx8rx","FUKQgyhXNvHizfJaW9qDzPmBoKjkKUrpNf","FTqRcGWGT8meMRb7fTuCqGgyjDHafhAu1A","FG1RqgC8PSQ7vbmHuzruMDRiatJbCMuHDu","F8YYAecAYTZJ1tAfq8A9YCFRWQnkmDFpnY","FLQ2z8SrUEBipwsjSMrhA6anyKihsYcyV3","FKHkbjVnj77cjGAmhTEvcrTfFiguKnKJaS","FFpAtQJ6dyUP6j1hdkHwchj7MtLsTah1Pg","FRVanPehx8qFNXDWEt3vWaZFbMLuF1LPqC","FTHqXZzJBZNkuhJf9eszwcYBacdTDxQWDU","FP4V2qieSLVB4tZAy7z6JdFneHpPEemgBQ","FHBe8EUnfymFNM3coCExJnwW7rSe5LSvbB","FDZiUTLTBfADYCnwxJz7NRqUxQw6tGFSRH","FPeq5Zxvi5RdvDDaJFDZqH5LGBjtw6Xd17","FNafSrZZzT2y4MW1T2RkHWAqBZKqh2TNGo","FRj6VMapJtkxUUsNXaT7ED2VC55s4VBWzV","F9uUnDrNRiTgFFfWaKrfcG49C5DhmQbM6x","FB1z3TvMioMZWetH2Zu2CMNeqWZJGtMLCJ","FCXffnqJ6PfU5ZQHkibn6sd4xPMQPqwZkm","F85nNkiU2EcpdbQMNQrPRb4UCko6E1PAxj","F6DGtps6XJah8X2MaLGqMDHhdpRRV778wQ","FRQgyz5jbiUAYu5RqyaGPLWGJoH2S6mivd","FSqVz8adAcx8VuLY6hXRCXXd6RokNKb3p4","FDqnjmkxhoaj7iA8znBzzsyud1YgH7fvZp","FL5s8sGjWie6T6v3UpsCU1q8UvEJC5mSsi","FQd6hTaqCjrruTPK9dVuPTze9sqa8FESU7","FCFfJaVmfQWwxtezV1Xi97cfT2VCUi8Pjm","FREH7W5dAV5wctT6vap7QQFUSs2MsfDfB2","F6dMbhzhbgiR4DpFGrkfxZXWL7rJt7prX5","FJ91BP3a3f9VXdRUb6SGcgQPPHtWkUwKit","FQ78R9XRLSMHT7YpLNpN7bewhTPmTxKoHQ","FBbiEYCiDhYu7WFXHp7P9kU9kCfMziZDtC","F8hhdp9WdAYgBsicoJa8HZuvvWTWk33LeP","F9crP67aXjDore5iHxPgwaRd69MEKhmRS2","FT43KvKnVXH7PJQQUtYbJZPQxmptTgu2HX","FMTHDSobX5mX8KzYmLUmQ9dafMRpURuEQN","FPPigxQ4n2dd5waemG5gUKmB9z737pjVmC","FDvVynp6AeW5DSRDksPsK1NVwD5zfMwWjk","FF6n2LCZiCxocwf2iuyuJVwUhim3Fv1JLF","F7YYH579T9cRsAdzoQhajEGceowxXcaR87","FEKe9a5VMz7M8J9195643NSbnVfF8J7zcA","F7X6gtjQuRs8xoJjKHyULPH9zN6kSGcqz8","FL92eujUmMDEEh1Xv6J9jUGEg6p67Jz3WG","F7h37B5V6BHnysDG2KtaFoN98W29nSQQAc","FNt2wEQVotBBPjYf4UuPvgf75EaLYhyAzk","FD6TgdiHsx27vNQWj3Q83nDxSYngC6hvfE","FHP8MDcvboXkqVeznE7rGSttny2EVHbCFA","FGj2SV2wx31Wc6MitwrFgRvxGVgS9ghLNh","FSXngFWsgnFy8M7kVar8tEyLuVFmQAevPA","FDfk9ZYWidYT6NbyED42nqY6hLDHyxTdnJ","F6n6KzbFEAcfBzxHLtXUXhg3dK1gALdJ16","FTsmfAoj2MPDU2nXKH835Up1YUQxwetMRP","FHDU3z1HWZU7z3ammgN3BN2BnVfs55DG5X","FQfdGvZ6aw6UBwjF8DyMLHK6RZXAsTGtyX","FALoUG8PxGaD58PoFRX5YwqB2gd7R9pEQ4","FPYryHitND648TekuYAYmsoUo4o7odZLSp","FQjfVRLExA921H4HkavNhg5QRFcJVUvXRN","F9o68rUAE8JHWM2iE2hRHWKmf9xJ4XYhfm","FQszNb5NrPyS84SiuirXMnWJrSUigBpvNw","FPvkuJscwofD2kzh58TiS48iRgRexgwuxg","FAMLFsTuSYEdVFhvN68ZZxMkKnJgpiNaPX","FNhAuM1XTUGA5REiai1urALvoGaepDunEA","FT5VKevhzNw4Dn3YRscUep1497SNL7hyn8","FGziP1iuFyjEh6mdik9ucEey21FeqYwnHn","FNwowSrksK3SDsXwUthaacKakjr6PL1hPk","F9pytXNG9tJeTwWmuhrbsDssHr83frdBPE","FGytsiM9N447N2teaCyL9w91dw96ywv6dM","FNqTmjLkPqKTs2Ergz7ux8QshZxNUq5e4v","FCPqpV5qkhnAvDV8KMoZN7VxfFDwY9QL8h","FKtevrBXvTAd2LexzXsFEDZ38Dd2oUHJH9","FJNqVN7euD3ZDpoMnkHeNj16sSS6NMDU13","FU8ztnMZV1jMDqtZy3iHQySFuYiAmEy44E","FMAsnBZzVxqjdtdBdtWoyLbodijLJArVeF","FNa59cEnMVjNYVVXRcq5gZXH3P64tn5GSq","FNbFmtkNp92TjeerfjWeJq2qMvfJUWALKW","F8WDw1j4mcu4poiuTqxkgTAoAWoPehCfLw","FAupKEEidU8E4wXb6Fwt5dsHxnrfg6h9KE","FGhXNknTKenqbTmfBhNMdBxRQF3drT6XyK","FDbZYQX4AsfoXYUWBzvFgbBjtJxXayNHYj","F9tMw9Esc8aoUJjNHRELU1c7PFENUJ1Nbi","FJdb8RLC7a4s6TRJWGTjPCs16k3G62x4ZV","FDjmZApN59NYWku59iVS6RXCEDaHrSEkfs","FEWsf56B9PUrhm6UDwnG6uWG4T35j29Z9u","FKfHs6PD4M5sEteV2gQLGh55BkL4Q4m3WC","FLpYSGtP2WPLEzaMXhGuJyjRRppnDPEwTW","FC8b3rc2riBtx3wbBYv5P6fe6q964W3d7B","FFETujYspa56Ps7fd4rPU4cRjPBkcTgfcu","FCGRidBYeEFLP9u9VU6md1JE4ajY2YMHtu","FKrKvbut3aYNcT2dZDAGLg3AWE9RzUXu2Q","FCtVhBN3n8jTCYHcb4uooDcMCVdMQpYdCU","FR2z5N3h1cHAFboHbJbawcjvY8c8bciBPS","FUvaALoydbn9PrRGi4zD2n4TT4RaKWjcpV","FP2MbEcDNuWxZYVaNrwWdnFz33ELgB3cXx","FLvKapx7LGdLWs18aE8vjb4trQ7TFyLd83","FUaVLj4ByKumZqeKwvxDS41obJMoi4pzdm","FAMACCoe3fZFMqDXWMBM8q12of9WPdHza2","FL1MNcVobpitVpmVsXcWjhcTAS6wDJ6tS9","FHnbY7mrvcjoBgJgndkj5yDJYHU4s63mj5","FLrKXLSeQztX1Wt8hrZeVhMnnYbF7wR7Vu","FFvVKJkXVq33jz4ktGEWaKCGJ5NrRBXyZn","FU6v3Wvf9RqcaErMbsCexe6zwjhmdVNA5H","F7u4NqteF3br4gEJkGHxZvB9mHZK3jyVTy","FT8BAUKJqhFdoNxjKAfHCcENTTx8F8TuuM","FEhtSSvzash2H6xVexapLGKjx4D4wvBePn","FP6Lu9xisecx2aeXnEzy3gi4pjjbtNb7HC","FCMKmrkNgtZb49hbTKxNUvAa1YEk5EjV1H","FA4U9mwY1nwuxeRZxG4eLc67rYgHmt2w9q","FExv6uvSDtRz4eFEy3ti6D33bYGkUcbRgk","FK78zavjFuBX5R4ScKbJT8m976KG4mSwya","FP6MJjvBoDjdMiqMUv6tLwTV8MooNmFGtC","FQTzi6F8A74utcbWWRRc2xJZxGYVNVnFrJ","FUD4S2XARwLr8UAizZq6mAtxoGxrQGL4xn","FQrPQ1u6KAZS6xyKp3in1nt7qYkQth8A7m","FNXQRcaQ6dwXVeGTU1aUiDgtaF57dwtt3s","FEmW2dV44Y34i1V1nwQAikueskkBM4zLqJ","FJRGk6Ta66mVBRgdf7mycssWfM6u38QepB","FGsBEWr6fG3gEn3MXbr7iJLCJPRkk9s3ZR","FHiueiWKkLufXFw9n8P5jj58DXgzbQk9Ju","F9DG3HQuPrKCbbvmEyizWu9caUE8Bq6raq","FRmtY4MyJhhdK9vd8LMvejZXAxbFUfta9h","FUfymX6wq9u2stNWxndJCiwEjMXiseTjEQ","FFTqm8RH7b1QS6vTAJoHpj3iFpdKVZE92d","FBLjtLerw2w1aoMYaSjfidvF9ojqCYGjSp","FUUQbBet4vWsqLsZebPtLaHmSxhD59pYaE","F8srw8yFuAp26oHZPWqafeU8gkmKHC6dN2","FHg1qgaEixSEpkA9nPfqZx4U2EUZrgebLM","FAzNtFQUaX5zdPr7YbrosoCvR7oT4SAWHi","FADNP2SVnPQwwJtzRwR1CCPeDPqZrZv1pU","FLjRbQshm9jZtnRPU6xTT3f5PkcVqpZYNA","F66tA5cJ5FXXgza4Wy6HEuDw5NF5dCCBuf","F7vZkh5UFj6NU5p6uboE6JkZbDvwhvCxpQ","FSGBuZxWTHNGaVP7hLz2AmyFrLSaFZfdvg","FHRHcLaPT6gHzwhVS7Uev3HZsHFZBqczo2","FHphzGDaLHVMzYdxv84DbKsXvDch563sv2","FPGVktiCe8ofGTDjnf163Whx5XJd73YCAG","F87qeCkWEC1CpziF63kXLVChDUxT7PApRU","FFrKMLjcFKv9kxDjDVkVj7FSkQoVqGp3oq","FH6ZMAk5QLBXF6TrQoLwRF2bHUPTDLKNbj","FJUeWTHdm28zLr1YcDJT9Ugw9ADWWrEXuV","FHfcUKUvjCpUBCjZvffuCAekJpr5F6aVvd","FRcmtyn6SGdQP1EhWXGwhPBqifKsCBCYTV","FHUicpKp8YR6hRLx1CZP3RcHbPVQVphQ97","FPeE78qPP2h3VuDXHKhPA9jnxnXtaZKfzW","FRF9VoC4zTXQwwQbVnUJYBKn6XnqpqECRA","F7bnw9hw5i7STEfykPUzfACKWa452VQjWN","FML3iGzEf2gtRcVjh7XqjtyDL3Gq28GJHb","FMFR2iMPADrRnLbivytM68x4MuutWsBBWC","FRRahENHT1UCttCrwY9N2rPB1eHrbXnyDu","FPQNzxfTLTuL9W9GTSALaWBNjW1VQx3qbe","F91TJDUKEXBRpsLUoQjuA5zJTxoWS56ajg","FDS9vJsUvmMtpUsqFWLUvvBrYFMP5NG8Lj","FKATM2bYd64GWy7KvhaqC1US94BnWMaVDH","FDEDSatC5eJRN5e1uChQCaMEEg79YxwM7d","FJVpxQJvYusSr6nQ5DsUgCGzECFso6i5nG","FMgywtzhmhZQgc8sp8vsVHnxnu3AJWKsDC","FP8kx3LFvUHpC6LRW7i6uM8yGyhSEGLYRK","F7tRi6SaiKhFw9xSdTqfjKDczrmiDFSvvZ","FNzf3gC5bR6kWfxed2a1MwQyFRNTqBtD2G","FBRxqVUmLx4cRzeazYbQUtNJPy6qEz1uVL","F628f9VhjxWrdKtWySS61j6Utwx9NkhL1J","FNnc1dGCrjSgaDbSnd9D4vyJRcAJ4Rth9U","FBG1dKNSx9t5ERzp6Kvydav9RBpuVJYeio","FMiN7zLyUAPY5xrexA7pGGEFfPgNT5DFGo","FJUgHJ3oznvWZD33QJDzujPTRX14CQDX7x","FDrgcbDzcGtwaj9Mwqqd2MtUFs3R3ETMjW","FMR7N4aP4BvEjnVExZtSzBpGgPsWwWRuWk","FMjzpaeCjHS5mAeHMJzA493P2R2KkT8Ci3","FD5mzUL9rA3iTzf3YgaixefrswRbujBEpP","FDgHEQeJJhy7GpBKGpP2cJinkWJSaz8E6S","F9jhVYht2JbaEovpVKwqo3mr1YqxksgXx2","F7VziUGF9ACzmp4ydzuSkdBMhg3XeYsKrr","FV3t8TsJokoCsJqesbAoZwxKLG2qfQQmVQ","FGXRPdgGcDwxfs1JX6tsETrm4pT4AxXL2K","FRfoK2LiraNUudqVgDuBERXmYPdmR7JT8L","FGbGzcQSCYV8xkv31iJ5Gh3kCvc2xopvmD","FTeARn24nR2Hu5tQEW1qF38ZDrBL741cQW","FLMs4Zv4CDXcWMUoCJr51CL2cymsUCxBYv","FQPY3VHUpbikrG2A8Ti3HDUepN2pApzm5A","FTz7QR4qrWL2C7VQkJdwtfns8uZPXwfrVv","FGXa7Q2f1pY5fyp1bqvXzLt5MHAXex3vVM","FNjUwRLFxisCXEAgNaz1zbxjUkmwYp2yBV","FJrkHjMoA1EpXVWEz61vNBiFRuCDqWFzUF","FDyiTjdzm4ztLL8K7Xt6t265weAaME711Z","FETgLWTZnVvGZ1WNyyhVkRPxZFTCMNrsoh","FBdH694FThGtKf3LsfQJq1EcMhiiqTCpXd","FEh8LLvTQRSkS7w8V9SeMijtJaUTUdNvf1","FFcjgmWD4RXju3p1ZghEqPQQmufeiAsnxK","FQcAZrSbY5qtycVsm6rGN2fsVHdnj9Kd9L","FT7he6WdmLisVQZkGsbrtery17o1uazZJi","FUNqp3QMLBYZn7UoQbebCQz7jAhmub1AC4","FBZMBW1UQayPBYNBxfb9pWLjjjXFAjwUa7","FTJaTERvAHa5kZJeKDKAJWKscSjNQXxXFT","FG2XjHhVTPskqgjAbWRz82JJpLQ49tQ5Nd","FD1zZEmUT1mXtDrgCJ4bcedoqFpexPqayR","F8V4Rngdqwjpw57D9uzjFTKR3qKLgSD2Gf","FJC9rGvTW9ELQBBhxVG9dCFKeh43xvGjQw","FG6fENHT9fHKsrGNPjA8QftoHnLzdzryHV","FFFaD6Jz9S8qybLoUNrfww7HrL15ZcDYe3","F8WDw1j4mcu4poiuTqxkgTAoAWoPehCfLw"]
+                console.log(addressesToUpdate);
+                // AddressToUpdateController.resetOrder(addressesToUpdate, function(numberRemoved) {
+                //     console.log('numberRemoved', numberRemoved)
+                // });
+            })
+            break;
         case 'test':
             var where = {};
             var fields = {};
@@ -4722,7 +4846,7 @@ if (wallet) {
             if(limitBigChain > 10000000) {
                 limitBigChain = 10000000;
             }
-            AddressToUpdateController.getAllUniqueStream(where, fields,{}, 0, offset, limitBigChain, function(cursor) {
+            AddressToUpdateController.getAllUniqueCursor(where, fields,{}, 0, offset, limitBigChain, function(cursor) {
                 function getNext() {
                     cursor.next(function(error, doc) {
                         console.log(doc);
@@ -5485,9 +5609,9 @@ function updateRichlistAndExtraStats() {
     var startTime = new Date();
     RichlistController.getOne(settings[wallet].coin, function(richlist) {
         // console.log('updating richlist');
-        AddressToUpdateController.getRichlistAndExtraStats('received', 'desc', 100, settings[wallet].dev_address, function(results){
+        AddressController.getRichlistAndExtraStats('received', 'desc', 100, settings[wallet].dev_address, function(results){
             var received = results.data;
-            AddressToUpdateController.getRichlistAndExtraStats('balance', 'desc', 100, settings[wallet].dev_address, function(results){
+            AddressController.getRichlistAndExtraStats('balance', 'desc', 100, settings[wallet].dev_address, function(results){
                 var active_wallets_count = results.countActive;
                 var total_wallets_count = results.countUnique;
                 var dev_wallet_balance = results.devAddressBalance;
@@ -5696,7 +5820,8 @@ var getUniqueAddresses = function(limit, offset, total) {
         var where = {};
         var fields = {};
         // where = {$or: [{order: {$exists: false}}, {order: {$eq: 0}}]};
-        where.order = {$not:{$gt: 0}};
+        // where.order = {$not:{$gt: 0}};
+        where.order = {$eq: 0};
         // where.address = "WUv8fyfuCWbTzmhvDaSGUfundZunnxGt12";
         // where.address = {$in: [
         //         "SRYkHm3QGCFyje2kP9sEC3wVb9gEA9voEG",
@@ -5709,8 +5834,8 @@ var getUniqueAddresses = function(limit, offset, total) {
         //         // "DSwGy32nTPm8nM5YfobvbvHryHiJSMtL9y",
         //     ]};
         var limitBigChain = total;
-        if(limitBigChain > 1000000) {
-            limitBigChain = 1000000;
+        if(limitBigChain > 500000) {
+            limitBigChain = 500000;
         }
         AddressToUpdateController.getAllUnique(where, fields,{}, limit, offset, limitBigChain, function(results) {
             // console.log('results.length', results.length);
@@ -5726,7 +5851,8 @@ var gettingNextAddressesToOrderCursor = function(limit, total) {
         var where = {};
         var fields = {};
         // where.blockindex = {$not: {$gt: 100}};
-        where.order = {$not: {$gt: 0}};
+        // where.order = {$not: {$gt: 0}};
+        where.order = {$eq: 0};
         // where.address = {$in: [
         //     "SNKH6MMiZahBVV5CkNvo6gW9iTZ38Rdg59",
         //     "SZC8B1scnzTeVk9bqGCJFhXEHH2sJpYK95",
@@ -5738,10 +5864,10 @@ var gettingNextAddressesToOrderCursor = function(limit, total) {
         //     "SZgnRmQkH8xkBHNRHaiVAVo5YUaBHTa2tL",
         // ]};
         var limitBigChain = total;
-        if (limitBigChain > 10000000) {
-            limitBigChain = 10000000;
+        if (limitBigChain > 5000000) {
+            limitBigChain = 1000000;
         }
-        AddressToUpdateController.getAllUniqueStream(where, fields, {}, limit, offset, limitBigChain, function (cursor) {
+        AddressToUpdateController.getAllUniqueCursor(where, fields, {}, limit, offset, limitBigChain, function (cursor) {
             resolve(cursor);
             // function getNext() {
             //     cursor.next(function (error, doc) {
@@ -6201,11 +6327,18 @@ function updateClusterTxByDay(wallet) {
             var clusterId = clusters[0];
             // console.log('clusterId', clusterId)
             clusters.shift();
-            ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 2, function(data) {
+            ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 1, function(data) {
+                var currentDate = new Date(new Date().setHours(0,0,0,0));
+                var currentDateString = currentDate.getFullYear() + "-" + ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" + ("0" + currentDate.getDate()).slice(-2);
+
+                var previousDate = new Date(new Date(currentDate.getTime() - 24*60*60*1000).setHours(0,0,0,0))
+                var previousDateString = previousDate.getFullYear() + "-" + ("0"+(previousDate.getMonth()+1)).slice(-2) + "-" + ("0" + previousDate.getDate()).slice(-2);
                 if(data.length) {
-                    var lastDate = data[0].d
-                    if(data.length > 1) {
-                        lastDate = data[1].d
+                    var lastDate = data[0].d;
+                    if(lastDate === currentDateString) {
+                        console.log('lastDate', lastDate)
+                        lastDate = previousDateString;
+                        console.log('previousDateString', previousDateString)
                     }
                     // console.log('data',lastDate);
                     updateClusterTxByDay(clusterId, lastDate);
@@ -6222,21 +6355,28 @@ function updateClusterTxByDay(wallet) {
         }
 
         function updateClusterTxByDay(clusterId, dateString) {
-            ClusterController.getTransactionsChart(clusterId, dateString, function(txByDays) {
-                if(txByDays && txByDays.length) {
-                    updateClusterTxByDayOneByOne(clusterId, txByDays);
+            ClusterController.getClusterTxsCountFromDate(clusterId, dateString, 1,function(count) {
+                if(count) {
+                    ClusterController.getTransactionsChart2(clusterId, dateString, function (txByDays) {
+                        if (txByDays && txByDays.length) {
+                            updateClusterTxByDayOneByOne(clusterId, txByDays);
+                        } else {
+                            // console.log('no tx found - ', clusterId);
+                            startUpdateCluster(clusters);
+                        }
+                    })
                 } else {
-                    // console.log('no tx found - ', clusterId);
                     startUpdateCluster(clusters);
+                    console.log('finish updating cluster chart - ' + clusterId)
                 }
-            })
+            });
         }
 
         function updateClusterTxByDayOneByOne(clusterId, txByDays) {
             // console.log(txByDays[0])
             ClusterTxByDayController.updateOne(txByDays[0], function(err) {
                 if(err) {
-                    console.log('err', err);
+                    console.log('err updateClusterTxByDayOneByOne', err);
                 } else {
                     txByDays.shift();
                     if(txByDays.length) {

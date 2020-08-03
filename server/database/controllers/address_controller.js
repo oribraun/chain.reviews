@@ -515,6 +515,162 @@ function getAllDuplicate(cb) {
     })
 }
 
+function getClusterDetails(addresses, cb) {
+    var aggregate = [];
+    // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
+    aggregate.push({ $match : { a_id : {$in : addresses} } });
+    aggregate.push({
+        "$group": {
+            "_id": null,
+            "sent" : { $sum: "$sent"},
+            "received" : { $sum: "$received"},
+            "balance" : { $sum: "$balance"},
+            "count" : { $sum: "$last_order"},
+        }
+    })
+    aggregate.push({
+        "$project": {
+            "sent": "$sent",
+            "received": "$received",
+            "balance": "$balance",
+            "count": "$count",
+        }
+    })
+    Address[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, results) {
+        if(results && results.length) {
+            return cb(results[0]);
+        } else {
+            return cb(err);
+        }
+    });
+}
+
+function getGroupCountForAddresses(addresses, limit, offset, cb) {
+    var aggregate = [];
+    aggregate.push({ $match : {a_id : {$in : addresses}} });
+    aggregate.push({"$group": {
+            "_id": "$a_id",
+            "tx_count": {"$first": "$last_order"},
+            "sent": {"$first": "$sent"},
+            "received": {"$first": "$received"},
+            "balance": {"$first": "$balance"},
+        }
+    });
+    aggregate.push({"$project": {
+            "_id": 0,
+            "address": "$_id",
+            "tx_count": 1,
+            "sent": 1,
+            "received": 1,
+            "balance": 1,
+        }
+    });
+    aggregate.push({$sort:{balance:-1}});
+    if(parseInt(offset)) {
+        aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
+    }
+    if(parseInt(limit)) {
+        aggregate.push({$limit: parseInt(limit)});
+    }
+    Address[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, addresses) {
+        if(addresses) {
+            return cb(addresses);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
+function findAllWrongOrder(cb) {
+    var aggregate = [];
+    aggregate.push({
+        "$lookup": {
+            "from": AddressToUpdate[db.getCurrentConnection()].collection.name,
+            "let": { "address": "$a_id",  "order": "$last_order" },
+            "pipeline": [
+                { "$match": { "$expr": { "$eq": [ "$address", "$$address" ] } }},
+                { "$match": { "$expr": { "$gt": [ "$order", "$$order" ] } }},
+                // { "$match": { "$expr": { "$gt": [ "$total", 0 ] } }},
+            ],
+            "as": "addr"
+        }});
+    aggregate.push({$match: {addr: {$not: {$size: 0}}}})
+    aggregate.push({"$project": {
+            "_id": 0,
+            "address": "$a_id",
+            "last_blockindex": 1,
+            "last_order": 1,
+            "sent": 1,
+            "received": 1,
+            "balance": 1,
+            "addr": 1,
+        }
+    });
+    Address[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, addresses) {
+        if(addresses) {
+            return cb(addresses);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
+function getRichlistAndExtraStats(sortBy, order, limit, dev_address, cb) {
+    var sort = {};
+    sort[sortBy] = order == 'desc' ? -1 : 1;
+    var aggregate = [];
+    aggregate.push({$match: {a_id: {$ne: "coinbase"}}});
+    // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
+    // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
+    aggregate.push({
+        "$project": {
+            "_id": "$a_id",
+            // "sent": "$sent",
+            "received": "$received",
+            "balance": "$balance",
+        }
+    })
+    aggregate.push({$sort:sort});
+    aggregate.push({
+        "$group": {
+            "_id": null,
+            "countUnique": {$sum: 1},
+            "countActive": {$sum: {$cond: { if: { $gt: [ "$balance", 0 ] }, then: 1, else: 0}}},
+            "devAddressBalance": {$sum: {$cond: { if: { $eq: [ "$_id", dev_address ] }, then: "$balance", else: 0}}},
+            "received_data": {$push: {"_id": "$_id", "received": "$received"}},
+            "balance_data": {$push: {"_id": "$_id", "balance": "$balance"}},
+        }
+    });
+    if(sortBy === 'received') {
+        aggregate.push({
+            "$project": {
+                "_id": 0,
+                "countActive": "$countActive",
+                "data": {"$slice": ["$received_data", 0, parseInt(limit)]},
+            }
+        });
+    }
+    if(sortBy === 'balance') {
+        aggregate.push({
+            "$project": {
+                "_id": 0,
+                "countActive": "$countActive",
+                "countUnique": "$countUnique",
+                "devAddressBalance": "$devAddressBalance",
+                "data": {"$slice": ["$balance_data", 0, parseInt(limit)]},
+            }
+        });
+    }
+    Address[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, address) {
+        if(address && address.length) {
+            return cb(address[0]);
+        } else {
+            return cb(err);
+        }
+    });
+}
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -531,3 +687,7 @@ module.exports.createAddress1 = createAddress1;
 module.exports.getOneWithTx = getOneWithTx;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.updateAllWhereGte = updateAllWhereGte;
+module.exports.getClusterDetails = getClusterDetails;
+module.exports.getGroupCountForAddresses = getGroupCountForAddresses;
+module.exports.findAllWrongOrder = findAllWrongOrder;
+module.exports.getRichlistAndExtraStats = getRichlistAndExtraStats;

@@ -65,7 +65,15 @@ var db = {
         dbString = dbString + ':' + dbSettings.port;
         dbString = dbString + '/' + dbSettings.database;
         // console.log(dbString)
-        mongoose.connect(dbString,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}, function(err, database) {
+        var options = {
+            socketTimeoutMS: 20*60*1000, // 10 minute timeout
+            connectTimeoutMS: 20*60*1000, // 10 minute timeout
+            keepAlive: true,
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            useCreateIndex: true
+        };
+        mongoose.connect(dbString,options, function(err, database) {
             if (err) {
                 console.log(err)
                 console.log('Unable to connect to database: %s', dbString);

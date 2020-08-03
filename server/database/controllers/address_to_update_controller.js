@@ -97,7 +97,41 @@ function getAllUniqueStream(where, fields, sort, limit, offset, limitBigChain, c
     //         return cb(null);
     //     }
     // });
-    var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor().option({'noCursorTimeout': true}).exec();
+    // var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor().option({'noCursorTimeout': true}).exec();
+    var stream = AddressToUpdate[db.getCurrentConnection()].find(where, fields).stream();
+    return cb(stream);
+}
+function getAllUniqueCursor(where, fields, sort, limit, offset, limitBigChain, cb) {
+    // db.addresstoupdates.aggregate([{$match: {$or: [{order: {$exists: false}}, {order: {$eq: 0}}]}},{$group:{_id:'$address'}}, {$skip:0}, {$limit:20000}])
+    var aggregate = [];
+    aggregate.push({$match: where});
+    if(limitBigChain) {
+        aggregate.push({$limit: limitBigChain});
+    }
+    aggregate.push({$group:{_id:'$address'}});
+    if(JSON.stringify(fields) !== '{}') {
+        aggregate.push({"$project": fields});
+    }
+    if(JSON.stringify(sort) !== '{}') {
+        aggregate.push({$sort: sort});
+    }
+    if(parseInt(offset)) {
+        aggregate.push({$skip: parseInt(offset) * parseInt(limit)});
+    }
+    if(parseInt(limit)) {
+        aggregate.push({$limit: parseInt(limit)});
+    }
+    // AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, addresses) {
+    //     console.log('err', err)
+    //     if(addresses) {
+    //         return cb(addresses);
+    //     } else {
+    //         return cb(null);
+    //     }
+    // });
+    // var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor().option({'noCursorTimeout': true}).exec();
+    // var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor().addCursorFlag('noCursorTimeout', true).exec();
+    var cursor = AddressToUpdate[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).cursor().addCursorFlag('noCursorTimeout', true).exec();
     return cb(cursor);
 }
 
@@ -970,7 +1004,7 @@ function getRichlistAndExtraStats(sortBy, order, limit, dev_address, cb) {
     sort[sortBy] = order == 'desc' ? -1 : 1;
     var aggregate = [];
     aggregate.push({$match: {amount: {$gt: 0}}});
-    aggregate.push({$match: {_id: {$ne: "coinbase"}}});
+    aggregate.push({$match: {address: {$ne: "coinbase"}}});
     // var twoYearsFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365*2).getTime() / 1000;
     // aggregate.push({$match: {txid_timestamp: {$gte: twoYearsFromNowTimestamp }}}); // limit to year a head
     aggregate.push({
@@ -1488,6 +1522,12 @@ function saveTxType(obj, cb) { // update or create
         }
     })
 }
+
+function resetOrder(addresses, cb) {
+    AddressToUpdate[db.getCurrentConnection()].updateMany({address: {$in: addresses}}, {$set: {order:0, sent:0, received:0, balance:0}},function(err, numberRemoved){
+        return cb(numberRemoved)
+    })
+}
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -1523,6 +1563,7 @@ module.exports.getAddressTxChart = getAddressTxChart;
 module.exports.getAll2 = getAll2;
 module.exports.getAll3 = getAll3;
 module.exports.getAllUnique = getAllUnique;
+module.exports.getAllUniqueCursor = getAllUniqueCursor;
 module.exports.getAllUniqueStream = getAllUniqueStream;
 module.exports.getByTotalTest = getByTotalTest;
 module.exports.save = save;
@@ -1532,3 +1573,4 @@ module.exports.getAllUniqueAddresses = getAllUniqueAddresses;
 module.exports.getClusterDetails = getClusterDetails;
 module.exports.getAllAddressUniqueTxs = getAllAddressUniqueTxs;
 module.exports.getAddressMap = getAddressMap;
+module.exports.resetOrder = resetOrder;

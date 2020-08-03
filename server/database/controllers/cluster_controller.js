@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var Cluster = require('../models/cluster');
 var AddressToUpdate = require('../models/address_to_update');
 var AddressToUpdateController = require('../controllers/address_to_update_controller');
+var AddressController = require('../controllers/address_controller');
 var TxVinVout = require('../models/txVinVout');
 var db = require('./../db');
 
@@ -310,6 +311,24 @@ function getClusterTxsCount(id, cb) {
     });
 }
 
+function getClusterTxsCountFromDate(id, date, limit, cb) {
+    var objID = mongoose.Types.ObjectId(id);
+    Cluster[db.getCurrentConnection()].find({_id: objID}, {addresses: 1}).exec(function(err, cluster) {
+        if(cluster) {
+            var addresses = cluster[0].addresses;
+            var timestamp = -1;
+            if(date) {
+                timestamp = new Date(date).getTime() + (24*60*60*1000)
+            }
+            AddressToUpdate[db.getCurrentConnection()].find({txid_timestamp: {$gte: timestamp / 1000 }, address: {$in: addresses}}, {}).limit(limit).countDocuments().exec(function (err, count) {
+                return cb(count);
+            });
+        } else {
+            return cb(null);
+        }
+    })
+}
+
 function getClusterTxsCount2(id, cb) {
     var objID = mongoose.Types.ObjectId(id);
     Cluster[db.getCurrentConnection()].find({_id: objID}, {addresses: 1}).exec(function(err, cluster) {
@@ -541,10 +560,21 @@ function getAllClustersWithAddressAndTxsCount(id, limit, offset,  cb) {
             var promises = [];
             for(var i = 0; i < clusters.length; i++) {
                 (function(i){
+                    var addresses = clusters[i].addresses;
+                    delete clusters[i].addresses;
                     promises.push(new Promise(function(resolve, reject) {
-                        AddressToUpdateController.countTxInArray(clusters[i].addresses, function (tx_count) {
-                            clusters[i].tx_count = tx_count;
-                            delete clusters[i].addresses;
+                        // AddressToUpdateController.getClusterDetails(addresses, function (details) {
+                        //     clusters[i].tx_count = details.count;
+                        //     clusters[i].tx_sent = details.sent;
+                        //     clusters[i].tx_received = details.received;
+                        //     clusters[i].tx_balance = details.balance;
+                        //     resolve();
+                        // })
+                        AddressController.getClusterDetails(addresses, function (details) {
+                            clusters[i].tx_count = details.count;
+                            clusters[i].tx_sent = details.sent;
+                            clusters[i].tx_received = details.received;
+                            clusters[i].tx_balance = details.balance;
                             resolve();
                         })
                     }))
@@ -647,7 +677,15 @@ function getClusterAddresses(id, limit, offset, cb) {
 
     Cluster[db.getCurrentConnection()].findOne({ _id : objID }, function(err, results) {
         if(results) {
-            AddressToUpdateController.getGroupCountForAddresses(results.addresses, limit, offset, function(res) {
+            // AddressController.getGroupCountForAddresses(results.addresses, limit, offset, function(res2) {
+            //     AddressToUpdateController.getGroupCountForAddresses(results.addresses, limit, offset, function (res) {
+            //         return cb(res, res2);
+            //     })
+            // });
+            // AddressToUpdateController.getGroupCountForAddresses(results.addresses, limit, offset, function (res) {
+            //     return cb(res);
+            // })
+            AddressController.getGroupCountForAddresses(results.addresses, limit, offset, function(res) {
                 return cb(res);
             })
         } else {
@@ -681,6 +719,16 @@ function getTransactionsChart(id, date, cb) {
                     // })
                     var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
                     var aggregate = [];
+                    var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+                    // aggregate.push({$match: {"txid_timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
+                    if(date) {
+                        var timestamp = new Date(date).getTime();
+                        var next_timestamp = new Date(date).getTime() + (30*24*60*60*1000);
+                        aggregate.push({$match: {"txid_timestamp": {$gte: timestamp / 1000 }}});
+                        aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp / 1000 }}});
+                    }
+                    // aggregate.push({$limit: 1000000});
+                    console.log('addresses', addresses.length)
                     aggregate.push({$match: {address: {$in: addresses}}});
                     aggregate.push({$project: {_id:0, txid: 1}});
                     aggregate.push({
@@ -708,12 +756,12 @@ function getTransactionsChart(id, date, cb) {
                         }
                     });
                     aggregate.push({$match: {"txs.total": {$gt: 0}}});
-                    var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
-                    aggregate.push({$match: {"txs.timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
-                    if(date) {
-                        var timestamp = new Date(date).getTime() / 1000;
-                        aggregate.push({$match: {"txs.timestamp": {$gte: timestamp }}});
-                    }
+                    // var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+                    // aggregate.push({$match: {"txs.timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
+                    // if(date) {
+                    //     var timestamp = new Date(date).getTime() / 1000;
+                    //     aggregate.push({$match: {"txs.timestamp": {$gte: timestamp }}});
+                    // }
                     aggregate.push({$project: {
                             "_id": "_id",
                             "total": "$txs.total",
@@ -806,12 +854,13 @@ function getTransactionsChart(id, date, cb) {
                         }});
                     AddressToUpdate[db.getCurrentConnection()].aggregate(
                         aggregate
-                    ).allowDiskUse(true).exec( function(err, txs) {
+                    ).option({ allowDiskUse: true, maxTimeMS: 10*60*1000 }).exec( function(err, txs) {
                         if(txs) {
                             return cb(txs);
                         } else {
                             if(err) {
-                                console.log('err', err);
+                                console.log('err clusterId', id);
+                                console.log('err getTransactionsChart', err);
                             }
                             return cb();
                         }
@@ -821,6 +870,138 @@ function getTransactionsChart(id, date, cb) {
                 // }
 
             // });
+        } else {
+            return cb(null);
+        }
+    })
+}
+function getTransactionsChart2(id, date, cb) {
+
+    var objID = mongoose.Types.ObjectId(id);
+    Cluster[db.getCurrentConnection()].find({_id: objID}, {addresses: 1}).exec(function(err, cluster) {
+        if(cluster) {
+            var addresses = cluster[0].addresses;
+            var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+            var aggregate = [];
+            var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+            // aggregate.push({$match: {"txid_timestamp": {$gte: yearFromNowTimestamp }}}); // limit to year a head
+            if(date) {
+                var timestamp = new Date(date).getTime();
+                var next_timestamp = new Date(date).getTime() + (30*24*60*60*1000);
+                aggregate.push({$match: {"txid_timestamp": {$gte: timestamp / 1000 }}});
+                // aggregate.push({$match: {"txid_timestamp": {$lt: next_timestamp / 1000 }}});
+            }
+            // aggregate.push({$limit: 1000000});
+            console.log('addresses', addresses.length)
+            aggregate.push({$match: {address: {$in: addresses}}});
+            aggregate.push({$project: {_id:0, txid: 1, amount:1, txid_timestamp: 1, blockindex: 1}});
+
+            aggregate.push({$project: {
+                    "_id": "_id",
+                    "amount": "$amount",
+                    "blockindex": "$blockindex",
+                    "date1": {
+                        $dateToParts: { date: {
+                                "$add": [
+                                    new Date(new Date(0).getTime() + new Date().getTimezoneOffset()*60*1000),
+                                    {"$multiply": ["$txid_timestamp", 1000]}
+                                ]
+                            }
+                        }
+                    },
+                    "date2": {
+                        $dateToParts: { date: {
+                                "$add": [
+                                    new Date(0), // GTM+2
+                                    {"$multiply": ["$txid_timestamp", 1000]}
+                                ]
+                            }
+                        }
+                    },
+                    "date": {
+                        $dateToString: {
+                            date: {
+                                "$add": [
+                                    new Date(0), // GTM+2
+                                    {"$multiply": ["$txid_timestamp", 1000]}
+                                ]
+                            },
+                            format: "%Y-%m-%d"
+                        }
+                    },
+                    "year": {
+                        "$year": {
+                            "$add": [
+                                new Date(0),
+                                {"$multiply": ["$txid_timestamp", 1000]}
+                            ]
+                        }
+                    },
+                    "month": {
+                        "$month": {
+                            "$add": [
+                                new Date(0),
+                                {"$multiply": ["$txid_timestamp", 1000]}
+                            ]
+                        }
+                    },
+                    "day": {
+                        "$dayOfMonth": {
+                            "$add": [
+                                new Date(0),
+                                {"$multiply": ["$txid_timestamp", 1000]}
+                            ]
+                        }
+                    },
+                    "week": {
+                        "$isoWeek": {
+                            "$add": [
+                                new Date(0),
+                                {"$multiply": ["$txid_timestamp", 1000]}
+                            ]
+                        }
+                    },
+                    "timestamp": "$txid_timestamp"
+                }});
+            aggregate.push({$match: {year: {$gt: 1970}}});
+            aggregate.push({$group: {
+                    "_id": {
+                        "year": "$year",
+                        "month": "$month",
+                        "day": "$day"
+                        // "week": "$week"
+                    },
+                    "week": {$first: "$week"},
+                    "date": {$first: "$date"},
+                    "timestamp": {$first: "$timestamp"},
+                    "count" : { "$sum" : 1 },
+                    "totalAmountADay" : { "$sum" : {$cond:
+                                {if: { $eq: [ "$type", "vout" ] },
+                                    then: "$amount",
+                                    else: 0 }} }
+                }});
+            aggregate.push({$sort:{timestamp:1}});
+            aggregate.push({$project: {
+                    "_id": 0,
+                    "cid": id,
+                    "date": "$date",
+                    "week": "$week",
+                    "count": "$count",
+                    "totalAmountADay": "$totalAmountADay",
+                }});
+            AddressToUpdate[db.getCurrentConnection()].aggregate(
+                aggregate
+            ).option({ allowDiskUse: true, maxTimeMS: 10*60*1000 }).exec( function(err, txs) {
+                if(txs) {
+                    return cb(txs);
+                } else {
+                    if(err) {
+                        console.log('err clusterId', id);
+                        console.log('err getTransactionsChart', err);
+                    }
+                    return cb();
+                }
+            });
         } else {
             return cb(null);
         }
@@ -840,11 +1021,13 @@ module.exports.getClusterTxs = getClusterTxs;
 module.exports.getClusterAddresses = getClusterAddresses;
 module.exports.getClusterTxsCount = getClusterTxsCount;
 module.exports.getClusterTxsCount2 = getClusterTxsCount2;
+module.exports.getClusterTxsCountFromDate = getClusterTxsCountFromDate;
 module.exports.getAllClusters = getAllClusters;
 module.exports.getAllClustersWithAddressCount = getAllClustersWithAddressCount;
 module.exports.getAllClustersWithTxsCount = getAllClustersWithTxsCount;
 module.exports.getAllClustersWithAddressAndTxsCount = getAllClustersWithAddressAndTxsCount;
 module.exports.getClusterByAddress = getClusterByAddress;
 module.exports.getTransactionsChart = getTransactionsChart;
+module.exports.getTransactionsChart2 = getTransactionsChart2;
 module.exports.getAllForCluster = getAllForCluster;
 module.exports.getAllClustersIds = getAllClustersIds;

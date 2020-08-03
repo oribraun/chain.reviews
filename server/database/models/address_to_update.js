@@ -6,7 +6,7 @@ var db = require('./../db');
 var AddressToUpdateSchema = new Schema({
   address: { type: String, index: true},
   txid: { type: String, default: '' },
-  txid_timestamp: { type: Number, default: 0 },
+  txid_timestamp: { type: Number, default: 0, index: true },
   txid_type: { type: Number, default: 0, index: true },
   order: { type: Number, default: 0},
   amount: { type: Number, default: 0 , index: true},
@@ -18,6 +18,10 @@ var AddressToUpdateSchema = new Schema({
 }, {id: false, timestamps: true});
 
 AddressToUpdateSchema.index({ order: 1, address: 1 }, { unique: true, partialFilterExpression: { order: { $gt: 0 }}});
+AddressToUpdateSchema.index({address: 1, blockindex: 1, order: 1}, {background:true});
+AddressToUpdateSchema.index({address: 1, blockindex: -1, order: -1}, {background:true});
+AddressToUpdateSchema.index({blockindex: -1});
+AddressToUpdateSchema.index({ order: 1 },{ partialFilterExpression: { order: { $eq: 0}}});
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {
