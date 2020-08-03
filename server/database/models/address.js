@@ -4,9 +4,9 @@ var db = require('./../db');
 
 var AddressSchema = new Schema({
   a_id: { type: String, unique: true, index: true},
-  received: { type: Number, default: 0 },
+  received: { type: Number, default: 0, index: true },
   sent: { type: Number, default: 0 },
-  balance: {type: Number, default: 0},
+  balance: {type: Number, default: 0, index: true},
   last_order: {type: Number, default: 0},
   last_blockindex: {type: Number, default: 0},
 }, {id: false, timestamps: false});
