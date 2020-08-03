@@ -242,17 +242,7 @@ router.post('/getAddressTxs', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    AddressToUpdateController.getAddressTxs(req.body['address'], req.body['limit'], req.body['offset'], function(results) {
-        if(results) {
-            response.data = results.txs;
-        } else {
-            response.err = 1;
-            response.errMessage = 'no tx found';
-        }
-        res.send(JSON.stringify(response, null, 2));
-        // db.disconnect();
-    })
-    // AddressToUpdateController.getAddressTxsByOrder(req.body['address'],'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+    // AddressToUpdateController.getAddressTxs(req.body['address'], req.body['limit'], req.body['offset'], function(results) {
     //     if(results) {
     //         response.data = results.txs;
     //     } else {
@@ -260,7 +250,17 @@ router.post('/getAddressTxs', (req, res) => {
     //         response.errMessage = 'no tx found';
     //     }
     //     res.send(JSON.stringify(response, null, 2));
+    //     // db.disconnect();
     // })
+    AddressToUpdateController.getAddressTxsByOrder(req.body['address'],'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+        if(results) {
+            response.data = results.txs;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no tx found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
 })
 
 router.post('/getAddressDetails', (req, res) => {
