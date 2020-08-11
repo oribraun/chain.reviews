@@ -186,6 +186,7 @@ function updateWalletStats(obj, cb) { // update or create
             stats.version = obj.version;
             stats.protocol = obj.protocol;
             stats.users_tx_count_24_hours = obj.users_tx_count_24_hours;
+            stats.users_tx_chart = obj.users_tx_chart;
             stats.save(function(err) {
                 if (err) {
                     return cb(err);
@@ -210,6 +211,7 @@ function updateWalletStats(obj, cb) { // update or create
                 version: obj.version,
                 protocol: obj.protocol,
                 users_tx_count_24_hours: obj.users_tx_count_24_hours,
+                users_tx_chart: obj.users_tx_chart,
             });
 
             newStats.save(function(err) {
