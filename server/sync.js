@@ -5427,44 +5427,57 @@ function updateStats() {
         // console.log('latestTx', latestTx);
         // console.log('settings[wallet].coin', settings[wallet].coin);
         TxVinVoutController.getUsersTxsCount24Hours(function(users_tx_count_24_hours) {
-            if (latestTx && latestTx.length) {
-                wallet_commands.getInfo(wallet).then(function (info) {
-                    info = JSON.parse(info);
-                    // console.log('updating masternode count');
-                    // wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
-                    //     console.log('finish updating masternode count');
-                    wallet_commands.getNetworkHashps(wallet).then(function (networkhashps) {
-                        var hashrate = (networkhashps / 1000000000).toFixed(4);
-                        wallet_commands.getConnectionCount(wallet).then(function (connections) {
-                            wallet_commands.getBlockCount(wallet).then(function (blockcount) {
-                                get_supply('GETINFO').then(function (supply) {
-                                    var stats = {
-                                        coin: settings[wallet].coin,
-                                        difficulty: info.difficulty,
-                                        moneysupply: info.moneysupply,
-                                        hashrate: hashrate,
-                                        // masternodesCount: JSON.parse(masterNodesCount),
-                                        connections: parseInt(connections),
-                                        blockcount: parseInt(blockcount),
-                                        last_block: latestTx[0].blockindex,
-                                        supply: supply,
-                                        version: info.version,
-                                        protocol: info.protocolversion,
-                                        users_tx_count_24_hours: users_tx_count_24_hours,
-                                        // last_price: stats.last_price,
-                                    };
-                                    console.log(stats)
-                                    StatsController.updateWalletStats(stats, function (err) {
-                                        if (err) {
-                                            console.log(err)
-                                        }
-                                        console.log('reindex cluster complete - ', latestTx[0].blockindex);
-                                        console.log('took - ', helpers.getFinishTime(startTime));
+            TxVinVoutController.getUsersTxsWeeklyChart(function (users_tx_chart) {
+                if (latestTx && latestTx.length) {
+                    wallet_commands.getInfo(wallet).then(function (info) {
+                        info = JSON.parse(info);
+                        // console.log('updating masternode count');
+                        // wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
+                        //     console.log('finish updating masternode count');
+                        wallet_commands.getNetworkHashps(wallet).then(function (networkhashps) {
+                            var hashrate = (networkhashps / 1000000000).toFixed(4);
+                            wallet_commands.getConnectionCount(wallet).then(function (connections) {
+                                wallet_commands.getBlockCount(wallet).then(function (blockcount) {
+                                    get_supply('GETINFO').then(function (supply) {
+                                        var stats = {
+                                            coin: settings[wallet].coin,
+                                            difficulty: info.difficulty,
+                                            moneysupply: info.moneysupply,
+                                            hashrate: hashrate,
+                                            // masternodesCount: JSON.parse(masterNodesCount),
+                                            connections: parseInt(connections),
+                                            blockcount: parseInt(blockcount),
+                                            last_block: latestTx[0].blockindex,
+                                            supply: supply,
+                                            version: info.version,
+                                            protocol: info.protocolversion,
+                                            users_tx_count_24_hours: users_tx_count_24_hours,
+                                            users_tx_chart: users_tx_chart,
+                                            // last_price: stats.last_price,
+                                        };
+                                        console.log(stats)
+                                        StatsController.updateWalletStats(stats, function (err) {
+                                            if (err) {
+                                                console.log(err)
+                                            }
+                                            console.log('reindex cluster complete - ', latestTx[0].blockindex);
+                                            console.log('took - ', helpers.getFinishTime(startTime));
+                                            deleteFile();
+                                            db.multipleDisconnect();
+                                            process.exit();
+                                        });
+                                    });
+                                }).catch(function (err) {
+                                    console.log(err)
+                                    if (err && err.toString().indexOf("couldn't connect to server") > -1) {
+                                        console.log('\n*******************************************************************');
+                                        console.log('******wallet disconnected please make sure wallet has started******');
+                                        console.log('*******************************************************************\n');
                                         deleteFile();
                                         db.multipleDisconnect();
-                                        process.exit();
-                                    });
-                                });
+                                        process.exit(1);
+                                    }
+                                })
                             }).catch(function (err) {
                                 console.log(err)
                                 if (err && err.toString().indexOf("couldn't connect to server") > -1) {
@@ -5487,6 +5500,17 @@ function updateStats() {
                                 process.exit(1);
                             }
                         })
+                        // }).catch(function(err) {
+                        //     console.log(err)
+                        //     if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                        //         console.log('\n*******************************************************************');
+                        //         console.log('******wallet disconnected please make sure wallet has started******');
+                        //         console.log('*******************************************************************\n');
+                        //         deleteFile();
+                        //         db.multipleDisconnect();
+                        //         process.exit(1);
+                        //     }
+                        // })
                     }).catch(function (err) {
                         console.log(err)
                         if (err && err.toString().indexOf("couldn't connect to server") > -1) {
@@ -5498,34 +5522,13 @@ function updateStats() {
                             process.exit(1);
                         }
                     })
-                    // }).catch(function(err) {
-                    //     console.log(err)
-                    //     if(err && err.toString().indexOf("couldn't connect to server") > -1) {
-                    //         console.log('\n*******************************************************************');
-                    //         console.log('******wallet disconnected please make sure wallet has started******');
-                    //         console.log('*******************************************************************\n');
-                    //         deleteFile();
-                    //         db.multipleDisconnect();
-                    //         process.exit(1);
-                    //     }
-                    // })
-                }).catch(function (err) {
-                    console.log(err)
-                    if (err && err.toString().indexOf("couldn't connect to server") > -1) {
-                        console.log('\n*******************************************************************');
-                        console.log('******wallet disconnected please make sure wallet has started******');
-                        console.log('*******************************************************************\n');
-                        deleteFile();
-                        db.multipleDisconnect();
-                        process.exit(1);
-                    }
-                })
-            } else {
-                console.log('reindex no blocks found');
-                deleteFile();
-                db.multipleDisconnect();
-                process.exit();
-            }
+                } else {
+                    console.log('reindex no blocks found');
+                    deleteFile();
+                    db.multipleDisconnect();
+                    process.exit();
+                }
+            });
         });
 
     })

@@ -643,6 +643,110 @@ function getUsersTxsCount24Hours(cb) {
     })
 }
 
+function getUsersTxsWeeklyChart(cb) {
+    // TxVinVout[db.getCurrentConnection()].find({type: {$eq: tx_types.NORMAL}, timestamp: {$gte : Date.now() / 1000 - 24*60*60}}, {_id: 0}).countDocuments(function(err, tx) {
+    //     if(tx) {
+    //         return cb(tx);
+    //     } else {
+    //         return cb();
+    //     }
+    // });
+    TxVinVout[db.getCurrentConnection()].aggregate([
+        {$sort:{timestamp:-1}},
+        // {$limit: 100000},
+        {"$match" : {timestamp:{$gte: Date.now() / 1000 - 7*24*60*60}}},
+        {"$match" : {type: {$eq: tx_types.NORMAL}}},
+        {$project: {
+                "date": {
+                    $dateToString: {
+                        date: {
+                            "$add": [
+                                new Date(0), // GTM+2
+                                {"$multiply": ["$timestamp", 1000]}
+                            ]
+                        },
+                        format: "%Y-%m-%d"
+                    }
+                },
+                "year": {
+                    "$year": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                },
+                "month": {
+                    "$month": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                },
+                "day": {
+                    "$dayOfMonth": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                },
+                "hour": {
+                    "$hour": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                },
+                "week": {
+                    "$isoWeek": {
+                        "$add": [
+                            new Date(0),
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                },
+                "total": "$total",
+                "timestamp": "$timestamp"
+            }
+        },
+        {$group: {
+                "_id": {
+                    "year": "$year",
+                    "month": "$month",
+                    "day": "$day",
+                    "hour": "$hour"
+                    // "week": "$week"
+                },
+                "week": {$first: "$week"},
+                "date": {$first: "$date"},
+                "hour": {$first: "$hour"},
+                "timestamp": {$first: "$timestamp"},
+                "count" : { "$sum" : 1 },
+                "totalAmountADay" : { "$sum" : "$total" }
+            }},
+        {$sort:{_id:1}},
+        {$project: {
+                "_id": 0,
+                "date": 1,
+                "hour": 1,
+                "count": 1,
+            }
+        },
+    ]).allowDiskUse(true).exec(function(err, txs) {
+        if(err) {
+            console.log(err);
+        }
+        if(txs) {
+            return cb(txs);
+        } else {
+            return cb();
+        }
+    })
+}
+
 
 function getLastTx(cb) {
     TxVinVout[db.getCurrentConnection()].find({'total': {$gt: 0}}).sort({_id: 'desc'}).limit(1).exec(function(err, txs){
@@ -677,4 +781,5 @@ module.exports.saveType = saveType;
 module.exports.getTxBlockFieldsByTxid = getTxBlockFieldsByTxid;
 module.exports.getUsersTxsCount = getUsersTxsCount;
 module.exports.getUsersTxsCount24Hours = getUsersTxsCount24Hours;
+module.exports.getUsersTxsWeeklyChart = getUsersTxsWeeklyChart;
 module.exports.getLastTx = getLastTx;

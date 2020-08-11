@@ -17,6 +17,7 @@ var StatsSchema = new Schema({
   version: { type: String, default: "" },
   protocol: { type: String, default: "" },
   users_tx_count_24_hours: { type: Number, default: 0 },
+  users_tx_chart: { type: Array, default: [] },
   total_wallets_count: { type: Number, default: 0 },
   active_wallets_count: { type: Number, default: 0 },
   dev_wallet_balance: { type: Number, default: 0 },
