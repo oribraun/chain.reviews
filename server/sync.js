@@ -4502,7 +4502,9 @@ if (wallet) {
                 process.exit()
                 return;
             }
-			globalStartGettingTransactions(hash_number);
+			setTimeout(function(){
+				globalStartGettingTransactions(hash_number);
+			})
             break;
         case 'updatemasternodes':
             if(fileExist('mn')) {
