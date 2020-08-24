@@ -6017,7 +6017,7 @@ var globalStartGettingTransactions = function(blockNum) {
                     if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                         globalStartGettingTransactions(blockNum);
                     }
-                    else if(err && err.toString().indexOf('No information available about transaction') > -1) {
+                    else if(err && (err.toString().indexOf('No information available about transaction') > -1 || err.toString().indexOf('The genesis block coinbase is not considered an ordinary transaction') > -1)) {
                         var newTx = new Tx({
                             txid: current_block.tx[i],
                             vin: [],
