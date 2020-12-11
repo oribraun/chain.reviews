@@ -1162,7 +1162,7 @@ if (wallet) {
                     var startTime = new Date();
                     // console.log(`Master ${process.pid} is running`);
                     if(fileExist()) {
-                        // console.log('reindex is in progress');
+                        console.log('reindex is in progress');
                         db.multipleDisconnect();
                         process.exit(1)
                         return;
