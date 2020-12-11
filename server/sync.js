@@ -32,6 +32,7 @@ var commands_require_db = [
     'save_from_tx_vin_vout_and_addresses',
     'save_from_update_addresses_order_and_sum',
     'save_tx_vin_vout_and_addresses_based_on_latest',
+	'save_one_block',
 
     'delete_from',
 
@@ -4494,6 +4495,17 @@ if (wallet) {
                 }
             }
             break;
+		case 'save_one_block':
+		if( !hash_number || isNaN(hash_number)) {
+                console.log('missing block number');
+                db.multipleDisconnect();
+                process.exit()
+                return;
+            }
+			setTimeout(function(){
+				globalStartGettingTransactions(hash_number);
+			})
+            break;
         case 'updatemasternodes':
             if(fileExist('mn')) {
                 // console.log('masternodes update is in progress');
@@ -6017,7 +6029,7 @@ var globalStartGettingTransactions = function(blockNum) {
                     if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                         globalStartGettingTransactions(blockNum);
                     }
-                    else if(err && err.toString().indexOf('No information available about transaction') > -1) {
+                    else if(err && (err.toString().indexOf('No information available about transaction') > -1 || err.toString().indexOf('The genesis block coinbase is not considered an ordinary transaction') > -1)) {
                         var newTx = new Tx({
                             txid: current_block.tx[i],
                             vin: [],
