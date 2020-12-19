@@ -3858,6 +3858,7 @@ if (wallet) {
                 var exit_count = 0;
                 var mongoTimeout = false;
                 var lastOrder = 0;
+                var gettingNextInProgress = false;
                 var startVinVoutClusterLinerAll = function() {
                     var currentBlockIndex = currentBlock;
                     var lastTx;
@@ -3874,11 +3875,13 @@ if (wallet) {
                                 gettingNextTxsCursor(limit, offset, currentBlockIndex, lastTx).then(function (cursor) {
 
                                     function getNext() {
+                                        gettingNextInProgress = true;
                                         return new Promise(function(resolve, reject) {
                                             cursor.next(function (error, nextTx) {
+                                                gettingNextInProgress = false;
                                                 if (error) {
                                                     console.log('cursor error', error);
-                                                    reject();
+                                                    reject(error);
                                                 }
                                                 if (nextTx) {
                                                     resolve(nextTx);
@@ -3890,8 +3893,8 @@ if (wallet) {
                                     }
                                     for (let i = 0; i < cpuCount; i++) {
                                         var worker = cluster.fork();
-                                        (function (w) {
-                                            getNext().then(function (tx) {
+                                        (async function (w) {
+                                            await getNext().then(function (tx) {
                                                 w.send({currentBlock: tx, order: lastOrder + countBlocks});
                                                 countBlocks++;
                                                 currentBlocks.shift();
@@ -3929,9 +3932,9 @@ if (wallet) {
                                             //     startUpdatingAddresses(msg.addreses_to_update)
                                             // }
                                             if (msg.finished) {
-                                                (function (id) {
+                                                (async function (id) {
                                                     clusterQ.push(id);
-                                                    getNext().then(function (tx) {
+                                                    await getNext().then(function (tx) {
                                                         cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
                                                         clusterQ.shift();
                                                         countBlocks++;
