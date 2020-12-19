@@ -3833,20 +3833,20 @@ if (wallet) {
             if (cluster.isMaster) {
                 var startTime = new Date();
                 console.log(`Master ${process.pid} is running`);
-                // if(fileExist()) {
-                //     console.log('reindex is in progress');
-                //     db.multipleDisconnect();
-                //     process.exit(1)
-                //     return;
-                // } else if( !hash_number || isNaN(hash_number)) {
-                //     console.log('missing block number');
-                //     db.multipleDisconnect();
-                //     process.exit(1)
-                //     return;
-                // };
+                if(fileExist()) {
+                    console.log('reindex is in progress');
+                    db.multipleDisconnect();
+                    process.exit(1)
+                    return;
+                } else if( !hash_number || isNaN(hash_number)) {
+                    console.log('missing block number');
+                    db.multipleDisconnect();
+                    process.exit(1)
+                    return;
+                };
                 var currentBlock = hash_number;
                 var startedFromBlock = currentBlock;
-                // createFile();
+                createFile();
                 var currentBlocks = [];
                 var limit = 2000;
                 var gotBlocks = 0;
