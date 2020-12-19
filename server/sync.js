@@ -3893,8 +3893,8 @@ if (wallet) {
                                     }
                                     for (let i = 0; i < cpuCount; i++) {
                                         var worker = cluster.fork();
-                                        (async function (w) {
-                                            await getNext().then(function (tx) {
+                                        (function (w) {
+                                            getNext().then(function (tx) {
                                                 w.send({currentBlock: tx, order: lastOrder + countBlocks});
                                                 countBlocks++;
                                                 currentBlocks.shift();
@@ -3932,17 +3932,25 @@ if (wallet) {
                                             //     startUpdatingAddresses(msg.addreses_to_update)
                                             // }
                                             if (msg.finished) {
-                                                (async function (id) {
+                                                (function (id) {
                                                     clusterQ.push(id);
-                                                    await getNext().then(function (tx) {
-                                                        cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
-                                                        clusterQ.shift();
-                                                        countBlocks++;
-                                                        currentBlocks.shift();
-                                                    }).catch(function (err) {
-                                                        cluster.workers[clusterQ[0]].send({kill: true});
-                                                        clusterQ.shift();
-                                                    })
+                                                    if(!gettingNextInProgress) {
+                                                        function getNextForAllClusters() {
+                                                            getNext().then(function (tx) {
+                                                                cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
+                                                                clusterQ.shift();
+                                                                countBlocks++;
+                                                                currentBlocks.shift();
+                                                                if(clusterQ.length) {
+                                                                    getNextForAllClusters();
+                                                                }
+                                                            }).catch(function (err) {
+                                                                cluster.workers[clusterQ[0]].send({kill: true});
+                                                                clusterQ.shift();
+                                                            })
+                                                        }
+                                                        getNextForAllClusters();
+                                                    }
                                                 })(this.id)
                                             }
                                             if (msg.mongoTimeout) {
