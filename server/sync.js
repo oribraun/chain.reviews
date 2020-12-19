@@ -30,6 +30,7 @@ var commands_require_db = [
 
     'save_from_tx',
     'save_from_tx_vin_vout_and_addresses',
+    'save_from_tx_vin_vout_and_addresses_cursor',
     'save_from_update_addresses_order_and_sum',
     'save_tx_vin_vout_and_addresses_based_on_latest',
 	'save_one_block',
@@ -3828,6 +3829,182 @@ if (wallet) {
                 }
             }
             break;
+        case 'save_from_tx_vin_vout_and_addresses_cursor': // 12:47:25.775 - block count 268159
+            if (cluster.isMaster) {
+                var startTime = new Date();
+                console.log(`Master ${process.pid} is running`);
+                // if(fileExist()) {
+                //     console.log('reindex is in progress');
+                //     db.multipleDisconnect();
+                //     process.exit(1)
+                //     return;
+                // } else if( !hash_number || isNaN(hash_number)) {
+                //     console.log('missing block number');
+                //     db.multipleDisconnect();
+                //     process.exit(1)
+                //     return;
+                // };
+                var currentBlock = hash_number;
+                var startedFromBlock = currentBlock;
+                // createFile();
+                var currentBlocks = [];
+                var limit = 2000;
+                var gotBlocks = 0;
+                var countBlocks = 0;
+                var offset = 0;
+                var cpuCount = numCPUs;
+                var clusterQ = [];
+                var gettingNextTxsInProgress = false;
+                var exit_count = 0;
+                var mongoTimeout = false;
+                var lastOrder = 0;
+                var startVinVoutClusterLinerAll = function() {
+                    var currentBlockIndex = currentBlock;
+                    var lastTx;
+                    TxVinVoutController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted) {
+                        AddressToUpdateController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted2) {
+                            console.log('tx vin vout deleted', numberDeleted);
+                            console.log('address deleted', numberDeleted2);
+                            TxVinVoutController.getAll('order', 'desc', 1, function(latestTx) {
+                                if(latestTx.length) {
+                                    lastOrder = latestTx[0].order;
+                                }
+                                console.log('lastOrder', lastOrder);
+                                gettingNextTxsInProgress = true;
+                                gettingNextTxsCursor(limit, offset, currentBlockIndex, lastTx).then(function (cursor) {
+
+                                    function getNext() {
+                                        return new Promise(function(resolve, reject) {
+                                            cursor.next(function (error, nextTx) {
+                                                if (error) {
+                                                    // console.log('cursor error', error);
+                                                    reject();
+                                                }
+                                                if (nextTx) {
+                                                    resolve(nextTx);
+                                                } else {
+                                                    reject();
+                                                }
+                                            });
+                                        });
+                                    }
+                                    for (let i = 0; i < cpuCount; i++) {
+                                        var worker = cluster.fork();
+                                        (function (w) {
+                                            getNext().then(function (tx) {
+                                                w.send({currentBlock: tx, order: lastOrder + countBlocks});
+                                                countBlocks++;
+                                                currentBlocks.shift();
+                                            }).catch(function (err) {
+                                                w.send({kill: true});
+                                            })
+                                        })(worker);
+                                        worker.on('exit', (code, signal) => {
+                                            exit_count++;
+                                            if (exit_count === cpuCount) {
+                                                if (!updateInProgress) {
+                                                    // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                                    // updateDbAddreess(local_addreses_before_save, function() {
+                                                    //     endReindex();
+                                                    // });
+                                                    if (mongoTimeout) {
+                                                        console.log('\n*******************************************************************');
+                                                        console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                        console.log('*******************************************************************\n');
+                                                        deleteFile();
+                                                        db.multipleDisconnect();
+                                                        process.exit(1);
+                                                    }
+                                                    endReindexNew();
+                                                    // console.log('countBlocks', countBlocks)
+                                                    // console.log('took ', helpers.getFinishTime(startTime));
+                                                    // endReindex();
+                                                }
+                                                // console.log('addreses_to_update', addreses_to_update.length)
+                                            }
+                                            console.log(`worker ${worker.process.pid} died`);
+                                        });
+                                        worker.on('message', function (msg) {
+                                            // if (msg.addreses_to_update) {
+                                            //     startUpdatingAddresses(msg.addreses_to_update)
+                                            // }
+                                            if (msg.finished) {
+                                                (function (id) {
+                                                    clusterQ.push(id);
+                                                    getNext().then(function (tx) {
+                                                        cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
+                                                        clusterQ.shift();
+                                                        countBlocks++;
+                                                        currentBlocks.shift();
+                                                    }).catch(function (err) {
+                                                        cluster.workers[clusterQ[0]].send({kill: true});
+                                                        clusterQ.shift();
+                                                    })
+                                                })(this.id)
+                                            }
+                                            if (msg.mongoTimeout) {
+                                                mongoTimeout = true;
+                                                for (var id in cluster.workers) {
+                                                    cluster.workers[id].send({kill: true});
+                                                }
+                                            }
+                                        })
+                                    };
+                                });
+                            });
+                        })
+                    })
+
+                    // var exit_count = 0;
+                    // cluster.on('exit', (worker, code, signal) => {
+                    //     exit_count++;
+                    //     if (exit_count === cpuCount) {
+                    //         if (!updateInProgress) {
+                    //             // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                    //             // updateDbAddreess(local_addreses_before_save, function() {
+                    //             //     endReindex();
+                    //             // });
+                    //             endReindexNew();
+                    //             // console.log('countBlocks', countBlocks)
+                    //             // console.log('took ', helpers.getFinishTime(startTime));
+                    //             // endReindex();
+                    //         }
+                    //         // console.log('addreses_to_update', addreses_to_update.length)
+                    //     }
+                    //     console.log(`worker ${worker.process.pid} died`);
+                    // });
+                }
+
+                // var addresses = [];
+                // var local_addreses_before_save = [];
+                var updateInProgress = false;
+
+
+                setTimeout(startVinVoutClusterLinerAll)
+                // startVinVoutClusterLinerAll()
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                process.on('message', function(msg) {
+                    if(msg.currentBlock !== undefined) {
+                        startVinVoutClusterLiner(msg.currentBlock, msg.order);
+                    }
+                    if(msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+                var startVinVoutClusterLiner = function(currentBlock, order) {
+                    var tx = currentBlock;
+                    if(tx) {
+                        tx.order = order + 1;
+                        globalCheckVinVoutCluster(tx);
+                    } else {
+                        cluster.worker.send({finished: true});
+                    }
+                }
+            }
+            break;
         case 'save_from_update_addresses_order_and_sum': // 12:47:25.775 - block count 268159
             if (cluster.isMaster) {
                 var startTime = new Date();
@@ -5741,6 +5918,30 @@ var getNextTxs = function(blockindex, lastTx) {
         });
     });
     return promise;
+}
+
+var gettingNextTxsCursor = function(limit, offset, blockindex, lastTx) {
+    var promise = new Promise(function(resolve, reject) {
+        var where = {};
+        var fields = {}
+        offset = offset * limit;
+        if(blockindex) {
+            blockindex = parseInt(blockindex);
+            console.log('blockindex', blockindex);
+            console.log('blockindex + limit', blockindex + limit);
+            where = {$and: [{blockindex : {$gte : blockindex}}, {blockindex : {$lt : blockindex + limit}}]};
+        }
+        if(lastTx) {
+            console.log('lastTx.blockindex', lastTx.blockindex + 1);
+            console.log('lastTx.blockindex + limit', lastTx.blockindex + 1 + limit);
+            where = {$and: [{blockindex : {$gte : lastTx.blockindex + 1}}, {blockindex : {$lt : lastTx.blockindex + 1 + limit}}]};
+        }
+        TxController.getAllCursor(where, fields,'blockindex', 'asc', 0, 0, function(cursor) {
+            resolve(cursor);
+        })
+    });
+    return promise;
+
 }
 var gettingNextTxsVinVout = function(limit, offset, blockindex) {
     var promise = new Promise(function(resolve, reject) {
