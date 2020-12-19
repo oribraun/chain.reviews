@@ -58,6 +58,7 @@ var commands_require_db = [
     'updateclusterstxbyday',
     'updateoneclusterstxbyday',
     'test',
+    'test2',
     'fix_address_order',
     'find_unconfirmed',
     'find_missing_blocks',
@@ -1163,7 +1164,7 @@ if (wallet) {
                     var startTime = new Date();
                     // console.log(`Master ${process.pid} is running`);
                     if(fileExist()) {
-                        // console.log('reindex is in progress');
+                        console.log('reindex is in progress');
                         db.multipleDisconnect();
                         process.exit(1)
                         return;
@@ -4861,6 +4862,30 @@ if (wallet) {
                 limitBigChain = 10000000;
             }
             AddressToUpdateController.getAllUniqueCursor(where, fields,{}, 0, offset, limitBigChain, function(cursor) {
+                function getNext() {
+                    cursor.next(function(error, doc) {
+                        console.log(doc);
+                        console.log(error);
+                        if(doc) {
+                            setTimeout(function(){
+                                getNext();
+                            })
+                        }
+                    });
+                }
+                getNext();
+                // console.log(results);
+            });
+            break;
+        case 'test2':
+            var where = {};
+            var fields = {};
+            where.order = {$not:{$gt: 0}};
+            var limitBigChain = 80000000;
+            if(limitBigChain > 10000000) {
+                limitBigChain = 10000000;
+            }
+            TxController.getAllCursor(where, fields,'blockindex', 'asc', 0, 0, function(cursor) {
                 function getNext() {
                     cursor.next(function(error, doc) {
                         console.log(doc);
