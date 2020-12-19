@@ -3877,7 +3877,7 @@ if (wallet) {
                                         return new Promise(function(resolve, reject) {
                                             cursor.next(function (error, nextTx) {
                                                 if (error) {
-                                                    // console.log('cursor error', error);
+                                                    console.log('cursor error', error);
                                                     reject();
                                                 }
                                                 if (nextTx) {
