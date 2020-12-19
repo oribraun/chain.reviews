@@ -5391,9 +5391,9 @@ if (wallet) {
             TxController.getAllCursor(where, fields,'blockindex', 'asc', 0, 0, function(cursor) {
                 function getNext() {
                     cursor.next(function(error, doc) {
-                        console.log(doc);
-                        console.log(error);
                         if(doc) {
+                            // console.log(error);
+                            console.log(doc.txid);
                             setTimeout(function(){
                                 getNext();
                             })
@@ -6255,12 +6255,12 @@ var gettingNextTxsCursor = function(limit, offset, blockindex, lastTx) {
             blockindex = parseInt(blockindex);
             console.log('blockindex', blockindex);
             console.log('blockindex + limit', blockindex + limit);
-            where = {$and: [{blockindex : {$gte : blockindex}}, {blockindex : {$lt : blockindex + limit}}]};
+            where = {$and: [{blockindex : {$gte : blockindex}}]};
         }
         if(lastTx) {
             console.log('lastTx.blockindex', lastTx.blockindex + 1);
             console.log('lastTx.blockindex + limit', lastTx.blockindex + 1 + limit);
-            where = {$and: [{blockindex : {$gte : lastTx.blockindex + 1}}, {blockindex : {$lt : lastTx.blockindex + 1 + limit}}]};
+            where = {$and: [{blockindex : {$gte : lastTx.blockindex + 1}}]};
         }
         TxController.getAllCursor(where, fields,'blockindex', 'asc', 0, 0, function(cursor) {
             resolve(cursor);
