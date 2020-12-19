@@ -39,6 +39,14 @@ function getAll2(where, fields, sortBy, order, limit, offset, cb) {
         }
     });
 }
+function getAllCursor(where, fields, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    if(sortBy) {
+        sort[sortBy] = order == 'asc' ? 1 : -1;
+    }
+    var cursor = Tx[db.getCurrentConnection()].find(where, fields).sort(sort).limit(limit).skip(offset).cursor().addCursorFlag('noCursorTimeout', true);
+    return cb(cursor);
+}
 
 function getAllJoin(fields, sortBy, order, limit, offset, cb) {
     var sort = {};
@@ -480,6 +488,7 @@ function getAllDuplicate(cb) {
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.getAll2 = getAll2;
+module.exports.getAllCursor = getAllCursor;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
 module.exports.deleteOne = deleteOne;
