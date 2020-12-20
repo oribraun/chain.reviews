@@ -4214,6 +4214,7 @@ if (wallet) {
                                                 countBlocks++;
                                                 currentBlocks.shift();
                                             }).catch(function (err) {
+                                                console.log('cursor err', err);
                                                 w.send({kill: true});
                                             })
                                         })(worker);
@@ -4241,6 +4242,8 @@ if (wallet) {
                                                 // console.log('addreses_to_update', addreses_to_update.length)
                                             }
                                             console.log(`worker ${worker.process.pid} died`);
+                                            console.log('code', code);
+                                            console.log('signal', signal);
                                         });
                                         worker.on('message', function (msg) {
                                             // if (msg.addreses_to_update) {
@@ -4311,6 +4314,9 @@ if (wallet) {
             } else {
                 // Workers can share any TCP connection
                 // In this case it is an HTTP server
+                process.on('SIGTERM', function() {
+                    console.log('*** GOT SIGTERM ***');
+                })
                 process.on('message', function(msg) {
                     if(msg.currentBlock !== undefined) {
                         startVinVoutClusterLiner(msg.currentBlock, msg.order);
