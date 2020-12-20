@@ -44,7 +44,7 @@ function getAllCursor(where, fields, sortBy, order, limit, offset, cb) {
     if(sortBy) {
         sort[sortBy] = order == 'asc' ? 1 : -1;
     }
-    var cursor = Tx[db.getCurrentConnection()].find(where, fields).sort(sort).limit(limit).skip(offset).cursor().addCursorFlag('noCursorTimeout', true);
+    var cursor = Tx[db.getCurrentConnection()].find(where, fields).sort(sort).limit(limit).skip(offset).lean().cursor().addCursorFlag('noCursorTimeout', true);
     return cb(cursor);
 }
 
