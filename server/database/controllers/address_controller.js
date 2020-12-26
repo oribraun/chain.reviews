@@ -729,6 +729,57 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
     });
 }
 
+function getAddressDetailsWithLastestTxs(address, cb) {
+    getOne(address, function(addr) {
+        const obj = {
+            "_id": addr["a_id"],
+            "sent": addr["sent"],
+            "received": addr["received"],
+            "balance": addr["balance"],
+            "last_txs": []
+        }
+        AddressToUpdate[db.getCurrentConnection()].aggregate([
+            { $match : { address : address } },
+            // {$sort:{createdAt:-1}},
+            {"$sort": {timestamp: -1}},
+            {"$limit": 100},
+            {
+                "$unwind": {
+                    "path": "$_id",
+                    "preserveNullAndEmptyArrays": true
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$address",
+                    "last_txs" : { "$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"} }
+                }
+            },
+            {
+                "$project": {
+                    "last_txs": "$last_txs",
+                }
+            },
+        ]).allowDiskUse(true).exec(function(err, results) {
+            if(results && results.length) {
+                obj.last_txs = results[0].last_txs;
+                return cb(obj);
+            } else {
+                return cb(err);
+            }
+        });
+        // return cb(obj);
+    });
+    // AddressToUpdate[db.getCurrentConnection()].find({address : {$eq : address}}, {amount: true}).exec( function (err, results) {
+    //     if(err) {
+    //         cb()
+    //     } else {
+    //         cb(results);
+    //     }
+    // });
+}
+
+
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -750,3 +801,4 @@ module.exports.getGroupCountForAddresses = getGroupCountForAddresses;
 module.exports.findAllWrongOrder = findAllWrongOrder;
 module.exports.getRichlistAndExtraStats = getRichlistAndExtraStats;
 module.exports.getRichlistAndExtraStats2 = getRichlistAndExtraStats2;
+module.exports.getAddressDetailsWithLastestTxs = getAddressDetailsWithLastestTxs;
