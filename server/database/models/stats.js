@@ -16,6 +16,7 @@ var StatsSchema = new Schema({
   last_price: { type: Number, default: 0 },
   version: { type: String, default: "" },
   protocol: { type: String, default: "" },
+  walletversion: { type: String, default: "" },
   users_tx_count_24_hours: { type: Number, default: 0 },
   users_tx_chart: { type: Array, default: [] },
   total_wallets_count: { type: Number, default: 0 },
