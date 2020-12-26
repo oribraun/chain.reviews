@@ -186,7 +186,7 @@ router.get('/getdistribution', (req, res) => {
 // })
 
 router.get('/getAddress/:address', (req, res) => {
-    AddressToUpdateController.getAddressDetailsWithLastestTxs(req.params['address'], function(addressDetails) {
+    AddressController.getAddressDetailsWithLastestTxs(req.params['address'], function(addressDetails) {
         if(addressDetails) {
             res.send(JSON.stringify(addressDetails, null, 2));
         } else {
