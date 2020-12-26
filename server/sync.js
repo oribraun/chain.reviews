@@ -66,6 +66,7 @@ var commands_require_db = [
     'find_missing_blocks',
     'find_orphans_tx_in_address',
     'find_missing_txs',
+    'fix_missing_genesis_block'
 ]
 if(settings[wallet]) {
     if(commands_require_db.indexOf(type) > -1) {
@@ -5821,6 +5822,227 @@ if (wallet) {
                     })
                 }
             }
+            break;
+        case 'fix_missing_genesis_block':
+            var blockNum = 0;
+            BlockController.getOne(blockNum, function(block) {
+                if(!block) {
+                    var txInsertCount = 0;
+                    var blockInserted = false;
+                    wallet_commands.getBlockHash(wallet, blockNum).then(function (hash) {
+                        wallet_commands.getBlock(wallet, hash).then(function (block) {
+                            var current_block = JSON.parse(block);
+                            var newBlock = new Block({
+                                timestamp: current_block.time,
+                                blockhash: current_block.hash,
+                                blockindex: current_block.height,
+                            });
+                            BlockController.updateOne(newBlock, function(err) {
+                                blockInserted = true;
+                                if(err) {
+                                    console.log('create block err ', err);
+                                    db.multipleDisconnect();
+                                    process.exit();
+                                } else {
+                                    updateBlockTx(0, current_block);
+                                }
+                            });
+                            var updateBlockTx = function(i, current_block) {
+                                wallet_commands.getRawTransaction(wallet, current_block.tx[i]).then(function (obj) {
+                                    obj = JSON.parse(obj);
+                                    var newTx = new Tx({
+                                        txid: obj.txid,
+                                        vin: obj.vin,
+                                        vout: obj.vout,
+                                        timestamp: obj.time,
+                                        blockhash: obj.blockhash,
+                                        blockindex: current_block.height,
+                                    });
+
+                                    console.log(current_block.height, obj.txid);
+
+                                    TxController.updateOne(newTx, function (err) {
+                                        txInsertCount++;
+                                        if (err) {
+                                            console.log('err', err.stack);
+                                            db.multipleDisconnect();
+                                            process.exit();
+                                        }
+                                        if (txInsertCount >= current_block.tx.length && blockInserted) {
+                                            db.multipleDisconnect();
+                                            process.exit();
+                                        }
+                                    });
+
+                                    if(i < current_block.tx.length - 1) {
+                                        updateBlockTx(++i, current_block);
+                                    }
+                                }).catch(function (err) {
+                                    if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
+                                        globalStartGettingTransactions(blockNum);
+                                    }
+                                    else if(err && (err.toString().indexOf('No information available about transaction') > -1 ||
+                                        err.toString().indexOf('The genesis block coinbase is not considered an ordinary transaction') > -1 ||
+                                        err.toString().indexOf('"No such mempool or blockchain transaction') > -1)) {
+                                        var newTx = new Tx({
+                                            txid: current_block.tx[i],
+                                            vin: [],
+                                            vout: [],
+                                            timestamp: current_block.time,
+                                            blockhash: current_block.hash,
+                                            blockindex: current_block.height,
+                                        });
+
+                                        console.log(current_block.height, current_block.tx[i]);
+
+                                        TxController.updateOne(newTx, function (err) {
+                                            txInsertCount++;
+                                            if (err) {
+                                                console.log('err', err.stack);
+                                                db.multipleDisconnect();
+                                                process.exit();
+                                            }
+                                            if (txInsertCount >= current_block.tx.length && blockInserted) {
+                                                db.multipleDisconnect();
+                                                process.exit();
+                                            }
+                                        });
+                                        if(i < current_block.tx.length - 1) {
+                                            updateBlockTx(++i, current_block);
+                                        }
+                                    } else {
+                                        console.log('err raw transaction', err);
+                                        db.multipleDisconnect();
+                                        process.exit();
+                                    }
+                                });
+                            }
+                        }).catch(function (err) {
+                            console.log('error getting block - ' + blockNum, err);
+                            db.multipleDisconnect();
+                            process.exit();
+                        });
+                    }).catch(function (err) {
+                        console.log('error getting block hash - ' + blockNum, err);
+                        db.multipleDisconnect();
+                        process.exit();
+                    })
+                } else {
+                    TxVinVoutController.getOne(blockNum, function(tx) {
+                        if (!tx) {
+                            TxController.getOne(blockNum, function(tx) {
+                                helpers.prepare_vin_db(wallet, tx).then(function (vin) {
+                                    helpers.prepare_vout(tx.vout, tx.txid, vin).then(function (obj) {
+                                        helpers.calculate_total(obj.vout).then(function (total) {
+
+                                            var tx_type = tx_types.NORMAL;
+                                            if (!obj.vout.length) {
+                                                tx_type = tx_types.NONSTANDARD;
+                                            } else if (!obj.nvin.length) {
+                                                tx_type = tx_types.POS;
+                                            } else if (obj.nvin.length && obj.nvin[0].addresses === 'coinbase') {
+                                                tx_type = tx_types.NEW_COINS;
+                                            }
+
+                                            var addreses_to_update = [];
+                                            for (var i = 0; i < obj.nvin.length; i++) {
+                                                // TODO update mongodb adress sceme
+                                                addreses_to_update.push({
+                                                    address: obj.nvin[i].addresses,
+                                                    txid: tx.txid,
+                                                    amount: obj.nvin[i].amount,
+                                                    type: 'vin',
+                                                    txid_timestamp: tx.timestamp,
+                                                    blockindex: tx.blockindex,
+                                                    txid_type: tx_type
+                                                })
+                                                // addreses_to_update.push({address: txVinVout.vin[i].addresses, txid: txid, amount: obj.nvin[i].amount, type: 'vin'})
+                                                // update_address(nvin[i].addresses, txid, nvin[i].amount, 'vin')
+                                            }
+                                            for (var i = 0; i < obj.vout.length; i++) {
+                                                // TODO update mongodb adress sceme
+                                                addreses_to_update.push({
+                                                    address: obj.vout[i].addresses,
+                                                    txid: tx.txid,
+                                                    amount: obj.vout[i].amount,
+                                                    type: 'vout',
+                                                    txid_timestamp: tx.timestamp,
+                                                    blockindex: tx.blockindex,
+                                                    txid_type: tx_type
+                                                })
+                                                // addreses_to_update.push({address: obj.vout[i].addresses, txid: txid, amount: obj.vout[i].amount, type: 'vout'})
+                                                // update_address(vout[t].addresses, txid, vout[t].amount, 'vout')
+                                            }
+                                            // if(addreses_to_update.length) {
+                                            //     cluster.worker.send({addreses_to_update: addreses_to_update});
+                                            // }
+                                            var vinvout = {
+                                                txid: tx.txid,
+                                                vin: obj.nvin,
+                                                vout: obj.vout,
+                                                total: total,
+                                                blockindex: tx.blockindex,
+                                                timestamp: tx.timestamp,
+                                                type: tx_type,
+                                                type_str: tx_types.toStr(tx_type),
+                                                order: 0
+                                            };
+                                            var finishUpdateTx = false;
+                                            var finishUpdateAddress = false;
+                                            var insertTx = function () {
+                                                TxVinVoutController.updateOne(vinvout, function (err) {
+                                                    if (err) {
+                                                        console.log('err', err);
+                                                        insertTx();
+                                                    } else {
+                                                        finishUpdateTx = true;
+                                                        console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
+                                                        if (finishUpdateTx && finishUpdateAddress) {
+                                                            db.multipleDisconnect();
+                                                            process.exit();
+                                                        }
+                                                    }
+                                                })
+                                            }
+                                            insertTx();
+
+                                            var insertAddresses = function () {
+                                                if (addreses_to_update.length) {
+                                                    // console.log('updating address - ' + addreses_to_update[0].blockindex, addreses_to_update[0].address);
+                                                    AddressToUpdateController.updateOne(addreses_to_update[0], function (err) {
+                                                        if (err) {
+                                                            console.log(err);
+                                                        } else {
+                                                            addreses_to_update.shift();
+                                                        }
+                                                        insertAddresses();
+                                                    })
+                                                } else {
+                                                    finishUpdateAddress = true;
+                                                    if (finishUpdateTx && finishUpdateAddress) {
+                                                        db.multipleDisconnect();
+                                                        process.exit();
+                                                    }
+                                                }
+                                            }
+                                            insertAddresses();
+                                        })
+                                    })
+                                }).catch(function (err) {
+                                    console.log('tx not found on db - ', tx.blockindex)
+                                    db.multipleDisconnect();
+                                    process.exit();
+                                })
+                            });
+                        } else {
+                            console.log('tx vin vout exists - ' + blockNum);
+                            db.multipleDisconnect();
+                            process.exit();
+                        }
+                    })
+                    console.log('block exists - ' + blockNum);
+                }
+            })
             break;
         default:
             console.log('command not allowed or not exist')
