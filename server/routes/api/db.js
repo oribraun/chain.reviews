@@ -97,7 +97,7 @@ router.get('/getblockcount', (req, res) => {
 
 router.get('/getblockhash/:number', (req, res) => {
     if(isNaN(parseInt(req.params['number']))) {
-        res.send('limit value have to be number');
+        res.send('hash value have to be number');
         return;
     }
     TxController.getOne(req.params['number'],function(result) {
@@ -228,6 +228,13 @@ router.get('/getstats', (req, res) => {
 router.get('/listMasternodes', (req, res) => {
     const response = helpers.getGeneralResponse();
     MasternodeController.getAll('lastseen', 'desc', 0, function(results) {
+        res.send(JSON.stringify(results, null, 2));
+        // db.disconnect();
+    })
+})
+router.get('/getUsersTxsWeeklyChart', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    TxVinVoutController.getUsersTxsWeeklyChart(function(results) {
         res.send(JSON.stringify(results, null, 2));
         // db.disconnect();
     })
@@ -751,5 +758,38 @@ router.get('/getAllClustersWithAddressAndTxsCount/:limit/:offset', (req, res) =>
 //         res.send(JSON.stringify(response, null, 2));
 //     })
 // })
+
+router.get('/getAddressByTx/:tx', (req, res) => {
+    var where = {};
+    where.txid = req.params['tx'];
+    var fields = {_id:0, address: 1, type: 1};
+    var results = [];
+    AddressToUpdateController.getAll2(where, fields, "", "", 0, 0, function(addresses) {
+        if(addresses && addresses.length) {
+            function findAddressCluster(i) {
+                results[i] = {};
+                results[i].address = addresses[i].address;
+                results[i].type = addresses[i].type;
+                ClusterController.getClusterByAddress(addresses[i].address, function(clusters){
+                    results[i].clusters = [];
+                    if(clusters) {
+                        results[i].clusters = clusters;
+                    }
+                    i++
+                    if(i < addresses.length) {
+                        findAddressCluster(i);
+                    } else {
+                        results[0].test = 'asdfasdf'
+                        console.log('results', results)
+                        res.send(JSON.stringify(results, null, 2));
+                    }
+                })
+            }
+            findAddressCluster(0);
+        } else {
+            res.send('no address found');
+        }
+    });
+})
 module.exports = router;
 
