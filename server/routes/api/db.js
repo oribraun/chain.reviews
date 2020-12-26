@@ -195,6 +195,24 @@ router.get('/getAddress/:address', (req, res) => {
     });
 })
 
+router.get('/getTopAddresses', (req, res) => {
+    AddressController.getRichlist('balance', 'desc', 100, function(topAddresses) {
+        if(topAddresses) {
+            const map = topAddresses.map((o) => {
+                return {
+                    address: o.a_id,
+                    balance: o.balance,
+                    sent: o.sent,
+                    received: o.received,
+                }
+            })
+            res.send(JSON.stringify(map, null, 2));
+        } else {
+            res.send('no address found');
+        }
+    });
+})
+
 router.get('/getstats', (req, res) => {
     var wallet = res.locals.wallet;
     var return_hash = { };
