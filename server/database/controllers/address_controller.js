@@ -732,7 +732,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
 function getAddressDetailsWithLastestTxs(address, cb) {
     getOne(address, function(addr) {
         const obj = {
-            "_id": addr["a_id"],
+            "address": addr["a_id"],
             "sent": addr["sent"],
             "received": addr["received"],
             "balance": addr["balance"],

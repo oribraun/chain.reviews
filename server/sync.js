@@ -6218,6 +6218,7 @@ function updateStats() {
                                             last_block: latestTx[0].blockindex,
                                             supply: supply,
                                             version: info.version,
+                                            walletversion: info.walletversion,
                                             protocol: info.protocolversion,
                                             users_tx_count_24_hours: users_tx_count_24_hours,
                                             users_tx_chart: users_tx_chart,

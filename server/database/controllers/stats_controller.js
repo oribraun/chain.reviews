@@ -185,6 +185,7 @@ function updateWalletStats(obj, cb) { // update or create
             stats.supply = obj.supply;
             stats.version = obj.version;
             stats.protocol = obj.protocol;
+            stats.walletversion = obj.walletversion;
             stats.users_tx_count_24_hours = obj.users_tx_count_24_hours;
             stats.users_tx_chart = obj.users_tx_chart;
             stats.save(function(err) {

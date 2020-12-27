@@ -195,11 +195,32 @@ router.get('/getAddress/:address', (req, res) => {
     });
 })
 
+router.get('/getTopAddresses', (req, res) => {
+    AddressController.getRichlist('balance', 'desc', 100, function(topAddresses) {
+        if(topAddresses) {
+            const map = topAddresses.map((o) => {
+                return {
+                    address: o.a_id,
+                    balance: o.balance,
+                    sent: o.sent,
+                    received: o.received,
+                }
+            })
+            res.send(JSON.stringify(map, null, 2));
+        } else {
+            res.send('no address found');
+        }
+    });
+})
+
 router.get('/getstats', (req, res) => {
     var wallet = res.locals.wallet;
     var return_hash = { };
     StatsController.getOne(wallet, function(stats) {
         if(stats) {
+            return_hash.version = stats.version;
+            return_hash.protocol = stats.protocol;
+            return_hash.walletversion = stats.walletversion;
             return_hash.total_wallets_count = stats.total_wallets_count;
             return_hash.active_wallets_count = stats.active_wallets_count;
             return_hash.money_supply = parseFloat(stats.moneysupply);
