@@ -18,6 +18,10 @@ var newCapitalMarket = require('./database/markets/new.capital');
 var wallet = process.argv[2];
 var type = process.argv[3];
 var hash_number = process.argv[4];
+var cpuNumber = process.argv[5];
+if(cpuNumber && parseInt(cpuNumber, 0)) {
+    numCPUs = cpuNumber
+}
 
 var commands_require_db = [
     'save_tx',
