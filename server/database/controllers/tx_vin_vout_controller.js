@@ -500,8 +500,10 @@ function getTransactionsChart(date, cb) {
     var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
     aggregate.push({$match: {timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
     if(date) {
-        var timestamp = new Date(date).getTime() / 1000;
-        aggregate.push({$match: {timestamp: {$gte: timestamp }}});
+        var d = new Date(date);
+        var timestamp = d.getTime() / 1000;
+        var tenDaysFromNow = timestamp +(10*24*60*60*1000);
+        aggregate.push({$match: {timestamp: {$gte: timestamp, $lt: tenDaysFromNow }}});
     }
     aggregate.push({$project: {
             "_id": "_id",
