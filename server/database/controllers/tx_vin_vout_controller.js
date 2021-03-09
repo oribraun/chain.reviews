@@ -503,6 +503,7 @@ function getTransactionsChart(date, cb) {
         var d = new Date(date);
         var timestamp = d.getTime() / 1000;
         var tenDaysFromNow = timestamp +(10*24*60*60*1000);
+        console.log('date', date)
         aggregate.push({$match: {timestamp: {$gte: timestamp, $lt: tenDaysFromNow }}});
     }
     aggregate.push({$project: {
