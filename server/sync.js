@@ -7085,15 +7085,15 @@ function updateTxByDay(wallet) {
                 lastDate = data[1].d
             }
             // console.log('data',lastDate);
-            updateTxByDay(lastDate);
+            startUpdateTxByDay(lastDate);
         } else {
             console.log('no data yet');
-            updateTxByDay("");
+            startUpdateTxByDay("");
             // db.multipleDisconnect()
         }
     })
 
-    function updateTxByDay(dateString) {
+    function startUpdateTxByDay(dateString) {
         TxVinVoutController.getTransactionsChart(dateString, function(txByDays) {
             if(txByDays && txByDays.length) {
                 updateTxByDayOneByOne(txByDays);
