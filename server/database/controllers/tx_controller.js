@@ -484,6 +484,21 @@ function getAllDuplicate(cb) {
         cb(results);
     })
 }
+function getMissingTrasaction(blockindex, cb) {
+    Tx[db.getCurrentConnection()].aggregate([
+        { "$match": { "blockindex": blockindex } },
+        { "$lookup": {
+                "from": "txvinvouts",
+                "localField": "txid",
+                "foreignField": "txid",
+                "as": "__txid"
+            }},
+        { "$match": { "__txid.txid": { "$exists": false } } },
+        {$project: {id: 1, txid: 1, "__txid": 1}}
+    ]).exec(function(err, results) {
+        cb(results);
+    })
+}
 
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
@@ -505,3 +520,4 @@ module.exports.getAll2Join = getAll2Join;
 module.exports.getAllBlocks = getAllBlocks;
 module.exports.getAllTxWithVinVoutByHash = getAllTxWithVinVoutByHash;
 module.exports.getAllDuplicate = getAllDuplicate;
+module.exports.getMissingTrasaction = getMissingTrasaction;
