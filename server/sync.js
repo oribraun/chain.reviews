@@ -6456,7 +6456,6 @@ if (wallet) {
             }
             console.log('hash_number', hash_number)
             TxController.getTxBlockByTxid(hash_number, function(res) {
-                console.log('res', res)
                 var stopProccess = function() {
                     process.exit();
                     db.multipleDisconnect();
@@ -6465,6 +6464,7 @@ if (wallet) {
                     stopProccess();
                 }
                 var tx = res;
+                console.log('tx', tx)
                 helpers.prepare_vin_db(wallet, tx).then(function (vin) {
                     helpers.prepare_vout(tx.vout, tx.txid, vin).then(function (obj) {
                         helpers.calculate_total(obj.vout).then(function (total) {
