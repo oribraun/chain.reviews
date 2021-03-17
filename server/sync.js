@@ -6460,7 +6460,7 @@ if (wallet) {
                     process.exit();
                     db.multipleDisconnect();
                 }
-                if(!res.length) {
+                if(!res) {
                     stopProccess();
                 }
                 var tx = res;
