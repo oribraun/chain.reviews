@@ -6415,9 +6415,14 @@ if (wallet) {
                 db.multipleDisconnect();
                 return;
             }
+            console.log('hash_number', hash_number)
             TxController.getMissingTrasaction(hash_number, function(res) {
                 console.log('res', res)
-                wallet_commands.getRawTransactionFull(wallet, res.txid).then(function (obj) {
+                if(!res.length) {
+                    process.exit();
+                    db.multipleDisconnect();
+                }
+                wallet_commands.getRawTransactionFull(wallet, res[0].txid).then(function (obj) {
                     var addresses = [];
                     for (var i in obj.addreses_to_update) {
                         addresses.push(obj.addreses_to_update[i].address)
