@@ -33,5 +33,5 @@
         "port": 27017
     },
     "masternode_required": 50000,
-    "active": true
+    "active": false
 }
