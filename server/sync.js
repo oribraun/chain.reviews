@@ -1363,13 +1363,13 @@ if (wallet) {
                     // allBlocksCount = 152939;
                     var startTime = new Date();
                     // console.log(`Master ${process.pid} is running`);
-                    if(fileExist()) {
-                        console.log('reindex is in progress');
-                        db.multipleDisconnect();
-                        process.exit(1)
-                        return;
-                    }
-                    createFile();
+                    // if(fileExist()) {
+                    //     console.log('reindex is in progress');
+                    //     db.multipleDisconnect();
+                    //     process.exit(1)
+                    //     return;
+                    // }
+                    // createFile();
                     var fromBlock = 0;
                     var toBlock = 112709;
                     var currentBlock = fromBlock;
