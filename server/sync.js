@@ -5271,7 +5271,10 @@ if (wallet) {
                                                 db.multipleDisconnect();
                                                 process.exit(1);
                                             }
-                                            endReindexNew();
+                                            console.log('took - ', helpers.getFinishTime(startTime));
+                                            deleteFile();
+                                            db.multipleDisconnect();
+                                            process.exit();
                                             // console.log('countBlocks', countBlocks)
                                             // console.log('took ', helpers.getFinishTime(startTime));
                                             // endReindex();
