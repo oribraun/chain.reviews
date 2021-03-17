@@ -44,6 +44,7 @@ var commands_require_db = [
 
     'save_tx_linear',
     'reindex_block_only_from',
+    'reindex_block_only_from_cursor',
 
     'update_address_type',
     'update_address_type_timestamp',
@@ -5191,6 +5192,180 @@ if (wallet) {
                 }
             }
             break;
+        case 'reindex_block_only_from_cursor':
+            if (cluster.isMaster) {
+                var startTime = new Date();
+                console.log(`Master ${process.pid} is running`);
+                if(fileExist()) {
+                    console.log('reindex is in progress');
+                    db.multipleDisconnect();
+                    process.exit(1)
+                    return;
+                } else if( !hash_number || isNaN(hash_number)) {
+                    console.log('missing block number');
+                    db.multipleDisconnect();
+                    process.exit(1)
+                    return;
+                };
+                var currentBlock = hash_number;
+                var startedFromBlock = currentBlock;
+                createFile();
+                var currentBlocks = [];
+                var limit = 20000;
+                var countBlocks = 0;
+                var offset = 0;
+                var cpuCount = numCPUs;
+                var clusterQ = [];
+                var gettingNextTxsInProgress = false;
+                var exit_count = 0;
+                var mongoTimeout = false;
+                var startGettingNextBlocks = function() {
+                    var currentBlockIndex = currentBlock;
+                    BlockController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted2) {
+                        console.log('blocks deleted', numberDeleted2);
+                        gettingNextTxsInProgress = true;
+                        gettingNextTxsCursor(limit, offset, currentBlockIndex, lastTx).then(function (cursor) {
+
+                            function getNext() {
+                                gettingNextInProgress = true;
+                                return new Promise(function(resolve, reject) {
+                                    cursor.next(function (error, nextTx) {
+                                        gettingNextInProgress = false;
+                                        if (error) {
+                                            console.log('cursor error', error);
+                                            reject(error);
+                                        }
+                                        if (nextTx) {
+                                            resolve(nextTx);
+                                        } else {
+                                            reject();
+                                        }
+                                    });
+                                });
+                            }
+                            for (let i = 0; i < cpuCount; i++) {
+                                var worker = cluster.fork();
+                                (function (w) {
+                                    getNext().then(function (tx) {
+                                        w.send({currentBlock: tx});
+                                        countBlocks++;
+                                        currentBlocks.shift();
+                                    }).catch(function (err) {
+                                        console.log('cursor err', err);
+                                        w.send({kill: true});
+                                    })
+                                })(worker);
+                                worker.on('exit', (code, signal) => {
+                                    exit_count++;
+                                    if (exit_count === cpuCount) {
+                                        if (!updateInProgress) {
+                                            // console.log('local_addreses_before_save', local_addreses_before_save.length);
+                                            // updateDbAddreess(local_addreses_before_save, function() {
+                                            //     endReindex();
+                                            // });
+                                            if (mongoTimeout) {
+                                                console.log('\n*******************************************************************');
+                                                console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                                console.log('*******************************************************************\n');
+                                                deleteFile();
+                                                db.multipleDisconnect();
+                                                process.exit(1);
+                                            }
+                                            endReindexNew();
+                                            // console.log('countBlocks', countBlocks)
+                                            // console.log('took ', helpers.getFinishTime(startTime));
+                                            // endReindex();
+                                        }
+                                        // console.log('addreses_to_update', addreses_to_update.length)
+                                    }
+                                    console.log(`worker ${worker.process.pid} died`);
+                                    console.log('code', code);
+                                    console.log('signal', signal);
+                                });
+                                worker.on('message', function (msg) {
+                                    // if (msg.addreses_to_update) {
+                                    //     startUpdatingAddresses(msg.addreses_to_update)
+                                    // }
+                                    if (msg.finished) {
+                                        (function (id) {
+                                            clusterQ.push(id);
+                                            if(!gettingNextInProgress) {
+                                                function getNextForAllClusters() {
+                                                    getNext().then(function (tx) {
+                                                        cluster.workers[clusterQ[0]].send({currentBlock: tx});
+                                                        clusterQ.shift();
+                                                        countBlocks++;
+                                                        currentBlocks.shift();
+                                                        if(clusterQ.length) {
+                                                            getNextForAllClusters();
+                                                        }
+                                                    }).catch(function (err) {
+                                                        cluster.workers[clusterQ[0]].send({kill: true});
+                                                        clusterQ.shift();
+                                                    })
+                                                }
+                                                getNextForAllClusters();
+                                            }
+                                        })(this.id)
+                                    }
+                                    if (msg.mongoTimeout) {
+                                        mongoTimeout = true;
+                                        for (var id in cluster.workers) {
+                                            cluster.workers[id].send({kill: true});
+                                        }
+                                    }
+                                })
+                            };
+                        });
+                    })
+                }
+
+                // var addresses = [];
+                // var local_addreses_before_save = [];
+                var updateInProgress = false;
+
+
+                setTimeout(startGettingNextBlocks)
+                // startVinVoutClusterLinerAll()
+            } else {
+                process.on('message', function(msg) {
+                    if(msg.currentBlock !== undefined) {
+                        startUpdateBlock(msg.currentBlock);
+                    }
+                    if(msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+                var startUpdateBlock = function(currentTx) {
+                    var tx = currentTx;
+                    var newBlock = new Block({
+                        timestamp: tx.timestamp,
+                        blockhash: tx.blockhash,
+                        blockindex: tx.blockindex,
+                    });
+                    var checkBlock = function() {
+                        BlockController.updateOne(newBlock,  function(err) {
+                            if(err) {
+                                // console.log('err', err);
+                                if(err.stack.indexOf('Server selection timed out') > -1 ||
+                                    err.stack.indexOf('interrupted at shutdown') > -1) {
+                                    cluster.worker.send({mongoTimeout: true});
+                                }
+                            } else {
+                                console.log('updated block - ' + newBlock.blockindex, tx.txid);
+                            }
+                            cluster.worker.send({finished: true});
+                        });
+                    }
+                    if(tx) {
+                        checkBlock();
+                    } else {
+                        cluster.worker.send({finished: true});
+                    }
+                }
+            }
+            break;
 		case 'save_one_block':
 		if( !hash_number || isNaN(hash_number)) {
                 console.log('missing block number');
@@ -6254,30 +6429,34 @@ function startReindex(onEnd) { // creating file to block other process and reset
 }
 
 function deleteDb(onEnd) {
-    BlockController.deleteAll(function(numberRemoved) {
-        TxController.deleteAll(function (numberRemoved) {
-            console.log(numberRemoved);
-            TxVinVoutController.deleteAll(function (numberRemoved) {
+    beforeDeletingDb(function() {
+        BlockController.deleteAll(function (numberRemoved) {
+            TxController.deleteAll(function (numberRemoved) {
                 console.log(numberRemoved);
-                var obj = {
-                    coin: settings[wallet].coin,
-                    received: [],
-                    balance: [],
-                }
-                RichlistController.updateOne(obj, function (err, obj) {
-                    if (err) {
-                        console.log(err);
+                TxVinVoutController.deleteAll(function (numberRemoved) {
+                    console.log(numberRemoved);
+                    var obj = {
+                        coin: settings[wallet].coin,
+                        received: [],
+                        balance: [],
                     }
-                    StatsController.update(settings[wallet].coin, {last_block: 0}, function (err) {
+                    RichlistController.updateOne(obj, function (err, obj) {
                         if (err) {
-                            console.log(err)
+                            console.log(err);
                         }
-                        onEnd();
-                    });
-                })
+                        StatsController.update(settings[wallet].coin, {last_block: 0}, function (err) {
+                            if (err) {
+                                console.log(err)
+                            }
+                            onEnd();
+                        });
+                    })
+                });
             });
         });
-    });
+    }, function() {
+        db.multipleDisconnect();
+    })
 }
 
 function deleteDbFrom(blockindex, onEnd) {
@@ -7377,6 +7556,26 @@ function updateClusterTxByDay(wallet) {
             })
         }
     }
+}
+function beforeDeletingDb(onYes, onNo) {
+    console.log('are you sure you want to fully delete db?');
+    console.log('Y/N');
+    process.stdin.on("data", function(d) {
+        if(d.toString().trim().toLowerCase() === 'y') {
+            process.stdin.pause();
+            if(typeof onYes === 'function') {
+                onYes()
+            }
+        }
+        else if(d.toString().trim().toLowerCase() === 'n') {
+            process.stdin.pause();
+            if(typeof onNo === 'function') {
+                onNo()
+            }
+        } else {
+            console.log('please write Y or N')
+        }
+    });
 }
 function forceProcess(onYes, onNo) {
     console.log('would you like to force reindex');
