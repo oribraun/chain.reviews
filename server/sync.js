@@ -72,7 +72,9 @@ var commands_require_db = [
     'find_missing_blocks',
     'find_orphans_tx_in_address',
     'find_missing_txs',
-    'fix_missing_genesis_block'
+    'fix_missing_genesis_block',
+
+    'get_missing_tx_vinvout'
 ]
 if(settings[wallet]) {
     if(commands_require_db.indexOf(type) > -1) {
@@ -6406,6 +6408,38 @@ if (wallet) {
                     console.log('block exists - ' + blockNum);
                 }
             })
+            break;
+        case 'get_missing_tx_vinvout':
+            // blockindex - 328899
+            if(!hash_number) {
+                db.multipleDisconnect();
+                return;
+            }
+            TxController.getMissingTrasaction(hash_number, function(res) {
+                console.log('res', res)
+                wallet_commands.getRawTransactionFull(wallet, res.txid).then(function (obj) {
+                    var addresses = [];
+                    for (var i in obj.addreses_to_update) {
+                        addresses.push(obj.addreses_to_update[i].address)
+                    }
+                    console.log('addresses', addresses);
+                }).catch(function (err) {
+                    console.log('error getting rawtransaction', err);
+                    process.exit();
+                    db.multipleDisconnect();
+                });
+            })
+            // db.txes.aggregate([
+            //     { "$match": { "blockindex": 328899 } },
+            //     { "$lookup": {
+            //             "from": "txvinvouts",
+            //             "localField": "txid",
+            //             "foreignField": "txid",
+            //             "as": "__txid"
+            //         }},
+            //     { "$match": { "__txid.txid": { "$exists": false } } },
+            //     {$project: {id: 1, txid: 1, "__txid": 1}}
+            // ])
             break;
         default:
             console.log('command not allowed or not exist')
