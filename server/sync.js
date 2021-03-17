@@ -1377,8 +1377,8 @@ if (wallet) {
                         process.exit()
                         return;
                     }
-                    var fromBlock = 0;
-                    var toBlock = hash_number;
+                    var fromBlock = 112710;
+                    var toBlock = 112715;
                     var currentBlock = fromBlock;
                     allBlocksCount = toBlock;
                     var exit_count = 0;
