@@ -29,6 +29,7 @@ var commands_require_db = [
     'reindex_addresses',
 
     'update_tx',
+    'update_tx_manual',
     'update_tx_vin_vout_and_addresses',
     'update_addresses_order_and_sum',
 
@@ -1271,6 +1272,180 @@ if (wallet) {
                                 }
                             }
                         });
+                    }
+
+                    //TODO
+                    // check last 6 db blocks exist in wallet
+                    var checkLatestBlocksInWallet = function() {
+                        BlockController.getAll('blockindex', 'desc', 8, function (latestTx) {
+                            function startCheckingBlock(i) {
+                                wallet_commands.getBlock(wallet, latestTx[i].blockhash).then((block) => {
+                                    block = JSON.parse(block);
+                                    // console.log(results.height);
+                                    if(block.confirmations >= 0) {
+                                        if (latestTx[i + 1] !== undefined) {
+                                            startCheckingBlock(++i);
+                                        } else {
+                                            // console.log('finish checking all is ok');
+                                            startReIndexClusterLinerAll();
+                                        }
+                                    } else {
+                                        console.log('on update negative confirmation', block.confirmations);
+                                        console.log('on update negative index', block.height);
+                                        console.log('on update negative hash',  block.hash);
+                                        var failedBlockIndex = latestTx[i].blockindex;
+                                        // console.log('err', err);
+                                        console.log('failedBlockIndex', failedBlockIndex);
+                                        BlockController.deleteAllWhereGte(failedBlockIndex, function(numberRemoved) {
+                                            TxController.deleteAllWhereGte(failedBlockIndex, function (numberRemoved) {
+                                                TxVinVoutController.deleteAllWhereGte(failedBlockIndex, function(numberDeleted) {
+                                                    AddressToUpdateController.deleteAllWhereGte(failedBlockIndex, function (numberDeleted2) {
+                                                        startReIndexClusterLinerAll();
+                                                        // console.log('deleted all before start update')
+                                                    })
+                                                });
+                                            })
+                                        })
+                                    }
+                                }).catch((err) => {
+                                    // delete all blocks from current number and update again
+                                    var failedBlockIndex = latestTx[i].blockindex;
+                                    // console.log('err', err);
+                                    console.log('failedBlockIndex', failedBlockIndex);
+                                    BlockController.deleteAllWhereGte(failedBlockIndex, function(numberRemoved) {
+                                        TxController.deleteAllWhereGte(failedBlockIndex, function (numberRemoved) {
+                                            TxVinVoutController.deleteAllWhereGte(failedBlockIndex, function(numberDeleted) {
+                                                AddressToUpdateController.deleteAllWhereGte(failedBlockIndex, function (numberDeleted2) {
+                                                    startReIndexClusterLinerAll();
+                                                    // console.log('deleted all before start update')
+                                                })
+                                            });
+                                        })
+                                    })
+                                })
+                            }
+                            if(latestTx && latestTx.length) {
+                                startCheckingBlock(0);
+                            } else {
+                                startReIndexClusterLinerAll();
+                            }
+                        })
+                    }
+                    setTimeout(checkLatestBlocksInWallet);
+                }).catch(function(err) {
+                    console.log('error getting block count', err);
+                    if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                        console.log('\n*******************************************************************');
+                        console.log('******wallet disconnected please make sure wallet has started******');
+                        console.log('*******************************************************************\n');
+                    }
+                    deleteFile();
+                    db.multipleDisconnect();
+                    process.exit(1);
+                });;
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                process.on('message', function(msg) {
+                    if(msg.blockNum !== undefined) {
+                        globalStartGettingTransactions(msg.blockNum);
+                    }
+                    if(msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+            }
+            break;
+        case 'update_tx_manual': // 0:52:3.69 - block count 268159
+            if (cluster.isMaster) {
+                wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
+                    // allBlocksCount = 152939;
+                    var startTime = new Date();
+                    // console.log(`Master ${process.pid} is running`);
+                    if(fileExist()) {
+                        console.log('reindex is in progress');
+                        db.multipleDisconnect();
+                        process.exit(1)
+                        return;
+                    }
+                    createFile();
+                    var fromBlock = 0;
+                    var toBlock = 112709;
+                    var currentBlock = fromBlock;
+                    allBlocksCount = toBlock;
+                    var exit_count = 0;
+                    var cpuCount = 1;
+                    var walletDisconnected = false;
+                    var mongoTimeout = false;
+                    var blockNotFound = false;
+                    var startedFromBlock = 0;
+                    var startReIndexClusterLinerAll = function() {
+                            for (let i = 0; i < cpuCount; i++) {
+                                var worker = cluster.fork();
+                                worker.on('message', function (msg) {
+                                    if (msg.finished) {
+                                        (function (id, block) {
+                                            if (block <= allBlocksCount) {
+                                                cluster.workers[id].send({blockNum: block});
+                                            } else {
+                                                cluster.workers[id].send({kill: true});
+                                            }
+                                        })(this.id, currentBlock++)
+                                    }
+                                    if (msg.blockNotFound) {
+                                        blockNotFound = msg.blockNotFound;
+                                        for(var id in cluster.workers) {
+                                            cluster.workers[id].send({kill: true});
+                                        }
+                                    }
+                                    if (msg.walletDisconnected) {
+                                        walletDisconnected = true;
+                                        cluster.workers[this.id].send({kill: true});
+                                    }
+                                    if (msg.mongoTimeout) {
+                                        mongoTimeout = true;
+                                        for(var id in cluster.workers) {
+                                            cluster.workers[id].send({kill: true});
+                                        }
+                                    }
+                                })
+                                worker.on('exit', (code, signal) => {
+                                    exit_count++;
+                                    if (exit_count === cpuCount) {
+                                        var exit_code = 0;
+                                        if(walletDisconnected) {
+                                            console.log('\n*******************************************************************');
+                                            console.log('******wallet was disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                            console.log('*******************************************************************\n');
+                                            exit_code = 1;
+                                        }
+                                        if(mongoTimeout) {
+                                            console.log('\n*******************************************************************');
+                                            console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                            console.log('*******************************************************************\n');
+                                            exit_code = 1;
+                                        }
+                                        if(blockNotFound) {
+                                            console.log('\n*******************************************************************');
+                                            console.log('****** block not found, please reindex again from block - ' + blockNotFound + '******')
+                                            console.log('*******************************************************************\n');
+                                            exit_code = 1;
+                                        }
+                                        // console.log('took - ', helpers.getFinishTime(startTime));
+                                        deleteFile();
+                                        db.multipleDisconnect();
+                                        process.exit(exit_code);
+                                    }
+                                    // console.log(`worker ${worker.process.pid} died`);
+                                });
+                                if(currentBlock <= allBlocksCount) {
+                                    worker.send({blockNum: currentBlock});
+                                    currentBlock++;
+                                } else {
+                                    worker.send({kill: true});
+                                }
+                            }
                     }
 
                     //TODO
