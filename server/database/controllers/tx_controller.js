@@ -496,6 +496,7 @@ function getMissingTrasaction(blockindex, cb) {
         { "$match": { "__txid.txid": { "$exists": false } } },
         {$project: {id: 1, txid: 1, "__txid": 1}}
     ]).exec(function(err, results) {
+        console.log('err', err);
         cb(results);
     })
 }
