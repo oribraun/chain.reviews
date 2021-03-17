@@ -6464,7 +6464,7 @@ if (wallet) {
                     stopProccess();
                 }
                 var tx = res;
-                console.log('tx', tx)
+                // console.log('tx', tx)
                 helpers.prepare_vin_db(wallet, tx).then(function (vin) {
                     helpers.prepare_vout(tx.vout, tx.txid, vin).then(function (obj) {
                         helpers.calculate_total(obj.vout).then(function (total) {
@@ -6499,7 +6499,9 @@ if (wallet) {
                             var finishUpdateAddress = false;
                             var insertTx = function() {
                                 console.log('vinvout', vinvout);
-                                insertTx();
+                                setTimeout(() => {
+                                    insertTx();
+                                })
                                 return;
                                 TxVinVoutController.updateOne(vinvout, function (err) {
                                     if (err) {
@@ -6525,7 +6527,9 @@ if (wallet) {
                                 if (addreses_to_update.length) {
                                     console.log('updating address - ' + addreses_to_update[0].blockindex, addreses_to_update[0].address);
                                     addreses_to_update.shift();
-                                    insertAddresses();
+                                    setTimeout(() => {
+                                        insertAddresses();
+                                    });
                                     return;
                                     AddressToUpdateController.updateOne(addreses_to_update[0], function(err){
                                         if(err) {
