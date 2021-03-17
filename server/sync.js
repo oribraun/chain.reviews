@@ -6419,8 +6419,7 @@ if (wallet) {
             TxController.getMissingTrasaction(hash_number, function(res) {
                 console.log('res', res)
                 if(!res.length) {
-                    process.exit();
-                    db.multipleDisconnect();
+                   res.push({txid:  "3155245f23904df049dd994a35076c09dd528d90b1879ab4e090c5f85e45a660"})
                 }
                 wallet_commands.getRawTransactionFull(wallet, res[0].txid).then(function (obj) {
                     var addresses = [];
