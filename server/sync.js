@@ -29,7 +29,7 @@ var commands_require_db = [
     'reindex_addresses',
 
     'update_tx',
-    'update_tx_manual',
+    'fix_tx_from_to',
     'update_tx_vin_vout_and_addresses',
     'update_addresses_order_and_sum',
 
@@ -1357,7 +1357,7 @@ if (wallet) {
                 });
             }
             break;
-        case 'update_tx_manual': // 0:52:3.69 - block count 268159
+        case 'fix_tx_from_to': // 0:52:3.69 - block count 268159
             if (cluster.isMaster) {
                 wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
                     // allBlocksCount = 152939;
@@ -1370,8 +1370,14 @@ if (wallet) {
                     //     return;
                     // }
                     // createFile();
+                    if( !hash_number || isNaN(hash_number)) {
+                        console.log('missing block number');
+                        db.multipleDisconnect();
+                        process.exit()
+                        return;
+                    }
                     var fromBlock = 0;
-                    var toBlock = 112709;
+                    var toBlock = hash_number;
                     var currentBlock = fromBlock;
                     allBlocksCount = toBlock;
                     var exit_count = 0;
@@ -7085,6 +7091,7 @@ var globalCheckVinVoutCluster = function(tx) {
                 var insertTx = function() {
                     TxVinVoutController.updateOne(vinvout, function (err) {
                         if (err) {
+                            console.log('vinvout', vinvout);
                             console.log('err', err);
                             if (err.stack.indexOf('Server selection timed out') > -1 ||
                                 err.stack.indexOf('interrupted at shutdown') > -1) {
