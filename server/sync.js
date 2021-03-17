@@ -74,7 +74,8 @@ var commands_require_db = [
     'find_missing_txs',
     'fix_missing_genesis_block',
 
-    'get_missing_tx_vinvout'
+    'get_missing_tx_vinvout',
+    'update_one_tx_to_vinvout'
 ]
 if(settings[wallet]) {
     if(commands_require_db.indexOf(type) > -1) {
@@ -6446,6 +6447,22 @@ if (wallet) {
             //     { "$match": { "__txid.txid": { "$exists": false } } },
             //     {$project: {id: 1, txid: 1, "__txid": 1}}
             // ])
+            break;
+        case 'update_one_tx_to_vinvout':
+            // blockindex - 328899
+            if(!hash_number) {
+                db.multipleDisconnect();
+                return;
+            }
+            console.log('hash_number', hash_number)
+            TxController.getTxBlockByTxid(hash_number, function(res) {
+                console.log('res', res)
+                if(!res.length) {
+                    process.exit();
+                    db.multipleDisconnect();
+                }
+                // globalCheckVinVoutCluster(res);
+            })
             break;
         default:
             console.log('command not allowed or not exist')

@@ -488,13 +488,13 @@ function getMissingTrasaction(blockindex, cb) {
     Tx[db.getCurrentConnection()].aggregate([
         { "$match": { "blockindex": blockindex } },
         { "$lookup": {
-                "from": "txvinvouts",
+                "from":  TxVinVout[db.getCurrentConnection()].collection.name,
                 "localField": "txid",
                 "foreignField": "txid",
-                "as": "__txid"
+                "as": "vintx"
             }},
-        { "$match": { "__txid.txid": { "$exists": false } } },
-        {$project: {id: 1, txid: 1, "__txid": 1}}
+        { "$match": { "vintx.txid": { "$exists": false } } },
+        {$project: {id: 1, txid: 1, "vintx": 1}}
     ]).exec(function(err, results) {
         console.log('err', err);
         cb(results);
