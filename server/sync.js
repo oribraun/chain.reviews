@@ -6427,6 +6427,8 @@ if (wallet) {
                         addresses.push(obj.addreses_to_update[i].address)
                     }
                     console.log('addresses', JSON.stringify(addresses));
+                    process.exit();
+                    db.multipleDisconnect();
                 }).catch(function (err) {
                     console.log('error getting rawtransaction', err);
                     process.exit();
