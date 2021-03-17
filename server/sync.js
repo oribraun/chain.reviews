@@ -72,9 +72,9 @@ var commands_require_db = [
     'find_missing_blocks',
     'find_orphans_tx_in_address',
     'find_missing_txs',
-    'fix_missing_genesis_block'
+    'fix_missing_genesis_block',
 
-    'get_missing_tx_vin_out'
+    'get_missing_tx_vinvout'
 ]
 if(settings[wallet]) {
     if(commands_require_db.indexOf(type) > -1) {
@@ -6409,7 +6409,7 @@ if (wallet) {
                 }
             })
             break;
-        case 'get_missing_tx_vin_vout':
+        case 'get_missing_tx_vinvout':
             // blockindex - 328899
             if(!hash_number) {
                 db.multipleDisconnect();
