@@ -1375,7 +1375,7 @@ if (wallet) {
                     var currentBlock = fromBlock;
                     allBlocksCount = toBlock;
                     var exit_count = 0;
-                    var cpuCount = 1;
+                    var cpuCount = numCPUs;
                     var walletDisconnected = false;
                     var mongoTimeout = false;
                     var blockNotFound = false;
