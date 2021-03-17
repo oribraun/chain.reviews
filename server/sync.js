@@ -6498,11 +6498,6 @@ if (wallet) {
                             var finishUpdateTx = false;
                             var finishUpdateAddress = false;
                             var insertTx = function() {
-                                console.log('vinvout', vinvout);
-                                setTimeout(() => {
-                                    insertTx();
-                                })
-                                return;
                                 TxVinVoutController.updateOne(vinvout, function (err) {
                                     if (err) {
                                         console.log('vinvout', vinvout);
@@ -6525,12 +6520,6 @@ if (wallet) {
 
                             var insertAddresses = function() {
                                 if (addreses_to_update.length) {
-                                    console.log('updating address - ' + addreses_to_update[0].blockindex, addreses_to_update[0].address);
-                                    addreses_to_update.shift();
-                                    setTimeout(() => {
-                                        insertAddresses();
-                                    });
-                                    return;
                                     AddressToUpdateController.updateOne(addreses_to_update[0], function(err){
                                         if(err) {
                                             console.log(err);
