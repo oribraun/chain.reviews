@@ -25,6 +25,7 @@ if(cpuNumber && parseInt(cpuNumber, 0)) {
 
 var commands_require_db = [
     'save_tx',
+    'save_blocks',
     'save_tx_vin_vout_and_addresses',
     'reindex_addresses',
 
@@ -692,6 +693,118 @@ if (wallet) {
                 process.on('message', function(msg) {
                     if(msg.blockNum !== undefined) {
                         globalStartGettingTransactions(msg.blockNum);
+                    }
+                    if(msg.kill) {
+                        db.multipleDisconnect();
+                        process.exit();
+                    }
+                });
+            }
+            break;
+        case 'save_blocks': // 0:52:3.69 - block count 149482
+            if (cluster.isMaster) {
+                wallet_commands.getBlockCount(wallet).then(function (allBlocksCount) {
+                    // allBlocksCount = 152939;
+                    var startTime = new Date();
+                    console.log(`Master ${process.pid} is running`);
+                    startReindex(function(){
+                        BlockController.deleteAll(function (numberRemoved) {
+                            startReIndexClusterLinerAll()
+                        })
+                    })
+                    var currentBlock = 0;
+                    var walletDisconnected = false;
+                    var mongoTimeout = false;
+                    var blockNotFound = false;
+                    var workersBlocksMap = {};
+                    var startReIndexClusterLinerAll = function() {
+                        for (let i = 0; i < numCPUs; i++) {
+                            var worker = cluster.fork();
+                            worker.on('message', function (msg) {
+                                if (msg.finished) {
+                                    (function(id, block){
+                                        if(block <= allBlocksCount ) {
+                                            workersBlocksMap[id] = block;
+                                            cluster.workers[id].send({blockNum: block});
+                                        } else {
+                                            cluster.workers[id].send({kill: true});
+                                        }
+                                    })(this.id, currentBlock++)
+                                }
+                                if (msg.blockNotFound) {
+                                    blockNotFound = msg.blockNumber;
+                                    for(var id in cluster.workers) {
+                                        cluster.workers[id].send({kill: true});
+                                    }
+                                }
+                                if (msg.walletDisconnected) {
+                                    walletDisconnected = true;
+                                    cluster.workers[this.id].send({kill: true});
+                                }
+                                if (msg.mongoTimeout) {
+                                    mongoTimeout = true;
+                                    for(var id in cluster.workers) {
+                                        cluster.workers[id].send({kill: true});
+                                    }
+                                }
+                            })
+                            var exit_count = 0;
+                            worker.on('exit', (code, signal) => {
+                                exit_count++;
+                                if (exit_count === numCPUs) {
+                                    var exit_code = 0;
+                                    if(walletDisconnected) {
+                                        console.log('\n*******************************************************************');
+                                        console.log('******wallet was disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                        console.log('*******************************************************************\n');
+                                        exit_code = 1;
+                                    }
+                                    if(mongoTimeout) {
+                                        console.log('\n*******************************************************************');
+                                        console.log('******mongodb has disconnected, please reindex again from block - ' + startedFromBlock + '******')
+                                        console.log('*******************************************************************\n');
+                                        exit_code = 1;
+                                    }
+                                    if(blockNotFound) {
+                                        console.log('\n*******************************************************************');
+                                        console.log('****** block not found, please reindex again from block - ' + blockNotFound + '******')
+                                        console.log('*******************************************************************\n');
+                                        exit_code = 1;
+                                    }
+                                    console.log('took - ', helpers.getFinishTime(startTime));
+                                    deleteFile();
+                                    db.multipleDisconnect();
+                                    process.exit(exit_code);
+                                }
+                                // console.log(`workers.length`, cluster.workers.length);
+                                console.log(`worker ${worker.process.pid} died`);
+                            });
+                            if(currentBlock <= allBlocksCount ) {
+                                worker.send({blockNum: currentBlock});
+                                currentBlock++;
+                            } else {
+                                worker.send({kill: true});
+                            }
+                        }
+                    }
+                }).catch(function(err) {
+                    console.log('error getting block count', err);
+                    if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                        console.log('\n*******************************************************************');
+                        console.log('******wallet disconnected please make sure wallet has started******');
+                        console.log('*******************************************************************\n');
+                    }
+                    deleteFile();
+                    db.multipleDisconnect();
+                    process.exit(1);
+                });
+            } else {
+                // Workers can share any TCP connection
+                // In this case it is an HTTP server
+                process.on('message', function(msg) {
+                    if(msg.blockNum !== undefined) {
+
+                        globalStartGettingBlocks(msg.blockNum);
                     }
                     if(msg.kill) {
                         db.multipleDisconnect();
@@ -7383,6 +7496,51 @@ var globalStartGettingTransactions = function(blockNum) {
                     }
                 });
             }
+        }).catch(function (err) {
+            if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
+                globalStartGettingTransactions(blockNum);
+            } else {
+                if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                    cluster.worker.send({walletDisconnected: true});
+                }
+                console.log('error getting block - ' + blockNum, err);
+                cluster.worker.send({blockNotFound: blockNum});
+            }
+        });
+    }).catch(function (err) {
+        if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
+            globalStartGettingTransactions(blockNum);
+        } else {
+            if(err && err.toString().indexOf("couldn't connect to server") > -1) {
+                cluster.worker.send({walletDisconnected: true});
+            }
+            console.log('error getting block hash - ' + blockNum, err);
+            cluster.worker.send({blockNotFound: blockNum});
+        }
+    })
+}
+var globalStartGettingBlocks = function(blockNum) {
+    var txInsertCount = 0;
+    var blockInserted = false;
+    wallet_commands.getBlockHash(wallet, blockNum).then(function (hash) {
+        wallet_commands.getBlock(wallet, hash).then(function (block) {
+            // TODO
+            // check if block confirmation not -1
+            var current_block = JSON.parse(block);
+            var newBlock = new Block({
+                timestamp: current_block.time,
+                blockhash: current_block.hash,
+                blockindex: current_block.height,
+            });
+            BlockController.updateOne(newBlock, function(err) {
+                blockInserted = true;
+                if(err) {
+                    console.log('create block err ', err);
+                    cluster.worker.send({blockNotFound: blockNum});
+                } else {
+                    cluster.worker.send({finished: true});
+                }
+            });
         }).catch(function (err) {
             if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
                 globalStartGettingTransactions(blockNum);
