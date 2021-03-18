@@ -7520,7 +7520,6 @@ var globalStartGettingTransactions = function(blockNum) {
     })
 }
 var globalStartGettingBlocks = function(blockNum) {
-    var txInsertCount = 0;
     var blockInserted = false;
     wallet_commands.getBlockHash(wallet, blockNum).then(function (hash) {
         wallet_commands.getBlock(wallet, hash).then(function (block) {
@@ -7543,7 +7542,7 @@ var globalStartGettingBlocks = function(blockNum) {
             });
         }).catch(function (err) {
             if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
-                globalStartGettingTransactions(blockNum);
+                globalStartGettingBlocks(blockNum);
             } else {
                 if(err && err.toString().indexOf("couldn't connect to server") > -1) {
                     cluster.worker.send({walletDisconnected: true});
@@ -7554,7 +7553,7 @@ var globalStartGettingBlocks = function(blockNum) {
         });
     }).catch(function (err) {
         if(err && err.toString().indexOf("couldn't parse reply from server") > -1) {
-            globalStartGettingTransactions(blockNum);
+            globalStartGettingBlocks(blockNum);
         } else {
             if(err && err.toString().indexOf("couldn't connect to server") > -1) {
                 cluster.worker.send({walletDisconnected: true});
