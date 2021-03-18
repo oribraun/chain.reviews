@@ -5752,9 +5752,9 @@ if (wallet) {
                         }
                     });
                 }
-                if(addresses && addresses.length) {
-                    console.log('addresses', addresses.length);
-                    startResetingAddresses(addresses);
+                if(addressesToUpdate && addressesToUpdate.length) {
+                    console.log('addresses', addressesToUpdate.length);
+                    startResetingAddresses(addressesToUpdate);
                 }
             break;
         case 'test':
