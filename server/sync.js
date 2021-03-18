@@ -5142,7 +5142,7 @@ if (wallet) {
                 var startedFromBlock = currentBlock;
                 createFile();
                 var currentBlocks = [];
-                var limit = 200000;
+                var limit = 20000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
@@ -5155,7 +5155,7 @@ if (wallet) {
                     BlockController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted2) {
                         console.log('blocks deleted', numberDeleted2);
                         gettingNextTxsInProgress = true;
-                        gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                        gettingNextBlocks(limit, currentBlockIndex).then(function (res) {
                             gettingNextTxsInProgress = false;
                             if (res && res.length) {
                                 currentBlocks = currentBlocks.concat(res);
@@ -5176,7 +5176,7 @@ if (wallet) {
                                                         if (!gettingNextTxsInProgress) {
                                                             gettingNextTxsInProgress = true;
                                                             offset++;
-                                                            gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
+                                                            gettingNextBlocks(limit, currentBlockIndex).then(function (res) {
                                                                 if (res && res.length) {
                                                                     currentBlocks = currentBlocks.concat(res);
                                                                     currentBlockIndex = currentBlocks[currentBlocks.length - 1];
@@ -7143,6 +7143,16 @@ var gettingNextTxsCursor = function(limit, offset, blockindex, lastTx) {
             where = {$and: [{blockindex : {$gte : lastTx.blockindex + 1}}]};
         }
         TxController.getAllCursor(where, fields,'blockindex', 'asc', 0, 0, function(cursor) {
+            resolve(cursor);
+        })
+    });
+    return promise;
+
+}
+
+var gettingNextBlocks = function(limit, blockindex) {
+    var promise = new Promise(function(resolve, reject) {
+        TxController.getAllBlocksNew('blockindex', 'asc', limit, blockindex, function(cursor) {
             resolve(cursor);
         })
     });
