@@ -1528,6 +1528,12 @@ function resetOrder(addresses, cb) {
         return cb(numberRemoved)
     })
 }
+
+function resetOrderForAddress(address, cb) {
+    AddressToUpdate[db.getCurrentConnection()].updateMany({address: address}, {$set: {order:0, sent:0, received:0, balance:0}},function(err, numberRemoved){
+        return cb(numberRemoved)
+    })
+}
 module.exports.getAll = getAll;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
@@ -1574,3 +1580,4 @@ module.exports.getClusterDetails = getClusterDetails;
 module.exports.getAllAddressUniqueTxs = getAllAddressUniqueTxs;
 module.exports.getAddressMap = getAddressMap;
 module.exports.resetOrder = resetOrder;
+module.exports.resetOrderForAddress = resetOrderForAddress;
