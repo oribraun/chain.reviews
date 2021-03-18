@@ -707,12 +707,19 @@ if (wallet) {
                     // allBlocksCount = 152939;
                     var startTime = new Date();
                     console.log(`Master ${process.pid} is running`);
+                    if( !hash_number || isNaN(hash_number)) {
+                        console.log('missing block number');
+                        db.multipleDisconnect();
+                        process.exit()
+                        return;
+                    }
+                    console.log('hash_number', hash_number)
                     startReindex(function(){
-                        BlockController.deleteAll(function (numberRemoved) {
+                        BlockController.deleteAllWhereGte(hash_number, function (numberRemoved) {
                             startReIndexClusterLinerAll()
                         })
                     })
-                    var currentBlock = 0;
+                    var currentBlock = hash_number;
                     var walletDisconnected = false;
                     var mongoTimeout = false;
                     var blockNotFound = false;
