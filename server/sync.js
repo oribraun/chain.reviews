@@ -5142,7 +5142,7 @@ if (wallet) {
                 var startedFromBlock = currentBlock;
                 createFile();
                 var currentBlocks = [];
-                var limit = 20000;
+                var limit = 200000;
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = numCPUs;
