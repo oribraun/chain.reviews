@@ -241,6 +241,38 @@ function getAllBlocks(sortBy, order, limit, offset, cb) {
     });
 }
 
+function getAllBlocksNew(sortBy, order, limit, blockindex, cb) {
+    var sort = {};
+    sort[sortBy] = order == 'asc' ? 1 : -1;
+    Tx[db.getCurrentConnection()].aggregate([
+        // { $limit : limit},
+        // {$limit: limit },
+        {$match: {blockindex : {$gte : blockindex}}},
+        {
+            $group:{
+                _id:"$blockhash",
+                blockindex: {"$first": "$blockindex"},
+                timestamp: {"$first": "$timestamp"},
+                // vout: {"$first": {$size: "$vout"}},
+                // countTxs:{$sum:1}
+            }
+        },
+        {$sort:sort},
+        // {$skip:offset},
+        {$limit: limit }
+        // {$group:{_id : "$blockindex", "blockhash": { "$first": "$blockhash" }, doc: { "$first": "$$ROOT" }}},
+        // {$group:{_id:"$blockhash",items:{$push:{blockhash:"$blockhash"}}}},
+        // {$project:{items:{$slice:["$items", 2]}}}
+    ]).exec( function(err, tx) {
+        // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb();
+        }
+    });
+}
+
 function getAllTxWithVinVoutByHash(hash, sortBy, order, cb) {
     var sort = {};
     sort[sortBy] = order == 'asc' ? 1 : -1;
@@ -519,6 +551,7 @@ module.exports.countByBlockIndex = countByBlockIndex;
 module.exports.getBlockHashJoin = getBlockHashJoin;
 module.exports.getAll2Join = getAll2Join;
 module.exports.getAllBlocks = getAllBlocks;
+module.exports.getAllBlocksNew = getAllBlocksNew;
 module.exports.getAllTxWithVinVoutByHash = getAllTxWithVinVoutByHash;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getMissingTrasaction = getMissingTrasaction;
