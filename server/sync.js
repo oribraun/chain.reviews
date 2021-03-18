@@ -5159,6 +5159,7 @@ if (wallet) {
                             gettingNextTxsInProgress = false;
                             if (res && res.length) {
                                 currentBlocks = currentBlocks.concat(res);
+                                currentBlockIndex = currentBlocks[currentBlocks.length - 1];
                             }
                             if (currentBlocks.length) {
                                 for (let i = 0; i < cpuCount; i++) {
@@ -5178,6 +5179,7 @@ if (wallet) {
                                                             gettingNextTxs(limit, offset, currentBlockIndex).then(function (res) {
                                                                 if (res && res.length) {
                                                                     currentBlocks = currentBlocks.concat(res);
+                                                                    currentBlockIndex = currentBlocks[currentBlocks.length - 1];
                                                                 }
                                                                 gettingNextTxsInProgress = false;
                                                                 if (currentBlocks.length) {
