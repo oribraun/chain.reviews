@@ -5865,6 +5865,7 @@ if (wallet) {
                 ]
                 var startResetingAddresses = function(addresses) {
                     AddressToUpdateController.resetOrderForAddress(addresses[0], function(numberRemoved) {
+                        console.log(addresses[0] + ' removed ' + numberRemoved);
                         addresses.shift();
                         if (addresses.length) {
                             startResetingAddresses(addresses)
