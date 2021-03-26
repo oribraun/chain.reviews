@@ -605,16 +605,18 @@ function getTransactionsChart(date, cb) {
 function getTransactionsChartBitcoin(date, cb) {
     var aggregate = [];
     aggregate.push({$match: {total: {$gt: 0}}});
-    var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
-    aggregate.push({$match: {timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
+    // var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+    // aggregate.push({$match: {timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
+    aggregate.push({$sort:{timestamp:1}});
+    aggregate.push({$limit: 100000});
     if(date) {
-        // var timestamp = new Date(date).getTime() / 1000;
-        // aggregate.push({$match: {timestamp: {$gte: timestamp }}});
-        var d = new Date(date);
-        var timestamp = d.getTime() / 1000;
-        var hundredDaysFromNow = (d.getTime() + (100*24*60*60*1000)) / 1000;
-        console.log('date', date)
-        aggregate.push({$match: {timestamp: {$gte: timestamp, $lt: hundredDaysFromNow }}});
+        var timestamp = new Date(date).getTime() / 1000;
+        aggregate.push({$match: {timestamp: {$gte: timestamp }}});
+        // var d = new Date(date);
+        // var timestamp = d.getTime() / 1000;
+        // var hundredDaysFromNow = (d.getTime() + (100*24*60*60*1000)) / 1000;
+        // console.log('date', date)
+        // aggregate.push({$match: {timestamp: {$gte: timestamp, $lt: hundredDaysFromNow }}});
     }
     aggregate.push({$project: {
             "_id": "_id",
@@ -697,7 +699,6 @@ function getTransactionsChartBitcoin(date, cb) {
             "count" : { "$sum" : 1 },
             "totalAmountADay" : { "$sum" : "$total" }
         }});
-    aggregate.push({$sort:{timestamp:1}});
     aggregate.push({$project: {
             "_id": 0,
             "date": "$date",
