@@ -752,7 +752,20 @@ function getAddressDetailsWithLastestTxs(address, cb) {
             {
                 "$group": {
                     "_id": "$address",
-                    "last_txs" : { "$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount"} }
+                    "last_txs" : { "$push": {txid: "$txid", timestamp: "$txid_timestamp", amount: "$amount",
+                            "date": {
+                                $dateToString: {
+                                    date: {
+                                        "$add": [
+                                            new Date(0), // GTM+2
+                                            {"$multiply": ["$txid_timestamp", 1000]}
+                                        ]
+                                    },
+                                    format: "%Y-%m-%d"
+                                }
+                            }
+                        }
+                    }
                 }
             },
             {
