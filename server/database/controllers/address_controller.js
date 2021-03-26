@@ -761,7 +761,7 @@ function getAddressDetailsWithLastestTxs(address, cb) {
                                             {"$multiply": ["$txid_timestamp", 1000]}
                                         ]
                                     },
-                                    format: "%Y-%m-%d"
+                                    format: "%d-%m-%Y"
                                 }
                             }
                         }
