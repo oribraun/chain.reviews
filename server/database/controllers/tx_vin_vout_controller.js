@@ -608,7 +608,7 @@ function getTransactionsChartBitcoin(date, cb) {
     // var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
     // aggregate.push({$match: {timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
     aggregate.push({$sort:{timestamp:1}});
-    aggregate.push({$limit: 100000});
+    aggregate.push({$limit: 1000000});
     if(date) {
         var timestamp = new Date(date).getTime() / 1000;
         aggregate.push({$match: {timestamp: {$gte: timestamp }}});
