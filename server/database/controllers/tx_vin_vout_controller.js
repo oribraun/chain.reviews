@@ -500,9 +500,119 @@ function getTransactionsChart(date, cb) {
     var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
     aggregate.push({$match: {timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
     if(date) {
+        var timestamp = new Date(date).getTime() / 1000;
+        aggregate.push({$match: {timestamp: {$gte: timestamp }}});
+    }
+    aggregate.push({$project: {
+            "_id": "_id",
+            "total": "$total",
+            "blockindex": "$blockindex",
+            "date1": {
+                $dateToParts: { date: {
+                        "$add": [
+                            new Date(new Date(0).getTime() + new Date().getTimezoneOffset()*60*1000),
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                }
+            },
+            "date2": {
+                $dateToParts: { date: {
+                        "$add": [
+                            new Date(0), // GTM+2
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    }
+                }
+            },
+            "date": {
+                $dateToString: {
+                    date: {
+                        "$add": [
+                            new Date(0), // GTM+2
+                            {"$multiply": ["$timestamp", 1000]}
+                        ]
+                    },
+                    format: "%Y-%m-%d"
+                }
+            },
+            "year": {
+                "$year": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$timestamp", 1000]}
+                    ]
+                }
+            },
+            "month": {
+                "$month": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$timestamp", 1000]}
+                    ]
+                }
+            },
+            "day": {
+                "$dayOfMonth": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$timestamp", 1000]}
+                    ]
+                }
+            },
+            "week": {
+                "$isoWeek": {
+                    "$add": [
+                        new Date(0),
+                        {"$multiply": ["$timestamp", 1000]}
+                    ]
+                }
+            },
+            "timestamp": "$timestamp"
+        }});
+    aggregate.push({$match: {year: {$gt: 1970}}});
+    aggregate.push({$group: {
+            "_id": {
+                "year": "$year",
+                "month": "$month",
+                "day": "$day"
+                // "week": "$week"
+            },
+            "week": {$first: "$week"},
+            "date": {$first: "$date"},
+            "timestamp": {$first: "$timestamp"},
+            "count" : { "$sum" : 1 },
+            "totalAmountADay" : { "$sum" : "$total" }
+        }});
+    aggregate.push({$sort:{timestamp:1}});
+    aggregate.push({$project: {
+            "_id": 0,
+            "date": "$date",
+            "week": "$week",
+            "count": "$count",
+            "totalAmountADay": "$totalAmountADay",
+        }});
+    TxVinVout[db.getCurrentConnection()].aggregate(
+        aggregate
+    ).allowDiskUse(true).exec( function(err, txs) {
+        if(txs) {
+            return cb(txs);
+        } else {
+            return cb();
+        }
+    });
+}
+function getTransactionsChartBitcoin(date, cb) {
+    var aggregate = [];
+    aggregate.push({$match: {total: {$gt: 0}}});
+    var yearFromNowTimestamp = new Date(new Date().getTime() - 1000*60*60*24*365).getTime() / 1000;
+    aggregate.push({$match: {timestamp: {$gte: yearFromNowTimestamp }}}); // limit to year a head
+    if(date) {
+        // var timestamp = new Date(date).getTime() / 1000;
+        // aggregate.push({$match: {timestamp: {$gte: timestamp }}});
         var d = new Date(date);
         var timestamp = d.getTime() / 1000;
-        var hundredDaysFromNow = timestamp +(100*24*60*60*1000);
+        var hundredDaysFromNow = (d.getTime() + (100*24*60*60*1000)) / 1000;
         console.log('date', date)
         aggregate.push({$match: {timestamp: {$gte: timestamp, $lt: hundredDaysFromNow }}});
     }
@@ -780,6 +890,7 @@ module.exports.getAll5 = getAll5;
 module.exports.getAllAggregeate = getAllAggregeate;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getTransactionsChart = getTransactionsChart;
+module.exports.getTransactionsChartBitcoin = getTransactionsChartBitcoin;
 module.exports.saveType = saveType;
 module.exports.getTxBlockFieldsByTxid = getTxBlockFieldsByTxid;
 module.exports.getUsersTxsCount = getUsersTxsCount;
