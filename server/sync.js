@@ -7804,15 +7804,27 @@ function updateTxByDay(wallet) {
     })
 
     function startUpdateTxByDay(dateString) {
-        TxVinVoutController.getTransactionsChart(dateString, function(txByDays) {
-            if(txByDays && txByDays.length) {
-                updateTxByDayOneByOne(txByDays);
-            } else {
-                console.log('no tx found');
-                deleteFile('txByDay');
-                db.multipleDisconnect();
-            }
-        })
+        if(wallet !== 'bitcoin') {
+            TxVinVoutController.getTransactionsChart(dateString, function (txByDays) {
+                if (txByDays && txByDays.length) {
+                    updateTxByDayOneByOne(txByDays);
+                } else {
+                    console.log('no tx found');
+                    deleteFile('txByDay');
+                    db.multipleDisconnect();
+                }
+            })
+        } else {
+            TxVinVoutController.getTransactionsChartBitcoin(dateString, function (txByDays) {
+                if (txByDays && txByDays.length) {
+                    updateTxByDayOneByOne(txByDays);
+                } else {
+                    console.log('no tx found');
+                    deleteFile('txByDay');
+                    db.multipleDisconnect();
+                }
+            })
+        }
     }
 
     function updateTxByDayOneByOne(txByDays) {
