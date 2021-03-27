@@ -699,6 +699,7 @@ function getTransactionsChartBitcoin(date, cb) {
             "count" : { "$sum" : 1 },
             "totalAmountADay" : { "$sum" : "$total" }
         }});
+    aggregate.push({$sort:{timestamp:1}});
     aggregate.push({$project: {
             "_id": 0,
             "date": "$date",
