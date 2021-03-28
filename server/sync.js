@@ -7890,11 +7890,15 @@ function updateClusterTxByDay(wallet) {
                             updateClusterTxByDayOneByOne(clusterId, txByDays);
                         } else {
                             // console.log('no tx found - ', clusterId);
-                            startUpdateCluster(clusters);
+                            ClusterController.updateChanged(clusterId, false, function(err) {
+                                startUpdateCluster(clusters);
+                            });
                         }
                     })
                 } else {
-                    startUpdateCluster(clusters);
+                    ClusterController.updateChanged(clusterId, false, function(err) {
+                        startUpdateCluster(clusters);
+                    })
                     console.log('finish updating cluster chart - ' + clusterId)
                 }
             });
