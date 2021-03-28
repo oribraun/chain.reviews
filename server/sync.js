@@ -227,7 +227,15 @@ if (wallet) {
             break;
         case 'getinfo':
             wallet_commands.getInfo(wallet).then(function(blockCount){
-                console.log('blockCount', blockCount);
+                console.log('info', blockCount);
+            }).catch(function(err) {
+                console.log('error getting blockCount', err);
+                process.exit();
+            });
+            break;
+        case 'gettxoutsetinfo':
+            wallet_commands.getTxoutsetInfo(wallet).then(function(blockCount){
+                console.log('info', blockCount);
             }).catch(function(err) {
                 console.log('error getting blockCount', err);
                 process.exit();
@@ -6865,7 +6873,11 @@ function updateStats() {
                             var hashrate = (networkhashps / 1000000000).toFixed(4);
                             wallet_commands.getConnectionCount(wallet).then(function (connections) {
                                 wallet_commands.getBlockCount(wallet).then(function (blockcount) {
-                                    get_supply('GETINFO').then(function (supply) {
+                                    var type = 'GETINFO';
+                                    if(wallet === 'bitcoin') {
+                                        type = 'TXOUTSET'
+                                    }
+                                    get_supply(type).then(function (supply) {
                                         var stats = {
                                             coin: settings[wallet].coin,
                                             difficulty: info.difficulty,
