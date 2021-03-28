@@ -23,7 +23,8 @@ function Reindex($db) {
         $addresses = array_slice($addresses_to_remove, $offset, 100);
 
         $db->clusters->update([
-            'addresses' => ['$in' => $addresses]
+            'addresses' => ['$in' => $addresses],
+            'changed' => true
         ], [
             '$pullAll' => ['addresses' => $addresses]
         ], [
