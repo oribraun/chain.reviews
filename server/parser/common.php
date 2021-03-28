@@ -51,7 +51,6 @@ function AddClusterConnection($db, $addresses) {
         );
     }
 
-    echo 'updated';
     $db->clusters->update([
         'addresses' => ['$in' => $addresses]
     ], [
