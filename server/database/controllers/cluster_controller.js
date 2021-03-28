@@ -84,14 +84,13 @@ function updateOne(obj, cb) { // update or create
     });
 }
 
-function updateChanged(id, changed) {
+function updateChanged(id, changed, cb) {
     Cluster[db.getCurrentConnection()].findOne({_id: obj._id}, function(err, cluster) {
         if(err) {
             return cb(err);
         }
         if(address) { // exist
-            cluster.changed = changed
-            cluster.tags = obj.tags;
+            cluster.changed = changed;
             cluster.save(function (err, tx) {
                 if (err) {
                     return cb(err);
