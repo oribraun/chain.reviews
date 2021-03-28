@@ -85,7 +85,7 @@ function updateOne(obj, cb) { // update or create
 }
 
 function updateChanged(id, changed, cb) {
-    Cluster[db.getCurrentConnection()].findOne({_id: obj._id}, function(err, cluster) {
+    Cluster[db.getCurrentConnection()].findOne({_id: id}, function(err, cluster) {
         if(err) {
             return cb(err);
         }
