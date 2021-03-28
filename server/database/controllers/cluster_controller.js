@@ -89,6 +89,7 @@ function updateChanged(id, changed, cb) {
         if(err) {
             return cb(err);
         }
+        console.log('cluster', cluster)
         if(cluster) { // exist
             cluster.changed = changed;
             cluster.save(function (err, tx) {
