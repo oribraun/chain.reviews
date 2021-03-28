@@ -677,7 +677,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
     var promises = [];
     var data = {};
     promises.push(new Promise((resolve, reject) => {
-        Address[db.getCurrentConnection()].countDocuments({}, function (err, countUnique) {
+        Address[db.getCurrentConnection()].find({}).countDocuments({}, function (err, countUnique) {
             if(err) {
                 reject()
             } else {
@@ -693,7 +693,6 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
                 reject()
             } else {
                 data.countActive = countActive;
-                console.log('countActive', countActive)
                 resolve();
             }
         });
@@ -708,7 +707,6 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
                 } else {
                     data.devAddressBalance = 0;
                 }
-                console.log('data.devAddressBalance', data.devAddressBalance)
                 resolve();
             }
         });
@@ -723,7 +721,6 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
                 reject()
             } else {
                 data.data = results;
-                console.log('data.data.length', data.data.length)
                 resolve();
             }
         });
