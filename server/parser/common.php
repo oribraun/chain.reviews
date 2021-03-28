@@ -52,7 +52,8 @@ function AddClusterConnection($db, $addresses) {
     }
 
     $db->clusters->update([
-        'addresses' => ['$in' => $addresses]
+        'addresses' => ['$in' => $addresses],
+        'changed' => true
     ], [
         '$addToSet' => [
             'addresses' => ['$each' => $addresses]

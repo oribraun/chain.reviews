@@ -5,6 +5,7 @@ var db = require('./../db');
 var ClusterSchema = new Schema({
   addresses: { type: Array, default: [] },
   update: { type: Boolean, default: false },
+  changed: { type: Boolean, default: false },
   tags: { type: Array, default: [] },
 }, {id: false, timestamps: false});
 
