@@ -86,10 +86,10 @@ function updateOne(obj, cb) { // update or create
 
 function updateChanged(id, changed, cb) {
     Cluster[db.getCurrentConnection()].findOne({_id: mongoose.Types.ObjectId(id)}, function(err, cluster) {
+        console.log('err', err);
         if(err) {
             return cb(err);
         }
-        console.log('cluster', cluster)
         if(cluster) { // exist
             cluster.changed = changed;
             cluster.save(function (err, tx) {
