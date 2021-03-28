@@ -5,7 +5,7 @@
     "daemon": "http://142.93.102.231:3000/api/bitcoin/",
     "example_txid": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",
     "example_hash": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
-    "dev_address": "address for route examples",
+    "dev_address": "12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX",
     "commands": {
         "startwallet": "startWallet",
         "stopwallet": "stopWallet",
@@ -33,5 +33,5 @@
         "port": 27017
     },
     "masternode_required": 0,
-    "active": false
+    "active": true
 }

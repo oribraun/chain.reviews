@@ -677,12 +677,11 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
     var promises = [];
     var data = {};
     promises.push(new Promise((resolve, reject) => {
-        Address[db.getCurrentConnection()].find({}).countDocuments({}, function (err, countUnique) {
+        Address[db.getCurrentConnection()].countDocuments({}, function (err, countUnique) {
             if(err) {
                 reject()
             } else {
                 data.countUnique = countUnique;
-                console.log('countUnique', countUnique)
                 resolve();
             }
         });
