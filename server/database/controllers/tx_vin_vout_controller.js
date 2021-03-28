@@ -769,8 +769,8 @@ function getUsersTxsWeeklyChart(cb) {
     TxVinVout[db.getCurrentConnection()].aggregate([
         // {$limit: 100000},
         {"$match" : {timestamp:{$gte: Date.now() / 1000 - 7*24*60*60}}},
-        {$sort:{timestamp:-1}},
         {"$match" : {type: {$eq: tx_types.NORMAL}}},
+        {$sort:{timestamp:-1}},
         {$project: {
                 "date": {
                     $dateToString: {
