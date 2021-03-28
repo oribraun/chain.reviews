@@ -12,11 +12,12 @@ var StatsController = require('./../database/controllers/stats_controller');
 var MarketsController = require('./../database/controllers/markets_controller');
 const settings = require('./../wallets/all_settings');
 
+var hideCoins = ['bitcoin'];
 app.get('/', function(req, res) {
     var array = [];
     var wallets = [];
     for (var wallet in settings) {
-        if(settings[wallet].active) {
+        if(settings[wallet].active && hideCoins.indexOf(settings[wallet].coin) === -1) {
             wallets.push(wallet);
         }
     }
