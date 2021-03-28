@@ -56,6 +56,7 @@ function updateOne(obj, cb) { // update or create
         if(address) { // exist
             cluster.addresses = obj.addresses;
             cluster.update = obj.update;
+            cluster.changed = obj.changed;
             cluster.tags = obj.tags;
             cluster.save(function (err, tx) {
                 if (err) {
@@ -68,6 +69,7 @@ function updateOne(obj, cb) { // update or create
             var newCluster = new Cluster[db.getCurrentConnection()]({
                 addresses: obj.addresses,
                 update: obj.update,
+                changed: obj.changed,
                 tags: obj.tags,
             });
             newCluster.save(function(err) {
@@ -80,6 +82,27 @@ function updateOne(obj, cb) { // update or create
             });
         }
     });
+}
+
+function updateChanged(id, changed) {
+    Cluster[db.getCurrentConnection()].findOne({_id: obj._id}, function(err, cluster) {
+        if(err) {
+            return cb(err);
+        }
+        if(address) { // exist
+            cluster.changed = changed
+            cluster.tags = obj.tags;
+            cluster.save(function (err, tx) {
+                if (err) {
+                    return cb(err);
+                } else {
+                    return cb();
+                }
+            });
+        } else {
+            return cb();
+        }
+    })
 }
 
 function getOne(id, cb) {
@@ -437,6 +460,16 @@ function getAllClusters(limit, offset, cb) {
 
 function getAllClustersIds(cb) {
     Cluster[db.getCurrentConnection()].find({}).distinct('_id').exec( function(err, clusters) {
+        if(clusters) {
+            return cb(clusters);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
+function getAllChangedClustersIds(cb) {
+    Cluster[db.getCurrentConnection()].find({}).distinct('_id', {changed: true}).exec( function(err, clusters) {
         if(clusters) {
             return cb(clusters);
         } else {
@@ -1031,3 +1064,5 @@ module.exports.getTransactionsChart = getTransactionsChart;
 module.exports.getTransactionsChart2 = getTransactionsChart2;
 module.exports.getAllForCluster = getAllForCluster;
 module.exports.getAllClustersIds = getAllClustersIds;
+module.exports.getAllChangedClustersIds = getAllChangedClustersIds;
+module.exports.updateChanged = updateChanged;
