@@ -6875,7 +6875,8 @@ function updateStats() {
                                 wallet_commands.getBlockCount(wallet).then(function (blockcount) {
                                     var type = 'GETINFO';
                                     if(wallet === 'bitcoin') {
-                                        type = 'TXOUTSET'
+                                        // type = 'TXOUTSET';
+                                        type = 'GETINFO';
                                     }
                                     get_supply(type).then(function (supply) {
                                         var stats = {
