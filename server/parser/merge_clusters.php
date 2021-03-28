@@ -58,7 +58,8 @@ function MergeClusters($db)
                 $clusters_collection->update(['_id' => $cluster_to_update['_id']], [
                     '$addToSet' => [
                         'addresses' => ['$each' => $addresses]
-                    ]
+                    ],
+                    'changed' => true
                 ]);
             }
 

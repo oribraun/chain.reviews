@@ -7846,7 +7846,7 @@ function updateTxByDay(wallet) {
 }
 
 function updateClusterTxByDay(wallet) {
-    ClusterController.getAllClustersIds(function(clusters) {
+    ClusterController.getAllChangedClustersIds(function(clusters) {
         startUpdateCluster(clusters);
     })
 
@@ -7890,11 +7890,15 @@ function updateClusterTxByDay(wallet) {
                             updateClusterTxByDayOneByOne(clusterId, txByDays);
                         } else {
                             // console.log('no tx found - ', clusterId);
-                            startUpdateCluster(clusters);
+                            ClusterController.updateChanged(clusterId, false, function(err) {
+                                startUpdateCluster(clusters);
+                            });
                         }
                     })
                 } else {
-                    startUpdateCluster(clusters);
+                    ClusterController.updateChanged(clusterId, false, function(err) {
+                        startUpdateCluster(clusters);
+                    })
                     console.log('finish updating cluster chart - ' + clusterId)
                 }
             });
@@ -7910,8 +7914,10 @@ function updateClusterTxByDay(wallet) {
                     if(txByDays.length) {
                         updateClusterTxByDayOneByOne(clusterId, txByDays)
                     } else {
-                        startUpdateCluster(clusters);
-                        console.log('finish updating cluster chart - ' + clusterId)
+                        ClusterController.updateChanged(clusterId, false, function(err) {
+                            startUpdateCluster(clusters);
+                            console.log('finish updating cluster chart - ' + clusterId)
+                        });
                     }
                 }
             })
