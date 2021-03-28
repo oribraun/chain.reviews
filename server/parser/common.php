@@ -52,14 +52,14 @@ function AddClusterConnection($db, $addresses) {
     }
 
     $db->clusters->update([
-        'addresses' => ['$in' => $addresses],
-        'changed' => true
+        'addresses' => ['$in' => $addresses]
     ], [
         '$addToSet' => [
             'addresses' => ['$each' => $addresses]
         ],
         '$set' => [
-            'update' => true
+            'update' => true,
+            'changed' => true
         ]
     ], ['upsert' => 1]);
 }
