@@ -53,7 +53,7 @@ function updateOne(obj, cb) { // update or create
         if(err) {
             return cb(err);
         }
-        if(address) { // exist
+        if(cluster) { // exist
             cluster.addresses = obj.addresses;
             cluster.update = obj.update;
             cluster.changed = obj.changed;
@@ -89,7 +89,7 @@ function updateChanged(id, changed, cb) {
         if(err) {
             return cb(err);
         }
-        if(address) { // exist
+        if(cluster) { // exist
             cluster.changed = changed;
             cluster.save(function (err, tx) {
                 if (err) {
