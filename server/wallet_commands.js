@@ -1136,7 +1136,7 @@ var getNetworkHashps = function(wallet){
             getFromUrl(wallet_cli, commands).then(
                 (results) => {
                     //TODO make sure return type int
-                    results = parseInt(results);
+                    results = parseFloat(results);
                     if(!isNaN(results)) {
                         resolve(results);
                     } else {
