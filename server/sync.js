@@ -225,6 +225,16 @@ if (wallet) {
                 process.exit();
             });
             break;
+        case 'getnetworkhashps':
+            wallet_commands.getNetworkHashps(wallet).then(function(networkhashps){
+                var hashrate = (networkhashps / 1000000000).toFixed(4);
+                console.log('networkhashps', networkhashps);
+                console.log('hashrate', hashrate);
+            }).catch(function(err) {
+                console.log('error getting blockCount', err);
+                process.exit();
+            });
+            break;
         case 'getinfo':
             wallet_commands.getInfo(wallet).then(function(blockCount){
                 console.log('info', blockCount);
