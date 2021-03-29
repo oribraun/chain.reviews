@@ -1470,7 +1470,7 @@ var getFromUrl = function(wallet_cli, commands) {
     var results = '';
     var promise = new Promise(function(resolve, reject) {
         var url = wallet_cli + '/' + commands.join('/');
-        request({uri: url, method :"POST", json: true, timeout: 1000 * 60 * 10}, function (error, response, body) {
+        request({uri: url, method :"POST", json: true}, function (error, response, body) {
             if(error) {
                 console.log('error', error)
                 reject(error);
