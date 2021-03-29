@@ -227,7 +227,7 @@ if (wallet) {
             break;
         case 'getnetworkhashps':
             wallet_commands.getNetworkHashps(wallet).then(function(networkhashps){
-                var hashrate = (networkhashps / 1000000000).toFixed(4);
+                var hashrate = (parseFloat(networkhashps) / 1000000000).toFixed(4);
                 console.log('networkhashps', networkhashps);
                 console.log('hashrate', hashrate);
             }).catch(function(err) {
@@ -6880,7 +6880,7 @@ function updateStats() {
                         // wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
                         //     console.log('finish updating masternode count');
                         wallet_commands.getNetworkHashps(wallet).then(function (networkhashps) {
-                            var hashrate = (networkhashps / 1000000000).toFixed(4);
+                            var hashrate = (parseFloat(networkhashps) / 1000000000).toFixed(4);
                             wallet_commands.getConnectionCount(wallet).then(function (connections) {
                                 wallet_commands.getBlockCount(wallet).then(function (blockcount) {
                                     var type = 'GETINFO';
@@ -6889,10 +6889,14 @@ function updateStats() {
                                         // type = 'GETINFO';
                                     }
                                     get_supply(type).then(function (supply) {
+                                        var moneysupply = info.moneysupply;
+                                        if(wallet === 'bitcoin') {
+                                            moneysupply = supply;
+                                        }
                                         var stats = {
                                             coin: settings[wallet].coin,
                                             difficulty: info.difficulty,
-                                            moneysupply: info.moneysupply,
+                                            moneysupply: moneysupply,
                                             hashrate: hashrate,
                                             // masternodesCount: JSON.parse(masterNodesCount),
                                             connections: parseInt(connections),
