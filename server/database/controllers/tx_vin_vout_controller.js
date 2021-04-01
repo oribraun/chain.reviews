@@ -772,6 +772,7 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                         "order": {"$first": "$order"},
                     }
                 })
+                aggregate.push({$sort: sort});
                 TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, tx) {
                     // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
                     if (tx) {
