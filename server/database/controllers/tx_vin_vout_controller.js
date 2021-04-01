@@ -751,7 +751,7 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
     Block[db.getCurrentConnection()].findOne({blockhash: hash}, (err, block) => {
         if(block) {
             var blockindex = block.blockindex;
-            this.getFirstByOrder(blockindex, sort, (tx) => {
+            this.getFirstByOrder(blockindex, sortOposite, (tx) => {
                 if(tx) {
                     this.countTxForBlock(blockindex, function (count) {
                         var aggregate = [];
