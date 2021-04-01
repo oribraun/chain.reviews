@@ -367,6 +367,16 @@ function countByBlockIndex(cb) {
     });
 }
 
+function countTxForBlock(blockhash, cb) {
+    TxVinVout[db.getCurrentConnection()].find({blockhash: blockhash}).countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function getAllDuplicate(cb) {
     TxVinVout[db.getCurrentConnection()].aggregate([
         {
@@ -718,6 +728,52 @@ function getTransactionsChartBitcoin(date, cb) {
     });
 }
 
+function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
+    this.countTxForBlock(hash, function(count) {
+        var sort = {};
+        var sortOposite = {};
+        if (sortBy) {
+            sort[sortBy] = order == 'asc' ? 1 : -1;
+            sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+        }
+        var aggregate = [];
+        aggregate.push({$match: {blockhash: hash}});
+        aggregate.push({$sort: sort});
+        if (offset) {
+            // aggregate.push({$skip: offset*limit});
+            aggregate.push({$match: {order: {$lte: count - offset * limit}}});
+        }
+        aggregate.push({$limit: limit});
+        aggregate.push({
+            "$unwind": {
+                "path": "$vout",
+                "preserveNullAndEmptyArrays": true
+            }
+        });
+        aggregate.push({
+            $group: {
+                _id: "$txid",
+                totalAmount: {$sum: "$vout.amount"},
+                "vout": {"$push": "$vout"},
+                "vin": {"$first": "$vin"},
+                "timestamp": {"$first": "$timestamp"},
+                "blockindex": {"$first": "$blockindex"},
+                "txid": {"$first": "$txid"},
+                "type": {"$first": "$type"},
+                "blockhash": {"$first": "$blockhash"},
+            }
+        })
+        TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, tx) {
+            // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+            if (tx) {
+                return cb(tx);
+            } else {
+                return cb();
+            }
+        });
+    });
+}
+
 function getUsersTxsCount(cb) {
     TxVinVout[db.getCurrentConnection()].find({type: {$eq: tx_types.NORMAL}}, {}).countDocuments(function(err, tx) {
         if(tx) {
@@ -885,6 +941,7 @@ module.exports.count = count;
 module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.countWhereTotal = countWhereTotal;
 module.exports.countByBlockIndex = countByBlockIndex;
+module.exports.countTxForBlock = countTxForBlock;
 module.exports.getAll2 = getAll2;
 module.exports.getAll3 = getAll3;
 module.exports.getAll4 = getAll4;
@@ -899,3 +956,4 @@ module.exports.getUsersTxsCount = getUsersTxsCount;
 module.exports.getUsersTxsCount24Hours = getUsersTxsCount24Hours;
 module.exports.getUsersTxsWeeklyChart = getUsersTxsWeeklyChart;
 module.exports.getLastTx = getLastTx;
+module.exports.getBlockTxs = getBlockTxs;

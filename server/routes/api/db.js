@@ -823,7 +823,7 @@ router.get('/getBlockTxs/:hash/:limit/:offset', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    TxController.getBlockTxs(req.params['hash'], 'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function (txs) {
+    TxVinVoutController.getBlockTxs(req.params['hash'], 'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function (txs) {
         var data = {txs: txs}
         response.data = data;
         res.send(JSON.stringify(response, null, 2));
