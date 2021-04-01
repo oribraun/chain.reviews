@@ -745,8 +745,8 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                 aggregate.push({$match: {blockindex: blockindex}});
                 aggregate.push({$sort: sort});
                 if (offset) {
-                    // aggregate.push({$skip: offset*limit});
-                    aggregate.push({$match: {order: {$lte: count - offset * limit}}});
+                    aggregate.push({$skip: offset*limit});
+                    // aggregate.push({$match: {order: {$lte: count - offset * limit}}});
                 }
                 aggregate.push({$limit: limit});
                 aggregate.push({
