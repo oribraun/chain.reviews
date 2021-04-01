@@ -275,6 +275,16 @@ function getOne(blockindex, cb) {
     });
 }
 
+function getFirstByOrder(blockindex, sort, cb) {
+    TxVinVout[db.getCurrentConnection()].findOne({blockindex: blockindex}).sort(sort).exec(function(err, tx) {
+        if(tx) {
+            return cb(tx);
+        } else {
+            return cb(null);
+        }
+    });
+}
+
 function deleteOne(txid, cb) {
     TxVinVout[db.getCurrentConnection()].deleteOne({txid: txid}, function(err, tx) {
         if(tx) {
@@ -730,21 +740,20 @@ function getTransactionsChartBitcoin(date, cb) {
 }
 
 function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
+    var sort = {};
+    var sortOrder = {};
+    var sortOposite = {};
+    if (sortBy) {
+        sort[sortBy] = order == 'asc' ? 1 : -1;
+        sortOrder[sortBy] = order == 'asc' ? 1 : -1;
+        sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+    }
     Block[db.getCurrentConnection()].findOne({blockhash: hash}, (err, block) => {
-        console.log('block', block)
         if(block) {
             var blockindex = block.blockindex;
-            this.getOne(blockindex, (tx) => {
+            this.getFirstByOrder(blockindex, sort, (tx) => {
                 if(tx) {
                     this.countTxForBlock(blockindex, function (count) {
-                        var sort = {};
-                        var sortOrder = {};
-                        var sortOposite = {};
-                        if (sortBy) {
-                            sort[sortBy] = order == 'asc' ? 1 : -1;
-                            sortOrder[sortBy] = order == 'asc' ? 1 : -1;
-                            sortOposite[sortBy] = order == 'desc' ? 1 : -1;
-                        }
                         var aggregate = [];
                         aggregate.push({$match: {blockindex: blockindex}});
                         aggregate.push({$sort: sort});
@@ -952,6 +961,7 @@ module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.updateOne = updateOne;
 module.exports.getOne = getOne;
+module.exports.getFirstByOrder = getFirstByOrder;
 module.exports.deleteOne = deleteOne;
 module.exports.deleteAll = deleteAll;
 module.exports.deleteAllWhereGte = deleteAllWhereGte;
