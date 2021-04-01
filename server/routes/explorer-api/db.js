@@ -960,7 +960,7 @@ router.post('/getMarketsSummary', (req, res) => {
 
 router.post('/getClustersCount', (req, res) => {
     const response = helpers.getGeneralResponse();
-    ClusterController.count(null, function(count) {
+    ClusterController.count(function(count) {
         if(count) {
             response.data = count;
         } else {
