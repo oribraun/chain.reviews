@@ -749,6 +749,9 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
         sortOposite[sortBy] = order == 'desc' ? 1 : -1;
     }
     Block[db.getCurrentConnection()].findOne({blockhash: hash}, (err, block) => {
+        if(err) {
+            console.log('err1', err)
+        }
         if(block) {
             var blockindex = block.blockindex;
             this.getFirstByOrder(blockindex, sort, (tx) => {
@@ -783,21 +786,24 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                             }
                         })
                         aggregate.push({$sort: sort});
-                        TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, tx) {
+                        TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, txs) {
                             // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
-                            if (tx) {
-                                return cb(tx);
+                            if(err) {
+                                console.log('err', err)
+                            }
+                            if (txs) {
+                                return cb(txs);
                             } else {
-                                return cb();
+                                return cb([]);
                             }
                         });
                     });
                 } else {
-                    return cb();
+                    return cb([]);
                 }
             });
         } else {
-            return cb();
+            return cb([]);
         }
     })
 }
