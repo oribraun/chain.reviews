@@ -734,7 +734,7 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
         console.log('block', block)
         if(block) {
             var blockindex = block.blockindex;
-            this.getOne(blockindex, function (tx) {
+            this.getOne(blockindex, (tx) => {
                 if(tx) {
                     this.countTxForBlock(blockindex, function (count) {
                         var sort = {};
