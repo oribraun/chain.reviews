@@ -425,18 +425,25 @@ function getAllClusters(limit, offset, cb) {
 
     limit = parseInt(limit);
     offset = parseInt(offset);
+    // aggregate.push({
+    //     "$unwind": {
+    //         "path": "$addresses",
+    //         "preserveNullAndEmptyArrays": true
+    //     }
+    // });
+    // aggregate.push({
+    //     "$group": {
+    //         "_id": "$_id",
+    //         "tags" : { "$first": "$tags" },
+    //         "address_count" : { "$sum": 1 },
+    //         // "addresses" : { "$push": "$addresses" },
+    //     }
+    // });
     aggregate.push({
-        "$unwind": {
-            "path": "$addresses",
-            "preserveNullAndEmptyArrays": true
-        }
-    });
-    aggregate.push({
-        "$group": {
+        "$project": {
             "_id": "$_id",
-            "tags" : { "$first": "$tags" },
-            "address_count" : { "$sum": 1 },
-            // "addresses" : { "$push": "$addresses" },
+            "tags": "$tags",
+            "address_count": {$size: "$addresses"}
         }
     });
     aggregate.push({
@@ -504,9 +511,9 @@ function getAllClustersWithAddressCount(id,  cb) {
             "address_count": {$size: "$addresses"}
         }
     })
-    // aggregate.push({
-    //     $sort:{address_count:-1}
-    // })
+    aggregate.push({
+        $sort:{address_count:-1}
+    })
     Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, cluster) {
         if(cluster) {
             return cb(cluster);

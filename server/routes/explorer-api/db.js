@@ -958,6 +958,38 @@ router.post('/getMarketsSummary', (req, res) => {
     });
 });
 
+router.post('/getClustersCount', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    ClusterController.count(null, function(count) {
+        if(count) {
+            response.data = count;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no clusters found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+router.post('/getClusters', (req, res) => {
+    if(isNaN(parseInt(req.body['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    if(isNaN(parseInt(req.body['offset']))) {
+        res.send('offset value have to be number');
+        return;
+    }
+    const response = helpers.getGeneralResponse();
+    ClusterController.getAllClusters(parseInt(req.body['limit']), parseInt(req.body['offset']), function(results) {
+        if(results) {
+            response.data = results;
+        } else {
+            response.err = 1;
+            response.errMessage = 'no clusters found';
+        }
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
 router.post('/getAllClustersWithTxsCount', (req, res) => {
     const response = helpers.getGeneralResponse();
     ClusterController.getAllClustersWithTxsCount(null, function(results) {
