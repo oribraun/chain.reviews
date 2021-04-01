@@ -755,11 +755,12 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                         "preserveNullAndEmptyArrays": true
                     }
                 });
+                aggregate.push({$sort: sort});
                 aggregate.push({
                     $group: {
                         _id: "$txid",
                         totalAmount: {$sum: "$vout.amount"},
-                        // recipients: {$size: "$vout"},
+                        recipients: {$size: "$vout"},
                         "vout": {"$push": "$vout"},
                         "vin": {"$first": "$vin"},
                         "timestamp": {"$first": "$timestamp"},
