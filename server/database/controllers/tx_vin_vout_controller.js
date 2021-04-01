@@ -767,7 +767,7 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                         "txid": {"$first": "$txid"},
                         "type": {"$first": "$type"},
                         "blockhash": {"$first": "$blockhash"},
-                        "order": {"$first": "$order"},
+                        "order": {"$push": "$order"},
                     }
                 })
                 TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, tx) {
