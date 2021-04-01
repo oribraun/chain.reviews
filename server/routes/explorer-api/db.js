@@ -617,7 +617,7 @@ router.get('/getBlockTxs', (req, res) => {
         return;
     }
     const response = helpers.getGeneralResponse();
-    TxVinVoutController.getBlockTxs(req.body['hash'], 'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function (txs) {
+    TxVinVoutController.getBlockTxs(req.body['hash'], 'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function (txs) {
         var data = {txs: txs}
         response.data = data;
         res.send(JSON.stringify(response, null, 2));
