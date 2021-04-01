@@ -484,21 +484,28 @@ function getAllClustersWithAddressCount(id,  cb) {
         var objID = mongoose.Types.ObjectId(id);
         aggregate.push({ $match : { _id : objID } });
     }
+    // aggregate.push({
+    //     "$unwind": {
+    //         "path": "$addresses",
+    //         "preserveNullAndEmptyArrays": true
+    //     }
+    // });
+    // aggregate.push({
+    //     "$group": {
+    //         "_id": "$_id",
+    //         "tags" : { "$first": "$tags" },
+    //         "address_count" : { "$sum": 1 },
+    //     }
+    // });
     aggregate.push({
-        "$unwind": {
-            "path": "$addresses",
-            "preserveNullAndEmptyArrays": true
+        "$project": {
+            "_id": "&_id",
+            "tags": "$tags",
+            "address_count": {$size: "$addresses"}
         }
-    });
+    })
     aggregate.push({
-        "$group": {
-            "_id": "$_id",
-            "tags" : { "$first": "$tags" },
-            "address_count" : { "$sum": 1 },
-        }
-    });
-    aggregate.push({
-        $sort:{count:-1}
+        $sort:{address_count:-1}
     })
     Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, cluster) {
         if(cluster) {
