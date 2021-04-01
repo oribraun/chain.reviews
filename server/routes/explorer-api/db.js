@@ -579,8 +579,8 @@ router.post('/getBlockDetails', (req, res) => {
     const response = helpers.getGeneralResponse();
     BlockController.getBlockByHash(req.body['hash'], function(dbBlock) {
         if(dbBlock) {
-            TxVinVoutController.countTxForBlock(dbBlock.blockindex, (count) => {
-                wallet_commands.getBlock(res.locals.wallet, req.params['hash']).then(function (block) {
+            TxVinVoutController.countTxForBlock(dbBlock.blockindex, function(count) {
+                wallet_commands.getBlock(res.locals.wallet, req.body['hash']).then(function (block) {
                     block = JSON.parse(block);
                     send(block.confirmations, count);
                 }).catch(function(err) {
