@@ -575,39 +575,41 @@ router.get('/getBlockWithTxsByHash/:hash', (req, res) => {
     // })
 });
 
-router.get('/getBlockDetails/:hash', (req, res) => {
+router.post('/getBlockDetails', (req, res) => {
     const response = helpers.getGeneralResponse();
-    BlockController.getBlockByHash(req.params['hash'], function(dbBlock) {
+    BlockController.getBlockByHash(req.body['hash'], function(dbBlock) {
         if(dbBlock) {
-            wallet_commands.getBlock(res.locals.wallet, req.params['hash']).then(function (block) {
-                block = JSON.parse(block);
-                send(block.confirmations);
-            }).catch(function(err) {
-                // response.err = 1;
-                // response.errMessage = err;
-                // res.send(JSON.stringify(response, null, 2));
-                send(-1);
+            TxVinVoutController.countTxForBlock(dbBlock.blockindex, function(count) {
+                wallet_commands.getBlock(res.locals.wallet, req.body['hash']).then(function (block) {
+                    block = JSON.parse(block);
+                    send(block.confirmations, count);
+                }).catch(function(err) {
+                    // response.err = 1;
+                    // response.errMessage = err;
+                    // res.send(JSON.stringify(response, null, 2));
+                    send(-1, count);
+                });
             });
         } else {
             response.err = 1;
             response.errMessage = 'no block found';
             res.send(JSON.stringify(response, null, 2));
         }
-        function send(confirmations) {
+        function send(confirmations, count) {
             var block = {
                 hash: dbBlock.blockhash,
                 confirmations: confirmations,
                 height: dbBlock.blockindex,
                 time: dbBlock.timestamp,
+                count: count
             }
-            var data = {block: block, txs: txs}
-            response.data = data;
+            response.data = block;
             res.send(JSON.stringify(response, null, 2));
         }
     })
 });
 
-router.get('/getBlockTxs', (req, res) => {
+router.post('/getBlockTxs', (req, res) => {
     if(isNaN(parseInt(req.body['limit']))) {
         res.send('limit value have to be number');
         return;
@@ -618,8 +620,7 @@ router.get('/getBlockTxs', (req, res) => {
     }
     const response = helpers.getGeneralResponse();
     TxVinVoutController.getBlockTxs(req.body['hash'], 'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function (txs) {
-        var data = {txs: txs}
-        response.data = data;
+        response.data = txs;
         res.send(JSON.stringify(response, null, 2));
     })
 })
