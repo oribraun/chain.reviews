@@ -603,8 +603,7 @@ router.post('/getBlockDetails', (req, res) => {
                 time: dbBlock.timestamp,
                 count: count
             }
-            var data = {block: block}
-            response.data = data;
+            response.data = block;
             res.send(JSON.stringify(response, null, 2));
         }
     })
@@ -621,8 +620,7 @@ router.post('/getBlockTxs', (req, res) => {
     }
     const response = helpers.getGeneralResponse();
     TxVinVoutController.getBlockTxs(req.body['hash'], 'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function (txs) {
-        var data = {txs: txs}
-        response.data = data;
+        response.data = txs;
         res.send(JSON.stringify(response, null, 2));
     })
 })
