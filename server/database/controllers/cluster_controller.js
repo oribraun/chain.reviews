@@ -499,7 +499,7 @@ function getAllClustersWithAddressCount(id,  cb) {
     // });
     aggregate.push({
         "$project": {
-            "_id": "&_id",
+            "_id": "$_id",
             "tags": "$tags",
             "address_count": {$size: "$addresses"}
         }
