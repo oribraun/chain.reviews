@@ -749,12 +749,12 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                     // aggregate.push({$match: {order: {$lte: count - offset * limit}}});
                 }
                 aggregate.push({$limit: limit});
-                // aggregate.push({
-                //     "$unwind": {
-                //         "path": "$vout",
-                //         "preserveNullAndEmptyArrays": true
-                //     }
-                // });
+                aggregate.push({
+                    "$unwind": {
+                        "path": "$vout",
+                        "preserveNullAndEmptyArrays": true
+                    }
+                });
                 // aggregate.push({
                 //     $group: {
                 //         _id: "$txid",
