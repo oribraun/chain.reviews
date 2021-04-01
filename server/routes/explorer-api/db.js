@@ -601,7 +601,7 @@ router.post('/getBlockDetails', (req, res) => {
                 confirmations: confirmations,
                 height: dbBlock.blockindex,
                 time: dbBlock.timestamp,
-                count: 100
+                count: count
             }
             response.data = block;
             res.send(JSON.stringify(response, null, 2));
