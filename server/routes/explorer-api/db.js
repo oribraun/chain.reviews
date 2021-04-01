@@ -575,6 +575,55 @@ router.get('/getBlockWithTxsByHash/:hash', (req, res) => {
     // })
 });
 
+router.get('/getBlockDetails/:hash', (req, res) => {
+    const response = helpers.getGeneralResponse();
+    BlockController.getBlockByHash(req.params['hash'], function(dbBlock) {
+        if(dbBlock) {
+            wallet_commands.getBlock(res.locals.wallet, req.params['hash']).then(function (block) {
+                block = JSON.parse(block);
+                send(block.confirmations);
+            }).catch(function(err) {
+                // response.err = 1;
+                // response.errMessage = err;
+                // res.send(JSON.stringify(response, null, 2));
+                send(-1);
+            });
+        } else {
+            response.err = 1;
+            response.errMessage = 'no block found';
+            res.send(JSON.stringify(response, null, 2));
+        }
+        function send(confirmations) {
+            var block = {
+                hash: dbBlock.blockhash,
+                confirmations: confirmations,
+                height: dbBlock.blockindex,
+                time: dbBlock.timestamp,
+            }
+            var data = {block: block, txs: txs}
+            response.data = data;
+            res.send(JSON.stringify(response, null, 2));
+        }
+    })
+});
+
+router.get('/getBlockTxs/:hash/:limit/:offset', (req, res) => {
+    if(isNaN(parseInt(req.params['limit']))) {
+        res.send('limit value have to be number');
+        return;
+    }
+    if(isNaN(parseInt(req.params['offset']))) {
+        res.send('offset value have to be number');
+        return;
+    }
+    const response = helpers.getGeneralResponse();
+    TxController.getBlockTxs(req.params['hash'], 'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function (txs) {
+        var data = {txs: txs}
+        response.data = data;
+        res.send(JSON.stringify(response, null, 2));
+    })
+})
+
 router.get('/getBlockTxsByHash/:hash', (req, res) => {
     const response = helpers.getGeneralResponse();
     BlockController.getBlockByHash(req.params['hash'], function(dbBlock) {
