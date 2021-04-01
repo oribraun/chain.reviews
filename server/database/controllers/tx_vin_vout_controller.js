@@ -759,9 +759,9 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                     $group: {
                         _id: "$txid",
                         totalAmount: {$sum: "$vout.amount"},
-                        recipients: {$size: "$vout"},
-                        // "vout": {"$push": "$vout"},
-                        // "vin": {"$first": "$vin"},
+                        // recipients: {$size: "$vout"},
+                        "vout": {"$push": "$vout"},
+                        "vin": {"$first": "$vin"},
                         "timestamp": {"$first": "$timestamp"},
                         "blockindex": {"$first": "$blockindex"},
                         "txid": {"$first": "$txid"},
