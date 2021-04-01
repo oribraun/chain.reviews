@@ -210,6 +210,16 @@ function countByBlockIndex(cb) {
     });
 }
 
+function countTxForBlock(blockhash, cb) {
+    Tx[db.getCurrentConnection()].find({blockhash: blockhash}).countDocuments({}, function (err, count) {
+        if(err) {
+            cb()
+        } else {
+            cb(count);
+        }
+    });
+}
+
 function getAllBlocks(sortBy, order, limit, offset, cb) {
     var sort = {};
     sort[sortBy] = order == 'asc' ? 1 : -1;
@@ -245,24 +255,16 @@ function getAllBlocksNew(sortBy, order, limit, blockindex, cb) {
     var sort = {};
     sort[sortBy] = order == 'asc' ? 1 : -1;
     Tx[db.getCurrentConnection()].aggregate([
-        // { $limit : limit},
-        // {$limit: limit },
         {$match: {blockindex : {$gte : blockindex}}},
         {
             $group:{
                 _id:"$blockhash",
                 blockindex: {"$first": "$blockindex"},
                 timestamp: {"$first": "$timestamp"},
-                // vout: {"$first": {$size: "$vout"}},
-                // countTxs:{$sum:1}
             }
         },
         {$sort:sort},
-        // {$skip:offset},
         {$limit: limit }
-        // {$group:{_id : "$blockindex", "blockhash": { "$first": "$blockhash" }, doc: { "$first": "$$ROOT" }}},
-        // {$group:{_id:"$blockhash",items:{$push:{blockhash:"$blockhash"}}}},
-        // {$project:{items:{$slice:["$items", 2]}}}
     ]).exec( function(err, tx) {
         // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
         if(tx) {
@@ -347,6 +349,84 @@ function getAllTxWithVinVoutByHash(hash, sortBy, order, cb) {
     //     } else {
     //         return cb();
     //     }
+    // });
+}
+
+function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
+    // this.countTxForBlock(hash, function(count) {
+        var sort = {};
+        var sortOposite = {};
+        if (sortBy) {
+            sort[sortBy] = order == 'asc' ? 1 : -1;
+            sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+        }
+        var aggregate = [];
+        aggregate.push({$match: {blockhash: hash}});
+        aggregate.push({$sort: sort});
+        if (offset) {
+            aggregate.push({$skip: offset*limit});
+            // aggregate.push({$match: {order: {$lte: count - offset * limit}}});
+        }
+        aggregate.push({$limit: limit});
+        aggregate.push({
+            "$lookup": {
+                "from": TxVinVout[db.getCurrentConnection()].collection.name,
+                "localField": "txid",
+                "foreignField": "txid",
+                // "pipeline":[
+                // {"$unwind":"$vout"},
+                // {"$match":{"$expr":{"$eq":["$$vin.vout","$vout.n"]}}}
+                // ],
+                "as": "vintx"
+                // where vin.vout = vout[0].n
+            }
+        })
+        aggregate.push({
+            "$unwind": {
+                "path": "$vintx",
+                "preserveNullAndEmptyArrays": true
+            }
+        });
+        aggregate.push({
+            "$project": {
+                "vout": {"$ifNull": ["$vintx.vout", []]},
+                "vin": {"$ifNull": ["$vintx.vin", []]},
+                "timestamp": "$vintx.timestamp",
+                "blockindex": "$vintx.blockindex",
+                "txid": "$vintx.txid",
+                "type": "$vintx.type",
+                "blockhash": "$vintx.blockhash",
+                "createdAt": "$vintx.createdAt",
+                "updatedAt": "$vintx.updatedAt",
+            }
+        })
+        aggregate.push({
+            "$unwind": {
+                "path": "$vout",
+                "preserveNullAndEmptyArrays": true
+            }
+        });
+        aggregate.push({
+            $group: {
+                _id: "$txid",
+                totalAmount: {$sum: "$vout.amount"},
+                "vout": {"$push": "$vout"},
+                "vin": {"$first": "$vin"},
+                "timestamp": {"$first": "$timestamp"},
+                "blockindex": {"$first": "$blockindex"},
+                "txid": {"$first": "$txid"},
+                "type": {"$first": "$type"},
+                "blockhash": {"$first": "$blockhash"},
+            }
+        })
+        Tx[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, tx) {
+            // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+            if (tx) {
+                return cb(tx);
+            } else {
+                return cb();
+            }
+        });
     // });
 }
 
@@ -548,10 +628,12 @@ module.exports.update = update;
 module.exports.count = count;
 module.exports.estimatedDocumentCount = estimatedDocumentCount;
 module.exports.countByBlockIndex = countByBlockIndex;
+module.exports.countTxForBlock = countTxForBlock;
 module.exports.getBlockHashJoin = getBlockHashJoin;
 module.exports.getAll2Join = getAll2Join;
 module.exports.getAllBlocks = getAllBlocks;
 module.exports.getAllBlocksNew = getAllBlocksNew;
 module.exports.getAllTxWithVinVoutByHash = getAllTxWithVinVoutByHash;
+module.exports.getBlockTxs = getBlockTxs;
 module.exports.getAllDuplicate = getAllDuplicate;
 module.exports.getMissingTrasaction = getMissingTrasaction;
