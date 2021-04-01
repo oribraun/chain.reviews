@@ -760,7 +760,7 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                     $group: {
                         _id: "$txid",
                         totalAmount: {$sum: "$vout.amount"},
-                        recipients: {$size: "$vout"},
+                        recipients: {$size: {"$first": "$vout"}},
                         "vout": {"$push": "$vout"},
                         "vin": {"$first": "$vin"},
                         "timestamp": {"$first": "$timestamp"},
