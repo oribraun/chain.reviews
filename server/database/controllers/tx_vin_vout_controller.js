@@ -736,14 +736,16 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
             var blockindex = block.blockindex;
             this.countTxForBlock(blockindex, function (count) {
                 var sort = {};
+                var sortId = {};
                 var sortOposite = {};
                 if (sortBy) {
                     sort[sortBy] = order == 'asc' ? 1 : -1;
+                    sortId['_id'] = order == 'asc' ? 1 : -1;
                     sortOposite[sortBy] = order == 'desc' ? 1 : -1;
                 }
                 var aggregate = [];
                 aggregate.push({$match: {blockindex: blockindex}});
-                aggregate.push({$sort: sort});
+                aggregate.push({$sort: sortId});
                 if (offset) {
                     aggregate.push({$skip: offset*limit});
                     // aggregate.push({$match: {order: {$lte: count - offset * limit}}});
