@@ -731,7 +731,8 @@ function getTransactionsChartBitcoin(date, cb) {
 
 function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
     Block[db.getCurrentConnection()].find({blockhash: hash}, function(block) {
-        if(block.length) {
+        console.log('block', block)
+        if(block && block.length) {
             var blockindex = block[0].blockindex;
             this.countTxForBlock(blockindex, function (count) {
                 var sort = {};
