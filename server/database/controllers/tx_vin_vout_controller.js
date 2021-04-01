@@ -734,53 +734,59 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
         console.log('block', block)
         if(block) {
             var blockindex = block.blockindex;
-            this.countTxForBlock(blockindex, function (count) {
-                var sort = {};
-                var sortOrder = {};
-                var sortOposite = {};
-                if (sortBy) {
-                    sort[sortBy] = order == 'asc' ? 1 : -1;
-                    sortOrder[sortBy] = order == 'asc' ? 1 : -1;
-                    sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+            this.getOne(blockindex, function (tx) {
+                if(tx) {
+                    this.countTxForBlock(blockindex, function (count) {
+                        var sort = {};
+                        var sortOrder = {};
+                        var sortOposite = {};
+                        if (sortBy) {
+                            sort[sortBy] = order == 'asc' ? 1 : -1;
+                            sortOrder[sortBy] = order == 'asc' ? 1 : -1;
+                            sortOposite[sortBy] = order == 'desc' ? 1 : -1;
+                        }
+                        var aggregate = [];
+                        aggregate.push({$match: {blockindex: blockindex}});
+                        aggregate.push({$sort: sort});
+                        if (offset) {
+                            // aggregate.push({$skip: offset * limit});
+                            aggregate.push({$match: {order: {$lte: tx.order + (count - offset * limit)}}});
+                        }
+                        aggregate.push({$limit: limit});
+                        aggregate.push({
+                            "$unwind": {
+                                "path": "$vout",
+                                "preserveNullAndEmptyArrays": true
+                            }
+                        });
+                        aggregate.push({
+                            $group: {
+                                _id: "$txid",
+                                totalAmount: {$sum: "$vout.amount"},
+                                recipients: {$sum: 1},
+                                // "vout": {"$push": "$vout"},
+                                // "vin": {"$first": "$vin"},
+                                "timestamp": {"$first": "$timestamp"},
+                                "blockindex": {"$first": "$blockindex"},
+                                "txid": {"$first": "$txid"},
+                                "type": {"$first": "$type"},
+                                "blockhash": {"$first": "$blockhash"},
+                                "order": {"$first": "$order"},
+                            }
+                        })
+                        aggregate.push({$sort: sort});
+                        TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, tx) {
+                            // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
+                            if (tx) {
+                                return cb(tx);
+                            } else {
+                                return cb();
+                            }
+                        });
+                    });
+                } else {
+                    return cb();
                 }
-                var aggregate = [];
-                aggregate.push({$match: {blockindex: blockindex}});
-                aggregate.push({$sort: sort});
-                if (offset) {
-                    aggregate.push({$skip: offset*limit});
-                    // aggregate.push({$match: {order: {$lte: count - offset * limit}}});
-                }
-                aggregate.push({$limit: limit});
-                aggregate.push({
-                    "$unwind": {
-                        "path": "$vout",
-                        "preserveNullAndEmptyArrays": true
-                    }
-                });
-                aggregate.push({
-                    $group: {
-                        _id: "$txid",
-                        totalAmount: {$sum: "$vout.amount"},
-                        recipients: {$sum: 1},
-                        // "vout": {"$push": "$vout"},
-                        // "vin": {"$first": "$vin"},
-                        "timestamp": {"$first": "$timestamp"},
-                        "blockindex": {"$first": "$blockindex"},
-                        "txid": {"$first": "$txid"},
-                        "type": {"$first": "$type"},
-                        "blockhash": {"$first": "$blockhash"},
-                        "order": {"$first": "$order"},
-                    }
-                })
-                aggregate.push({$sort: sort});
-                TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, tx) {
-                    // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
-                    if (tx) {
-                        return cb(tx);
-                    } else {
-                        return cb();
-                    }
-                });
             });
         } else {
             return cb();
