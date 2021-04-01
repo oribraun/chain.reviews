@@ -750,7 +750,7 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
     }
     Block[db.getCurrentConnection()].findOne({blockhash: hash}, (err, block) => {
         if(err) {
-            console.log('err1', err)
+            console.log('no block', err)
         }
         if(block) {
             var blockindex = block.blockindex;
@@ -794,15 +794,18 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                             if (txs) {
                                 return cb(txs);
                             } else {
+                                console.log('no txs')
                                 return cb([]);
                             }
                         });
                     });
                 } else {
+                    console.log('no first tx')
                     return cb([]);
                 }
             });
         } else {
+            console.log('no block')
             return cb([]);
         }
     })
