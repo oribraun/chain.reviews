@@ -607,17 +607,17 @@ router.get('/getBlockDetails/:hash', (req, res) => {
     })
 });
 
-router.get('/getBlockTxs/:hash/:limit/:offset', (req, res) => {
-    if(isNaN(parseInt(req.params['limit']))) {
+router.get('/getBlockTxs', (req, res) => {
+    if(isNaN(parseInt(req.body['limit']))) {
         res.send('limit value have to be number');
         return;
     }
-    if(isNaN(parseInt(req.params['offset']))) {
+    if(isNaN(parseInt(req.body['offset']))) {
         res.send('offset value have to be number');
         return;
     }
     const response = helpers.getGeneralResponse();
-    TxController.getBlockTxs(req.params['hash'], 'blockindex', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function (txs) {
+    TxController.getBlockTxs(req.body['hash'], 'blockindex', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function (txs) {
         var data = {txs: txs}
         response.data = data;
         res.send(JSON.stringify(response, null, 2));
