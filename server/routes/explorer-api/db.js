@@ -621,7 +621,7 @@ router.post('/getBlockTxs', (req, res) => {
     const response = helpers.getGeneralResponse();
     TxVinVoutController.getBlockTxs(req.body['hash'], 'order', 'desc', parseInt(req.body['limit']), parseInt(req.body['offset']), function (txs) {
         response.data = txs;
-        res.send(JSON.stringify(response, null, 2));
+        // res.send(JSON.stringify(response, null, 2));
     })
 })
 
