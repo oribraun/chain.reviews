@@ -504,9 +504,9 @@ function getAllClustersWithAddressCount(id,  cb) {
             "address_count": {$size: "$addresses"}
         }
     })
-    aggregate.push({
-        $sort:{address_count:-1}
-    })
+    // aggregate.push({
+    //     $sort:{address_count:-1}
+    // })
     Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, cluster) {
         if(cluster) {
             return cb(cluster);
