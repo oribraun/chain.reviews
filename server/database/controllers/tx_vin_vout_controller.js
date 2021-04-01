@@ -755,21 +755,21 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                         "preserveNullAndEmptyArrays": true
                     }
                 });
-                // aggregate.push({
-                //     $group: {
-                //         _id: "$txid",
-                //         totalAmount: {$sum: "$vout.amount"},
-                //         recipients: {$sum: 1},
-                //         // "vout": {"$push": "$vout"},
-                //         // "vin": {"$first": "$vin"},
-                //         "timestamp": {"$first": "$timestamp"},
-                //         "blockindex": {"$first": "$blockindex"},
-                //         "txid": {"$first": "$txid"},
-                //         "type": {"$first": "$type"},
-                //         "blockhash": {"$first": "$blockhash"},
-                //         "order": {"$first": "$order"},
-                //     }
-                // })
+                aggregate.push({
+                    $group: {
+                        _id: "$txid",
+                        totalAmount: {$sum: "$vout.amount"},
+                        recipients: {$sum: 1},
+                        // "vout": {"$push": "$vout"},
+                        // "vin": {"$first": "$vin"},
+                        "timestamp": {"$first": "$timestamp"},
+                        "blockindex": {"$first": "$blockindex"},
+                        "txid": {"$first": "$txid"},
+                        "type": {"$first": "$type"},
+                        "blockhash": {"$first": "$blockhash"},
+                        "order": {"$first": "$order"},
+                    }
+                })
                 TxVinVout[db.getCurrentConnection()].aggregate(aggregate).exec(function (err, tx) {
                     // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
                     if (tx) {
