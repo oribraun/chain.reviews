@@ -10,13 +10,12 @@ var ClusterSchema = new Schema({
   tags: { type: Array, default: [] },
 }, {id: false, timestamps: false});
 
+ClusterSchema.post('update', (doc) => {
+  console.log('mongo update', doc);
+})
 var connections = db.getConnections();
 var obj = {};
 for(var i in connections) {
   obj[i] = connections[i].model('Cluster', ClusterSchema);
-  const changeStream = obj[i].watch();
-  changeStream.on('change', data => {
-    console.log(new Date(), data)
-  });
 }
 module.exports = obj;
