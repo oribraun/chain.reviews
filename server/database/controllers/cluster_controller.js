@@ -450,14 +450,14 @@ function getAllClusters(limit, offset, cb) {
         $sort:{address_count:-1}
     })
     if(offset) {
-        aggregate.push({$skip: offset * limit});
+        // aggregate.push({$skip: offset * limit});
     }
     if(limit) {
-        aggregate.push({$limit: limit});
+        // aggregate.push({$limit: limit});
     }
-    Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, cluster) {
-        if(cluster) {
-            return cb(cluster);
+    Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, clusters) {
+        if(clusters) {
+            return cb(clusters.slice(offset * limit, limit));
         } else {
             return cb(null);
         }
