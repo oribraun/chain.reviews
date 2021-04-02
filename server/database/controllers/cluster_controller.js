@@ -446,9 +446,9 @@ function getAllClusters(limit, offset, cb) {
             "address_count": {$size: "$addresses"}
         }
     });
-    // aggregate.push({
-    //     $sort:{address_count:-1}
-    // })
+    aggregate.push({
+        $sort:{address_count:-1}
+    })
     if(offset) {
         aggregate.push({$skip: offset * limit});
     }
