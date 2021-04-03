@@ -681,7 +681,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
     var promises = [];
     var data = {};
     promises.push(new Promise((resolve, reject) => {
-        Address[db.getCurrentConnection()].countDocuments({}, function (err, countUnique) {
+        Address[db.getCurrentConnection()].countDocuments({}).lean().exec(function (err, countUnique) {
             if(err) {
                 reject()
             } else {
@@ -692,7 +692,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
         });
     }))
     promises.push(new Promise((resolve, reject) => {
-        Address[db.getCurrentConnection()].find({balance: {$gt: 0}}).countDocuments({}, function (err, countActive) {
+        Address[db.getCurrentConnection()].find({balance: {$gt: 0}}).countDocuments({}).lean().exec(function (err, countActive) {
             if(err) {
                 reject()
             } else {
