@@ -703,7 +703,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
         });
     }))
     promises.push(new Promise((resolve, reject) => {
-        Address[db.getCurrentConnection()].find({a_id: {$eq: dev_address}}).exec({}, function (err, address) {
+        Address[db.getCurrentConnection()].find({a_id: {$eq: dev_address}}).lean().exec({}, function (err, address) {
             if(err) {
                 reject()
             } else {
@@ -722,7 +722,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
         get._id = 0;
         get.a_id = 1;
         get[sortBy] = 1;
-        Address[db.getCurrentConnection()].find({},get).sort(sort).limit(limit).exec({}, function (err, results) {
+        Address[db.getCurrentConnection()].find({},get).sort(sort).limit(limit).lean().exec({}, function (err, results) {
             if (err) {
                 reject()
             } else {
