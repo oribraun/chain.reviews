@@ -686,6 +686,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
                 reject()
             } else {
                 data.countUnique = countUnique;
+                console.log('got countUnique', countUnique)
                 resolve();
             }
         });
@@ -696,6 +697,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
                 reject()
             } else {
                 data.countActive = countActive;
+                console.log('got countActive', countActive)
                 resolve();
             }
         });
@@ -710,6 +712,7 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
                 } else {
                     data.devAddressBalance = 0;
                 }
+                console.log('got devAddressBalance', data.devAddressBalance)
                 resolve();
             }
         });
