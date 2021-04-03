@@ -15,7 +15,7 @@ var AddressSchema = new Schema({
 // AddressSchema.index({received: -1});
 AddressSchema.index({balance: 1});
 AddressSchema.index({received: 1});
-AddressSchema.index({balance: 1}, {partialFilterExpression: { balance: { $gt: 0 }}});
+AddressSchema.index({balance: -1}, {partialFilterExpression: { balance: { $gt: 0 }}});
 
 var connections = db.getConnections();
 var obj = {};
