@@ -115,7 +115,7 @@ if(settings[wallet]) {
 
     }
 } else {
-    if(type != 'killall') {
+    if(type != 'killall' && type != 'killAllByString') {
         console.log('no wallet found');
         process.exit();
     }
@@ -5959,6 +5959,13 @@ if (wallet) {
             });
             break;
         }
+        case 'killAllByString': {
+            killAllByString(wallet);
+            deleteFile();
+            console.log('killed ' + count + ' process');
+            process.exit();
+            break;
+        }
         case 'find_unconfirmed':
             // 27675 stream block
             var cpuCount = numCPUs;
@@ -8016,6 +8023,9 @@ function forceReindexFrom(onYes, onNo, from) {
 
 function killAll(wallet) {
     exec('ps -ef | grep "sync.js ' + wallet + '" | grep -v grep | awk \'{print $2}\' | xargs -r kill -9');
+}
+function killAllByString(str) {
+    exec('ps -ef | grep ' + str + ' | grep -v grep | awk \'{print $2}\' | xargs -r kill -9');
 }
 function findProccessCount() {
     var promise = new Promise(function(resolve, reject) {
