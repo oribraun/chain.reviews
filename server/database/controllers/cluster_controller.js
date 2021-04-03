@@ -425,18 +425,25 @@ function getAllClusters(limit, offset, cb) {
 
     limit = parseInt(limit);
     offset = parseInt(offset);
+    // aggregate.push({
+    //     "$unwind": {
+    //         "path": "$addresses",
+    //         "preserveNullAndEmptyArrays": true
+    //     }
+    // });
+    // aggregate.push({
+    //     "$group": {
+    //         "_id": "$_id",
+    //         "tags" : { "$first": "$tags" },
+    //         "address_count" : { "$sum": 1 },
+    //         // "addresses" : { "$push": "$addresses" },
+    //     }
+    // });
     aggregate.push({
-        "$unwind": {
-            "path": "$addresses",
-            "preserveNullAndEmptyArrays": true
-        }
-    });
-    aggregate.push({
-        "$group": {
+        "$project": {
             "_id": "$_id",
-            "tags" : { "$first": "$tags" },
-            "address_count" : { "$sum": 1 },
-            // "addresses" : { "$push": "$addresses" },
+            "tags": "$tags",
+            "address_count": {$size: "$addresses"}
         }
     });
     aggregate.push({
@@ -448,9 +455,9 @@ function getAllClusters(limit, offset, cb) {
     if(limit) {
         aggregate.push({$limit: limit});
     }
-    Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, cluster) {
-        if(cluster) {
-            return cb(cluster);
+    Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, clusters) {
+        if(clusters) {
+            return cb(clusters);
         } else {
             return cb(null);
         }
@@ -484,21 +491,28 @@ function getAllClustersWithAddressCount(id,  cb) {
         var objID = mongoose.Types.ObjectId(id);
         aggregate.push({ $match : { _id : objID } });
     }
+    // aggregate.push({
+    //     "$unwind": {
+    //         "path": "$addresses",
+    //         "preserveNullAndEmptyArrays": true
+    //     }
+    // });
+    // aggregate.push({
+    //     "$group": {
+    //         "_id": "$_id",
+    //         "tags" : { "$first": "$tags" },
+    //         "address_count" : { "$sum": 1 },
+    //     }
+    // });
     aggregate.push({
-        "$unwind": {
-            "path": "$addresses",
-            "preserveNullAndEmptyArrays": true
-        }
-    });
-    aggregate.push({
-        "$group": {
+        "$project": {
             "_id": "$_id",
-            "tags" : { "$first": "$tags" },
-            "address_count" : { "$sum": 1 },
+            "tags": "$tags",
+            "address_count": {$size: "$addresses"}
         }
-    });
+    })
     aggregate.push({
-        $sort:{count:-1}
+        $sort:{address_count:-1}
     })
     Cluster[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, cluster) {
         if(cluster) {

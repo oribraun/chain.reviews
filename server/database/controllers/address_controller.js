@@ -336,7 +336,11 @@ function bulkUpdateAddress(hash, txid, amount, type, cb) {
 function getRichlist(sortBy, order, limit, cb) {
     var sort = {};
     sort[sortBy] = order;
-    Address[db.getCurrentConnection()].find({}).sort(sort).limit(limit).exec(function(err, addresses){
+    var get = {}
+    get._id = 0;
+    get.a_id = 1;
+    get[sortBy] = 1;
+    Address[db.getCurrentConnection()].find({}, get).sort(sort).limit(limit).exec(function(err, addresses){
         if(err) {
             return cb(err);
         }

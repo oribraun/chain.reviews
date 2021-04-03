@@ -7073,7 +7073,7 @@ function updateRichlistAndExtraStats() {
             richlist.coin = settings[wallet].coin;
         }
         // console.log('updating richlist');
-        AddressController.getRichlistAndExtraStats2('received', 'desc', 100, settings[wallet].dev_address, function(results){
+        AddressController.getRichlist('received', 'desc', 100, function(results){
             var received = results.data;
             AddressController.getRichlistAndExtraStats2('balance', 'desc', 100, settings[wallet].dev_address, function(results){
                 var active_wallets_count = results.countActive;

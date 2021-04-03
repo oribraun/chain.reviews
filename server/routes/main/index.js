@@ -152,7 +152,7 @@ function calcMarketData(marketSummary, marketData, wallet) {
         setDataBasedOnLastPrice();
     }
     for (const i in marketData) {
-        marketData[i].avgPriceBtc = (marketData[i].totalPriceBtc / marketData[i].totalPriceCount).toFixed(8);
+        marketData[i].avgPriceBtc = (marketData[i].totalPriceBtc / marketData[i].totalPriceCount).toFixed(10);
         marketData[i].buyLiquidity = marketData[i].buyLiquidity.toFixed(8);
         marketData[i].sellLiquidity = marketData[i].sellLiquidity.toFixed(8);
         marketData[i]['24hVolume'] = marketData[i]['24hVolume'].toFixed(8);
