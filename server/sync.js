@@ -115,7 +115,7 @@ if(settings[wallet]) {
 
     }
 } else {
-    if(type != 'killall' && type != 'killAllByString') {
+    if(type !== 'killall' && type !== 'killAllByString') {
         console.log('no wallet found');
         process.exit();
     }
@@ -5961,8 +5961,7 @@ if (wallet) {
         }
         case 'killAllByString': {
             killAllByString(wallet);
-            deleteFile();
-            console.log('killed ' + count + ' process');
+            console.log('killed ' + wallet + ' process');
             process.exit();
             break;
         }
