@@ -7074,8 +7074,10 @@ function updateRichlistAndExtraStats() {
         }
         // console.log('updating richlist');
         AddressController.getRichlist('received', 'desc', 100, function(results){
+            console.log('got received')
             var received = results.data;
             AddressController.getRichlistAndExtraStats2('balance', 'desc', 100, settings[wallet].dev_address, function(results){
+                console.log('got all')
                 var active_wallets_count = results.countActive;
                 var total_wallets_count = results.countUnique;
                 var dev_wallet_balance = results.devAddressBalance;
