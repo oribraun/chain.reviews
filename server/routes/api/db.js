@@ -434,7 +434,7 @@ router.get('/getMarketsSummary', (req, res) => {
             var wallet = res.locals.wallet;
             markets = removeDuplicateSummary(markets, settings[wallet].symbol);
             var markets_stats = calcMarketData(markets, {}, wallet);
-            response.data = markets_stats;
+            response.data = {markets_stats, markets};
         } else {
             response.err = 1;
             response.errMessage = 'no market found';
