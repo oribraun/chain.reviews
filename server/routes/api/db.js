@@ -432,9 +432,10 @@ router.get('/getMarketsSummary', (req, res) => {
     MarketController.getAllSummary('symbol', 'desc', 0, 0, function(markets) {
         if(markets && markets.length) {
             var wallet = res.locals.wallet;
+            var original_markets = markets;
             markets = removeDuplicateSummary(markets, settings[wallet].symbol);
             var markets_stats = calcMarketData(markets, {}, wallet);
-            response.data = {markets_stats, markets};
+            response.data = {markets_stats, markets, original_markets};
         } else {
             response.err = 1;
             response.errMessage = 'no market found';
@@ -479,7 +480,7 @@ function calcMarketData(marketSummary, marketData, wallet) {
             marketData[marketSummary[i].market_name].buyLiquidity += marketSummary[i].totalBuyLiquidityBtc;
             marketData[marketSummary[i].market_name].sellLiquidity += marketSummary[i].amountSellLiquidityBtc;
             marketData[marketSummary[i].market_name]['24hVolume'] += parseFloat(marketSummary[i].volume) * parseFloat(marketSummary[i].leftCoinPriceBtc);
-            if (marketSummary[i].symbol.indexOf('BTC_') === -1 && wallet !== 'bitcoin') {
+            if (marketSummary[i].symbol.indexOf('BTC_') === -1) {
                 marketData[marketSummary[i].market_name].totalPriceBtc += marketSummary[i].leftCoinPriceBtc;
                 marketData[marketSummary[i].market_name].totalPriceCount += 1;
             }
