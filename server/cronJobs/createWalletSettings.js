@@ -43,7 +43,8 @@ var default_settings = {
         "port" : 27017
     },
     "masternode_required": 0,
-    "active": false
+    "active": false,
+    "hide": false
 }
 
 if(!settings[wallet]) {
