@@ -480,10 +480,10 @@ function calcMarketData(marketSummary, marketData, wallet) {
             marketData[marketSummary[i].market_name].buyLiquidity += marketSummary[i].totalBuyLiquidityBtc;
             marketData[marketSummary[i].market_name].sellLiquidity += marketSummary[i].amountSellLiquidityBtc;
             marketData[marketSummary[i].market_name]['24hVolume'] += parseFloat(marketSummary[i].volume) * parseFloat(marketSummary[i].leftCoinPriceBtc);
-            if (marketSummary[i].symbol.indexOf('BTC_') === -1) {
+            // if (marketSummary[i].symbol.indexOf('BTC_') === -1) {
                 marketData[marketSummary[i].market_name].totalPriceBtc += marketSummary[i].leftCoinPriceBtc;
                 marketData[marketSummary[i].market_name].totalPriceCount += 1;
-            }
+            // }
             const symbolSplit = marketSummary[i].symbol.split('_');
             const fromCoin = symbolSplit[0];
             const toCoin = symbolSplit[1];
