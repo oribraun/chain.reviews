@@ -962,7 +962,9 @@ router.post('/getMarketsSummary', (req, res) => {
     const response = helpers.getGeneralResponse();
     MarketController.getAllSummary('symbol', 'desc', 0, 0, function(markets) {
         if(markets && markets.length) {
-            response.data = markets;
+            markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
+            var markets_stats = helpers.calcMarketData(markets, {}, wallet);
+            response.data = markets_stats;
         } else {
             response.err = 1;
             response.errMessage = 'no market found';
