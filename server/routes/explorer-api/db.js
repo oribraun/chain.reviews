@@ -962,6 +962,7 @@ router.post('/getMarketsSummary', (req, res) => {
     const response = helpers.getGeneralResponse();
     MarketController.getAllSummary('symbol', 'desc', 0, 0, function(markets) {
         if(markets && markets.length) {
+            var wallet = res.locals.wallet;
             markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
             var markets_stats = helpers.calcMarketData(markets, {}, wallet);
             response.data = markets_stats;
