@@ -268,35 +268,35 @@ router.post('/getAddressDetails', (req, res) => {
     AddressController.getOne(req.body['address'], function(results) {
         if(!results) {
             AddressToUpdateController.getAddressDetails(req.body['address'], function(results) {
-                getClusters();
+                getClusters(results);
             })
         } else {
-            getClusters();
-        }
-        function getClusters() {
-            // AddressToUpdateController.getAddressDetails(req.body['address'], function (results) {
-            ClusterController.getClusterByAddress(req.body['address'], function (clusters) {
-                if (results) {
-                    if (clusters) {
-                        results.clusters = clusters;
-                    }
-                    if(results.last_order) {
-                        results.count = results.last_order;
-                    }
-                    if(results.a_id) {
-                        results.address = results.a_id;
-                    }
-                    // results.addressSum = results;
-                    response.data = results;
-                } else {
-                    response.err = 1;
-                    response.errMessage = 'no address found';
-                }
-                res.send(JSON.stringify(response, null, 2));
-            });
-            // });
+            getClusters(results);
         }
     });
+    function getClusters(results) {
+        // AddressToUpdateController.getAddressDetails(req.body['address'], function (results) {
+        ClusterController.getClusterByAddress(req.body['address'], function (clusters) {
+            if (results) {
+                if (clusters) {
+                    results.clusters = clusters;
+                }
+                if(results.last_order) {
+                    results.count = results.last_order;
+                }
+                if(results.a_id) {
+                    results.address = results.a_id;
+                }
+                // results.addressSum = results;
+                response.data = results;
+            } else {
+                response.err = 1;
+                response.errMessage = 'no address found';
+            }
+            res.send(JSON.stringify(response, null, 2));
+        });
+        // });
+    }
 })
 
 router.post('/getAddressTxChart', (req, res) => {
