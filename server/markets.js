@@ -44,10 +44,11 @@ const obj = {
         db.setCurrentConnection(wallet);
         coincodexMarketCap.getCoin(settings[wallet].symbol.toUpperCase()).then((market_cap) => {
             console.log('market_cap', market_cap);
-            MarketsController.getOne(settings[wallet].symbol.toUpperCase() + '_BTC', function (market) {
-                if (!market) {
-                    market = {summary: {"24h_volume": {BTC: "0"}, usd_price: {BTC: "0"}}};
-                }
+            const market =  {summary: {"24h_volume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
+            // MarketsController.getOne(settings[wallet].symbol.toUpperCase() + '_BTC', function (market) {
+            //     if (!market) {
+            //         market = {summary: {"24h_volume": {BTC: "0"}, usd_price: {BTC: "0"}}};
+            //     }
                 MarketsController.getAllSummary('symbol', 'desc', 0, 0, function (markets) {
                     markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
                     var markets_stats = helpers.calcMarketData(markets, {}, wallet);
@@ -65,7 +66,7 @@ const obj = {
                         cb(obj);
                     });
                 })
-            });
+            // });
         });
     }
 }
