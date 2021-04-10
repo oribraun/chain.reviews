@@ -51,7 +51,7 @@ app.get('/', function(req, res) {
 
 var allowOnlyForExplorer = function (req, res, next) {
     // res.header('Content-Type', 'application/json');
-    console.log("add to header called ... " + req.url + " origin - " + req.headers.referer);
+    // console.log("add to header called ... " + req.url + " origin - " + req.headers.referer);
     // // res.header("charset", "utf-8")
     var allowedOrigins = [
         "http://139.59.131.210/explorer",
