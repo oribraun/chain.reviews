@@ -43,9 +43,6 @@ const obj = {
     getStatsCoincodex: (wallet, fullUrl, cb) => {
         db.setCurrentConnection(wallet);
         let symbol = settings[wallet].symbol.toUpperCase();
-        if(symbol === 'FIX') {
-            symbol = 'FIX2'
-        }
         coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
             console.log('market_cap', market_cap);
             const market =  {summary: {"24hVolume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}

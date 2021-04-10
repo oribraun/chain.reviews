@@ -28,7 +28,7 @@ var model = {
                 } else {
                     let current;
                     body = body.filter((o) => o.display);
-                    const map = body.map((o) => o.symbol);
+                    const map = body.map((o) => o.display_symbol);
                     const index = map.indexOf(coin);
                     if(index > -1) {
                         current = body[index];
