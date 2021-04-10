@@ -19,6 +19,26 @@ var model = {
         });
         return promise;
     },
+    getCoinFromCache: function(coin) {
+        var url = 'https://coincodex.com/apps/coincodex/cache/all_coins.json';
+        var promise = new Promise(function(resolve, reject) {
+            request({uri: url, json: true}, function (error, response, body) {
+                if(error) {
+                    reject(error);
+                } else {
+                    let current;
+                    body = body.filter((o) => o.display);
+                    const map = body.map((o) => o.symbol);
+                    const index = map.indexOf(coin);
+                    if(index > -1) {
+                        current = body[index];
+                    }
+                    resolve(current);
+                }
+            });
+        });
+        return promise;
+    },
     getCacheCoinInfo: function(coin) {
         var url = 'https://coincodex.com/apps/coincodex/cache/all_coins.json';
         var promise = new Promise(function(resolve, reject) {
@@ -27,7 +47,7 @@ var model = {
                     reject(error);
                 } else {
                     let current;
-                    const map = body.map((o) => p.symbol);
+                    const map = body.map((o) => o.symbol);
                     const index = map.indexOf(coin.toUpperCase());
                     if(index > -1) {
                         current = body[index];
