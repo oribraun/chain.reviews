@@ -5,6 +5,7 @@ const api = require('./api');
 const explorer = require('./explorer');
 const main = require('./main');
 const helpers = require('./../helpers');
+const markets_helper = require('./../markets');
 const path = require('path');
 
 const db = require('./../database/db');
@@ -14,54 +15,27 @@ const settings = require('./../wallets/all_settings');
 
 app.get('/', function(req, res) {
     var array = [];
-    var wallets = [];
-    for (var wallet in settings) {
-        if(settings[wallet].active && !settings[wallet].hide) {
-            wallets.push(wallet);
-        }
-    }
+    var wallets = markets_helper.getAllWallets();
     var fullUrl = req.protocol + '://' + req.get('host');
-    addingWalletsStats(wallets);
-    function sendFile() {
-        res.render(path.resolve(__dirname + "/../../chain.review.clients/main/chain.review.ejs"), {
-            data: array,
-        });
-    }
-    function addStats(wallet,cb) {
-        db.setCurrentConnection(wallet);
-        MarketsController.getOne(settings[wallet].symbol.toUpperCase() + '_BTC', function(market) {
-            if(!market) {
-                market = {summary: {"24h_volume": {BTC: "0"}, usd_price: {BTC: "0"}}};
-            }
-            MarketsController.getAllSummary('symbol', 'desc', 0, 0, function (markets) {
-                markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
-                var markets_stats = helpers.calcMarketData(markets, {}, wallet);
-                StatsController.getOne(wallet, function (stats) {
-                    console.log('stats', stats)
-                    array.push({
-                        wallet: helpers.ucfirst(wallet),
-                        symbol: settings[wallet].symbol,
-                        explorer: fullUrl + '/explorer/' + wallet,
-                        api: fullUrl + '/public-api/db/' + wallet,
-                        stats: stats,
-                        markets_stats: markets_stats,
-                        market_summary: market.summary,
-                    })
-                    cb();
-                });
-            })
-        });
-    }
+
     function addingWalletsStats(wallets) {
         if(!wallets.length) {
-            sendFile();
+            returnData();
         } else {
-            addStats(wallets[0], function () {
+            markets_helper.getStats(wallets[0], fullUrl, function (stats) {
+                array.push(stats);
                 wallets.shift();
                 addingWalletsStats(wallets);
             })
         }
     }
+
+    function returnData() {
+        res.render(path.resolve(__dirname + "/../../chain.review.clients/main/chain.review.ejs"), {
+            data: array,
+        });
+    }
+    addingWalletsStats(wallets);
 });
 
 // app.use("/:wallet/api", function(req, res, next) {
