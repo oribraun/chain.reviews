@@ -285,7 +285,7 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                     data[i]['totalBuyLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['totalBuyLiquidity'];
                     data[i]['totalSellLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['totalSellLiquidity'];
                 }
-                console.log('data', data);
+                // console.log('data', data);
             }
 
             function findAllOptionsRecursive(i,j, opt, inner_prices) {
