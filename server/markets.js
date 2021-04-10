@@ -43,13 +43,13 @@ const obj = {
     getStatsCoincodex: (wallet, fullUrl, cb) => {
         db.setCurrentConnection(wallet);
         coincodexMarketCap.getCoin(settings[wallet].symbol.toUpperCase()).then((market_cap) => {
-            const market =  {summary: {"24h_volume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
+            const market =  {summary: {"24hVolume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
             console.log('market_cap.volume_24_usd', market_cap.volume_24_usd);
             console.log('market_cap.last_price_usd', market_cap.last_price_usd);
             console.log('market', market);
             // MarketsController.getOne(settings[wallet].symbol.toUpperCase() + '_BTC', function (market) {
             //     if (!market) {
-            //         market = {summary: {"24h_volume": {BTC: "0"}, usd_price: {BTC: "0"}}};
+            //         market = {summary: {"24hVolume": {BTC: "0"}, usd_price: {BTC: "0"}}};
             //     }
                 MarketsController.getAllSummary('symbol', 'desc', 0, 0, function (markets) {
                     markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
