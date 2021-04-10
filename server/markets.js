@@ -44,7 +44,7 @@ const obj = {
         db.setCurrentConnection(wallet);
         let symbol = settings[wallet].symbol.toUpperCase();
         coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
-            console.log('market_cap', market_cap);
+            // console.log('market_cap', market_cap);
             const market =  {summary: {"24hVolume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
             // MarketsController.getOne(settings[wallet].symbol.toUpperCase() + '_BTC', function (market) {
             //     if (!market) {
