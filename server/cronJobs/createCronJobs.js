@@ -8,10 +8,10 @@ for (var wallet in settings) {
         // var txid = settings[wallet].example_txid;
         // var hash = settings[wallet].example_hash;
         // var dev_address = settings[wallet].dev_address;
-        //   * * * * *  sleep  0 && /usr/bin/node /var/www/html/server/cronJobs/update_split.js fix >> /var/www/html/logs/fixCronUpdate.log 2>&1
+        //   * * * * *  sleep  0 && /usr/bin/node --max-old-space-size=8192 /var/www/html/server/cronJobs/update_split.js fix >> /var/www/html/logs/fixCronUpdate.log 2>&1
         // */5 * * * *  sleep  0 && /usr/bin/node /var/www/html/server/cronJobs/update_peers.js fix >> /var/www/html/logs/fixCronUpdate.log 2>&1
         // */5 * * * *  sleep  0 && /usr/bin/node /var/www/html/server/cronJobs/update_masternodes.js fix >> /var/www/html/logs/fixCronUpdate.log 2>&1
-        string += "  * * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_split.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdate.log 2>&1\n";
+        string += "  * * * * * root sleep 0 && /usr/bin/node --max-old-space-size=8192 /var/www/html/chain.review/server/cronJobs/update_split.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdate.log 2>&1\n";
         string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_peers.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdatePeers.log 2>&1\n";
         string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_masternodes.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdateMasternodes.log 2>&1\n";
         string += "*/5 * * * * root sleep 0 && /usr/bin/node /var/www/html/chain.review/server/cronJobs/update_richlist.js " + wallet + " >> /var/www/html/chain.review/logs/" + wallet + "CronUpdateRichlist.log 2>&1\n";
