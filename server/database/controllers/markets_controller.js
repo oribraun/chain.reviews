@@ -253,7 +253,7 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                 data.push(tempData);
             }
             var map = data.map((obj) => (obj.symbol));
-            console.log(map);
+            // console.log(map);
             var indexs = [];
             var leftCoinPrices = [];
             var rightCoinPrices = [];
@@ -267,9 +267,9 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                     findAllOptionsRecursive(i, 0, opt, inner_prices);
                     //}
                 }
-                console.log('indexs',indexs)
-                console.log('leftCoinPrices',leftCoinPrices);
-                console.log('rightCoinPrices',rightCoinPrices);
+                // console.log('indexs',indexs)
+                // console.log('leftCoinPrices',leftCoinPrices);
+                // console.log('rightCoinPrices',rightCoinPrices);
                 for(var i = 0; i < leftCoinPrices.length; i++) {
                     var currentData = data[i];
                     var coins = currentData.symbol.split('_')
@@ -285,7 +285,7 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
                     data[i]['totalBuyLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['totalBuyLiquidity'];
                     data[i]['totalSellLiquidityBtc'] = data[i]['rightCoinPriceBtc'] * data[i]['totalSellLiquidity'];
                 }
-                console.log('data', data);
+                // console.log('data', data);
             }
 
             function findAllOptionsRecursive(i,j, opt, inner_prices) {
