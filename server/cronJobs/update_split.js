@@ -13,7 +13,7 @@ if(!wallet) {
 }
 var startTime = new Date();
 function startReindex() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/chain.review/server/sync.js', wallet, 'update_tx'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['--max-old-space-size=8192', '/var/www/html/chain.review/server/sync.js', wallet, 'update_tx'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
@@ -71,7 +71,7 @@ function startReindex() {
     });
 }
 function startUpdateVinVout() {
-    var proc = spawn('/usr/bin/node', ['/var/www/html/chain.review/server/sync.js', wallet, 'update_tx_vin_vout_and_addresses_cursor'], {execFileOpts, options}, function done(err, stdout, stderr) {
+    var proc = spawn('/usr/bin/node', ['--max-old-space-size=8192', '/var/www/html/chain.review/server/sync.js', wallet, 'update_tx_vin_vout_and_addresses_cursor'], {execFileOpts, options}, function done(err, stdout, stderr) {
         if (err) {
             console.error('Error:', err.stack);
             // reject(err.stack);
