@@ -2104,7 +2104,7 @@ if (wallet) {
                                 // console.log('tx vin vout', numberDeleted);
                                 // console.log('address deleted', numberDeleted2);
                                 gettingNextTxsInProgress = true;
-                                gettingNextTxsCursor(limit, offset, blockindex, lastTx).then(function (cursor) {
+                                gettingNextTxsCursor(limit, offset, currentBlockIndex, lastTx).then(function (cursor) {
 
                                     function getNext() {
                                         gettingNextInProgress = true;
