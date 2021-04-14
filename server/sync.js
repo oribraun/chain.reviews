@@ -2093,11 +2093,11 @@ if (wallet) {
                             startedFromBlock = latestTx[0].blockindex;
                             lastOrder = latestTx[0].order;
                         } else {
-                            console.log('no blocks found - please run save_tx_vin_vout_and_addresses first');
-                            deleteFile();
-                            db.multipleDisconnect();
-                            process.exit();
-                            return;
+                            // console.log('no blocks found - please run save_tx_vin_vout_and_addresses first');
+                            // deleteFile();
+                            // db.multipleDisconnect();
+                            // process.exit();
+                            // return;
                         }
                         TxVinVoutController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted) {
                             AddressToUpdateController.deleteAllWhereGte(currentBlockIndex, function(numberDeleted2) {
