@@ -1,7 +1,7 @@
 var validations =  require('./entities_validations');
 
 class Info {
-    _version = 0;
+    _version = "0";
     _protocolversion = 0;
     // walletversion = 61000;
     // balance = 0.00000000;
@@ -33,7 +33,7 @@ class Info {
     }
 
     set version(value) {
-        if(validations.numberValidation('version', value)) {
+        if(validations.stringValidation('version', value.toString())) {
             this._version = value;
         }
     }
