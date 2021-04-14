@@ -1,5 +1,6 @@
 {
     "coin": "pirate",
+    "symbol": "PIRATE",
     "cli": "http://138.68.104.254:3000/api/pirate/",
     "daemon": "http://138.68.104.254:3000/api/pirate/",
     "example_txid": "28ca7c0197d430a19fa879000bef9f747c8b95b296afc9b1b80893b443b6e622",
