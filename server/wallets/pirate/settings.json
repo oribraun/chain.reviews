@@ -3,9 +3,9 @@
     "symbol": "PIRATE",
     "cli": "http://138.68.104.254:3000/api/pirate/",
     "daemon": "http://138.68.104.254:3000/api/pirate/",
-    "example_txid": "28ca7c0197d430a19fa879000bef9f747c8b95b296afc9b1b80893b443b6e622",
-    "example_hash": "0000071cf2d95aec5ba4818418756c93cb12cd627191710e8969f2f35c3530de",
-    "dev_address": "WmXhHCV6PjXjxJdSXPeC8e4PrY8qTQMBFg",
+    "example_txid": "4c76eaba05cab86f9321c4c6d7a29bd64e0d8a5fae3ea695bfa0710847491f8a",
+    "example_hash": "9e4399d0b54e7a193a5dee2996858b1da56f9dba2c45abecb1ebd1f60a74a66f",
+    "dev_address": "PPw71sdvf1ZszjwvmPS8jjcEMYEHFGnQDZ",
     "commands": {
         "startwallet": "startWallet",
         "stopwallet": "stopWallet",
