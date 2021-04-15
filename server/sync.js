@@ -1501,6 +1501,9 @@ if (wallet) {
                     var currentBlock = 0;
                     var exit_count = 0;
                     var cpuCount = 1;
+                    if(cpuNumber && parseInt(cpuNumber, 0)) {
+                        cpuCount = cpuNumber;
+                    }
                     var walletDisconnected = false;
                     var mongoTimeout = false;
                     var blockNotFound = false;
@@ -1874,6 +1877,9 @@ if (wallet) {
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = 1;
+                if(cpuNumber && parseInt(cpuNumber, 0)) {
+                    cpuCount = cpuNumber;
+                }
                 var clusterQ = [];
                 var gettingNextTxsInProgress = false;
                 var exit_count = 0;
@@ -2078,6 +2084,9 @@ if (wallet) {
                 var countBlocks = 0;
                 var offset = 0;
                 var cpuCount = 1;
+                if(cpuNumber && parseInt(cpuNumber, 0)) {
+                    cpuCount = cpuNumber;
+                }
                 var clusterQ = [];
                 var gettingNextTxsInProgress = false;
                 var exit_count = 0;
