@@ -6020,11 +6020,15 @@ if (wallet) {
                                 end();
                                 return;
                             }
+                            var country = '';
+                            if(geo && geo.country_name) {
+                                country = geo.country_name
+                            }
                             var peer = {
                                 address: address,
                                 protocol: results[i].version,
                                 version: results[i].subver.replace('/', '').replace('/', ''),
-                                country: geo.country_name,
+                                country: country,
                                 lastactivity: Math.max(results[i].lastrecv, results[i].lastsend),
                                 connectiontime: results[i].conntime,
                             }
