@@ -42,7 +42,7 @@ var commands_require_db = [
     'save_from_update_addresses_order_and_sum',
     'save_tx_vin_vout_and_addresses_based_on_latest',
 	'save_one_block',
-	'save_one_tx_in_vout',
+	'save_one_tx_vin_vout',
 
     'delete_from',
 
@@ -5901,7 +5901,7 @@ if (wallet) {
 				globalStartGettingTransactions(hash_number);
 			})
             break;
-		case 'save_one_tx_in_vout':
+		case 'save_one_tx_vin_vout':
 		    if( !hash_number || isNaN(hash_number)) {
                 console.log('missing block number');
                 db.multipleDisconnect();
@@ -5909,7 +5909,7 @@ if (wallet) {
                 return;
             }
 			setTimeout(function(){
-                TxController.getAll2({blockindex: {$gt: hash_number - 1, $lte: hash_number }},'blockindex', 'asc', 0, 0, function(results) {
+                TxController.getAll2({blockindex: {$gt: hash_number - 1, $lte: hash_number }}, {},'blockindex', 'asc', 0, 0, function(results) {
                     console.log('results', results.length);
                     // globalCheckVinVoutCluster(hash_number);
                 });
