@@ -51,8 +51,11 @@ const obj = {
             //         market = {summary: {"24hVolume": {BTC: "0"}, usd_price: {BTC: "0"}}};
             //     }
                 MarketsController.getAllSummary('symbol', 'desc', 0, 0, function (markets) {
-                    markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
-                    var markets_stats = helpers.calcMarketData(markets, {}, wallet);
+                    var markets_stats = {};
+                    if(markets) {
+                        markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
+                        markets_stats = helpers.calcMarketData(markets, {}, wallet);
+                    }
                     StatsController.getOne(wallet, function (stats) {
                         // console.log('stats', stats)
                         var obj = {
