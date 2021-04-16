@@ -221,7 +221,7 @@ function getAllSummary(sortBy, order, limit, offset, cb) {
     });
     aggregate.push({$sort:{'market_name': 1}});
     Markets[db.getCurrentConnection()].aggregate(aggregate).allowDiskUse(true).exec(function(err, markets) {
-        if(markets) {
+        if(markets && markets.length) {
             var data = [];
             var btcUsdPrice = markets[0].summary.usd_price.BTC;
             for(var i in markets) {
