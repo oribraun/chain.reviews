@@ -34,5 +34,5 @@
     },
     "masternode_required": 10000,
     "active": true,
-    "hide": true
+    "hide": false
 }
