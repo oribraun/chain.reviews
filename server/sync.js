@@ -1699,8 +1699,8 @@ if (wallet) {
                         process.exit()
                         return;
                     }
-                    var fromBlock = 112710;
-                    var toBlock = 112715;
+                    var fromBlock = 675007;
+                    var toBlock = 675007;
                     var currentBlock = fromBlock;
                     allBlocksCount = toBlock;
                     var exit_count = 0;
@@ -5890,7 +5890,7 @@ if (wallet) {
             }
             break;
 		case 'save_one_block':
-		if( !hash_number || isNaN(hash_number)) {
+		    if( !hash_number || isNaN(hash_number)) {
                 console.log('missing block number');
                 db.multipleDisconnect();
                 process.exit()
@@ -5898,6 +5898,20 @@ if (wallet) {
             }
 			setTimeout(function(){
 				globalStartGettingTransactions(hash_number);
+			})
+            break;
+		case 'save_one_tx_in_vout':
+		    if( !hash_number || isNaN(hash_number)) {
+                console.log('missing block number');
+                db.multipleDisconnect();
+                process.exit()
+                return;
+            }
+			setTimeout(function(){
+                TxController.getAll2({blockindex: {$gt: hash_number - 1, $lte: hash_number }},'blockindex', 'asc', 0, 0, function(results) {
+                    console.log('results', results.length);
+                    // globalCheckVinVoutCluster(hash_number);
+                });
 			})
             break;
         case 'updatemasternodes':
