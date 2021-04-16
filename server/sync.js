@@ -42,6 +42,7 @@ var commands_require_db = [
     'save_from_update_addresses_order_and_sum',
     'save_tx_vin_vout_and_addresses_based_on_latest',
 	'save_one_block',
+	'save_one_tx_in_vout',
 
     'delete_from',
 
