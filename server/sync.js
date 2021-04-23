@@ -7277,19 +7277,23 @@ function updateStats() {
                 if (latestTx && latestTx.length) {
                     wallet_commands.getInfo(wallet).then(function (info) {
                         info = JSON.parse(info);
-                        console.log('updating masternode count');
+                        // console.log('updating masternode count');
                         // wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
-                            console.log('finish updating masternode count');
+                        //     console.log('finish updating masternode count');
                         wallet_commands.getNetworkHashps(wallet).then(function (networkhashps) {
+                            console.log('1')
                             var hashrate = (parseFloat(networkhashps) / 1000000000).toFixed(4);
                             wallet_commands.getConnectionCount(wallet).then(function (connections) {
+                                console.log('2')
                                 wallet_commands.getBlockCount(wallet).then(function (blockcount) {
+                                    console.log('3')
                                     var type = 'GETINFO';
                                     if(wallet === 'bitcoin') {
                                         type = 'TXOUTSET';
                                         // type = 'GETINFO';
                                     }
                                     get_supply(type).then(function (supply) {
+                                        console.log('4')
                                         var moneysupply = info.moneysupply;
                                         if(wallet === 'bitcoin') {
                                             moneysupply = supply;
