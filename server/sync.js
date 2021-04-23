@@ -7270,16 +7270,16 @@ function endReindexNew() {
 function updateStats() {
     // BlockController.getAll('blockindex', 'desc', 1, function(latestTx) {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
-        console.log('latestTx', latestTx);
+        // console.log('latestTx', latestTx);
         // console.log('settings[wallet].coin', settings[wallet].coin);
         TxVinVoutController.getUsersTxsCount24Hours(function(users_tx_count_24_hours) {
             TxVinVoutController.getUsersTxsWeeklyChart(function (users_tx_chart) {
                 if (latestTx && latestTx.length) {
                     wallet_commands.getInfo(wallet).then(function (info) {
                         info = JSON.parse(info);
-                        // console.log('updating masternode count');
+                        console.log('updating masternode count');
                         // wallet_commands.getMasternodeCount(wallet).then(function(masterNodesCount) {
-                        //     console.log('finish updating masternode count');
+                            console.log('finish updating masternode count');
                         wallet_commands.getNetworkHashps(wallet).then(function (networkhashps) {
                             var hashrate = (parseFloat(networkhashps) / 1000000000).toFixed(4);
                             wallet_commands.getConnectionCount(wallet).then(function (connections) {
