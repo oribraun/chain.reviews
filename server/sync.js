@@ -2147,9 +2147,6 @@ if (wallet) {
                                         })(worker);
                                         worker.on('exit', (code, signal) => {
                                             exit_count++;
-                                            console.log('exit_count', exit_count)
-                                            console.log('cpuCount', cpuCount)
-                                            console.log('updateInProgress', updateInProgress)
                                             if (exit_count === cpuCount) {
                                                 if (!updateInProgress) {
                                                     // console.log('local_addreses_before_save', local_addreses_before_save.length);
@@ -2164,9 +2161,9 @@ if (wallet) {
                                                         db.multipleDisconnect();
                                                         process.exit(1);
                                                     }
+                                                    console.log('countBlocks', countBlocks)
+                                                    console.log('took ', helpers.getFinishTime(startTime));
                                                     endReindexNew();
-                                                    // console.log('countBlocks', countBlocks)
-                                                    // console.log('took ', helpers.getFinishTime(startTime));
                                                     // endReindex();
                                                 }
                                                 // console.log('addreses_to_update', addreses_to_update.length)
