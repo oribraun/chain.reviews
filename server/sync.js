@@ -2161,9 +2161,9 @@ if (wallet) {
                                                         db.multipleDisconnect();
                                                         process.exit(1);
                                                     }
-                                                    console.log('countBlocks', countBlocks)
-                                                    console.log('took ', helpers.getFinishTime(startTime));
                                                     endReindexNew();
+                                                    // console.log('countBlocks', countBlocks)
+                                                    // console.log('took ', helpers.getFinishTime(startTime));
                                                     // endReindex();
                                                 }
                                                 // console.log('addreses_to_update', addreses_to_update.length)
@@ -7270,7 +7270,7 @@ function endReindexNew() {
 function updateStats() {
     // BlockController.getAll('blockindex', 'desc', 1, function(latestTx) {
     TxController.getAll('blockindex', 'desc', 1, function(latestTx) {
-        // console.log('latestTx', latestTx);
+        console.log('latestTx', latestTx);
         // console.log('settings[wallet].coin', settings[wallet].coin);
         TxVinVoutController.getUsersTxsCount24Hours(function(users_tx_count_24_hours) {
             TxVinVoutController.getUsersTxsWeeklyChart(function (users_tx_chart) {
