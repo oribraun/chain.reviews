@@ -2135,7 +2135,6 @@ if (wallet) {
                                     }
                                     for (let i = 0; i < cpuCount; i++) {
                                         var worker = cluster.fork();
-                                        console.log('started cluster ', i)
                                         (function (w) {
                                             getNext().then(function (tx) {
                                                 w.send({currentBlock: tx, order: lastOrder + countBlocks});
