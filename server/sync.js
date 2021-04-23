@@ -2135,6 +2135,7 @@ if (wallet) {
                                     }
                                     for (let i = 0; i < cpuCount; i++) {
                                         var worker = cluster.fork();
+                                        console.log('started cluster ', i)
                                         (function (w) {
                                             getNext().then(function (tx) {
                                                 w.send({currentBlock: tx, order: lastOrder + countBlocks});
@@ -2147,6 +2148,9 @@ if (wallet) {
                                         })(worker);
                                         worker.on('exit', (code, signal) => {
                                             exit_count++;
+                                            console.log('exit_count', exit_count)
+                                            console.log('cpuCount', cpuCount)
+                                            console.log('updateInProgress', updateInProgress)
                                             if (exit_count === cpuCount) {
                                                 if (!updateInProgress) {
                                                     // console.log('local_addreses_before_save', local_addreses_before_save.length);
