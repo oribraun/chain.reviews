@@ -7286,14 +7286,17 @@ function updateStats() {
                                 wallet_commands.getBlockCount(wallet).then(function (blockcount) {
                                     var type = 'GETINFO';
                                     if(wallet === 'bitcoin') {
-                                        type = 'TXOUTSET';
-                                        // type = 'GETINFO';
+                                        // type = 'TXOUTSET';
+                                        type = 'GETINFO';
                                     }
                                     //TODO need to fix for bitcoin
                                     get_supply(type).then(function (supply) {
                                         var moneysupply = info.moneysupply;
                                         if(wallet === 'bitcoin') {
-                                            moneysupply = supply;
+                                            moneysupply = 0;
+                                            if(supply) {
+                                                moneysupply = supply
+                                            }
                                         }
                                         var stats = {
                                             coin: settings[wallet].coin,
