@@ -2486,9 +2486,9 @@ if (wallet) {
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
                                 val = Math.round(val / (diff * 10))
-                                for(var i = 0; i < diff; i++) {
-                                    val = val * 10;
-                                }
+                                // for(var i = 0; i < diff; i++) {
+                                //     val = val * 10;
+                                // }
                             }
                             // console.log('diff', diff)
                             // console.log('rounded val', val)
@@ -2508,22 +2508,25 @@ if (wallet) {
                             var amount = roundToMaxSafeInt(addr.amount);
                             if(addr.address === 'coinbase') {
                                 addr.sent += parseFloat(amount);
+                                addr.sent = roundToMaxSafeInt(addr.sent);
                             }
                             else if(addr.type === 'vin') {
                                 addr.sent += parseFloat(amount);
+                                addr.sent = roundToMaxSafeInt(addr.sent);
                             }
                             else if(addr.type === 'vout') {
                                 addr.received += parseFloat(amount);
+                                addr.received = roundToMaxSafeInt(addr.received);
                             }
                             addr.balance = addr.received - addr.sent;
-                            if(addr.balance < 0) {
-                                if(addr.received < add.sent) {
-                                    addr.received = addr.sent;
-                                } else {
-                                    addr.sent = addr.received;
-                                }
-                                addr.balance = addr.received - addr.sent;
-                            }
+                            // if(addr.balance < 0) { // correcting precision issues
+                            //     if(addr.received < add.sent) {
+                            //         addr.received = addr.sent;
+                            //     } else {
+                            //         addr.sent = addr.received;
+                            //     }
+                            //     addr.balance = addr.received - addr.sent;
+                            // }
                             lastOrder++;
                             addr.order = lastOrder;
 
