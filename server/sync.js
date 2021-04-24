@@ -2508,12 +2508,21 @@ if (wallet) {
                             var amount = roundToMaxSafeInt(addr.amount);
                             if(addr.address === 'coinbase') {
                                 addr.sent += parseFloat(amount);
+                                if(!Number.isSafeInteger(addr.sent)) {
+                                    addr.sent = Math.round(addr.sent / 10) * 10
+                                }
                             }
                             else if(addr.type === 'vin') {
                                 addr.sent += parseFloat(amount);
+                                if(!Number.isSafeInteger(addr.sent)) {
+                                    addr.sent = Math.round(addr.sent / 10) * 10
+                                }
                             }
                             else if(addr.type === 'vout') {
                                 addr.received += parseFloat(amount);
+                                if(!Number.isSafeInteger(addr.received)) {
+                                    addr.received = Math.round(addr.received / 10) * 10
+                                }
                             }
                             addr.balance = addr.received - addr.sent;
                             // if(addr.balance < 0) { // correcting precision issues
