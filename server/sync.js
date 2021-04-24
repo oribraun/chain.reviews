@@ -2516,9 +2516,9 @@ if (wallet) {
                                 addr.received += parseFloat(amount);
                             }
                             addr.balance = addr.received - addr.sent;
-                            if(addr.balance < 0) {
-                                addr.balance = 0;
-                            }
+                            // if(addr.balance < 0) {
+                            //     addr.balance = 0;
+                            // }
                             lastOrder++;
                             addr.order = lastOrder;
 
