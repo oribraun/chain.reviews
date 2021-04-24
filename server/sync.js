@@ -7855,11 +7855,18 @@ function get_supply(type) {
                 var step = 210000;
                 var value = 50;
                 var total = 0;
-                for(var i = 0; i < maxBlockIndex; i += step) {
+                var currentBlock = 0;
+                for(var i = step; i < maxBlockIndex; i += step) {
+                    console.log(i)
                     total += step * value;
                     value = value / 2;
+                    currentBlock += step;
                 }
-                // console.log('total');
+                var leftBlocks = maxBlockIndex - currentBlock;
+                total += leftBlocks * value;
+                // console.log('total', total);
+                // console.log('currentBlock', currentBlock)
+                // console.log('leftBlocks', leftBlocks)
                 resolve(total)
             })
             wallet_commands.getTxoutsetInfo(wallet).then(function(results){
