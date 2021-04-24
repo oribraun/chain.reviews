@@ -2507,22 +2507,23 @@ if (wallet) {
                             addr.sent = lastSent;
                             var amount = roundToMaxSafeInt(addr.amount);
                             if(addr.address === 'coinbase') {
-                                addr.sent = roundToMaxSafeInt(addr.sent);
                                 addr.sent += parseFloat(amount);
                             }
                             else if(addr.type === 'vin') {
-                                addr.sent = roundToMaxSafeInt(addr.sent);
                                 addr.sent += parseFloat(amount);
                             }
                             else if(addr.type === 'vout') {
-                                addr.received = roundToMaxSafeInt(addr.received);
                                 addr.received += parseFloat(amount);
                             }
-
                             addr.balance = addr.received - addr.sent;
-                            // if(addr.balance < 0) {
-                            //     addr.balance = 0;
-                            // }
+                            if(addr.balance < 0) {
+                                if(addr.received < add.sent) {
+                                    addr.received = addr.sent;
+                                } else {
+                                    addr.sent = addr.received;
+                                }
+                                addr.balance = addr.received - addr.sent;
+                            }
                             lastOrder++;
                             addr.order = lastOrder;
 
