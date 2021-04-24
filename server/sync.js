@@ -2486,9 +2486,9 @@ if (wallet) {
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
                                 val = Math.round(val / (diff * 10))
-                                // for(var i = 0; i < diff; i++) {
-                                //     val = val * 10;
-                                // }
+                                for(var i = 0; i < diff; i++) {
+                                    val = val * 10;
+                                }
                             }
                             // console.log('diff', diff)
                             // console.log('rounded val', val)
