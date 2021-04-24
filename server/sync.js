@@ -2485,10 +2485,11 @@ if (wallet) {
                             console.log('val', val)
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
-                                val = Math.round(val / (diff * 10))
-                                for(var i = 0; i < diff; i++) {
-                                    val = val * 10;
-                                }
+                                val = Math.round(val / (diff * 10)) * (diff * 10);
+                                // val = Math.round(val / (diff * 10))
+                                // for(var i = 0; i < diff; i++) {
+                                //     val = val * 10;
+                                // }
                             }
                             // console.log('diff', diff)
                             // console.log('rounded val', val)
@@ -2507,22 +2508,16 @@ if (wallet) {
                             addr.sent = lastSent;
                             var amount = roundToMaxSafeInt(addr.amount);
                             if(addr.address === 'coinbase') {
-                                addr.sent += parseFloat(amount);
-                                if(!Number.isSafeInteger(addr.sent)) {
-                                    addr.sent = Math.round(addr.sent / 10) * 10
-                                }
+                                addr.sent += (amount);
+                                addr.sent = roundToMaxSafeInt(addr.sent);
                             }
                             else if(addr.type === 'vin') {
-                                addr.sent += parseFloat(amount);
-                                if(!Number.isSafeInteger(addr.sent)) {
-                                    addr.sent = Math.round(addr.sent / 10) * 10
-                                }
+                                addr.sent += (amount);
+                                addr.sent = roundToMaxSafeInt(addr.sent);
                             }
                             else if(addr.type === 'vout') {
-                                addr.received += parseFloat(amount);
-                                if(!Number.isSafeInteger(addr.received)) {
-                                    addr.received = Math.round(addr.received / 10) * 10
-                                }
+                                addr.received += (amount);
+                                addr.received = roundToMaxSafeInt(addr.received);
                             }
                             addr.balance = addr.received - addr.sent;
                             // if(addr.balance < 0) { // correcting precision issues
