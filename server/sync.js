@@ -2516,6 +2516,9 @@ if (wallet) {
                                 addr.received += parseFloat(amount);
                             }
                             addr.balance = addr.received - addr.sent;
+                            if(addr.balance < 0) {
+                                addr.balance = 0;
+                            }
                             lastOrder++;
                             addr.order = lastOrder;
 
@@ -7287,7 +7290,8 @@ function updateStats() {
                                     var type = 'GETINFO';
                                     if(wallet === 'bitcoin') {
                                         // type = 'TXOUTSET';
-                                        type = 'GETINFO';
+                                        // type = 'GETINFO';
+                                        type = 'BITCOIN_BLOCKS';
                                     }
                                     //TODO need to fix for bitcoin
                                     get_supply(type).then(function (supply) {
@@ -7842,6 +7846,22 @@ function get_supply(type) {
                 resolve(supply.balance/100000000)
             });
         } else if (type == 'TXOUTSET') {
+            wallet_commands.getTxoutsetInfo(wallet).then(function(results){
+                resolve(JSON.parse(results).total_amount)
+            })
+        } else if (type == 'BITCOIN_BLOCKS') {
+            BlockController.getAll('blockindex', 'desc', 1, (res) => {
+                var maxBlockIndex = res[0].blockindex;
+                var step = 210000;
+                var value = 50;
+                var total = 0;
+                for(var i = 0; i < maxBlockIndex; i += step) {
+                    total += step * value;
+                    value = value / 2;
+                }
+                // console.log('total');
+                resolve(total)
+            })
             wallet_commands.getTxoutsetInfo(wallet).then(function(results){
                 resolve(JSON.parse(results).total_amount)
             })
