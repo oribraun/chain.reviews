@@ -2260,11 +2260,9 @@ if (wallet) {
                 });
                 var startVinVoutClusterLiner = function(currentBlock, order) {
                     var tx = currentBlock;
-                    console.log('currentBlock', currentBlock)
                     if(tx) {
                         tx.order = order + 1;
-                        console.log('tx.order', tx.order)
-                        // globalCheckVinVoutCluster(tx);
+                        globalCheckVinVoutCluster(tx);
                     } else {
                         cluster.worker.send({finished: true});
                     }
