@@ -2262,6 +2262,7 @@ if (wallet) {
                     var tx = currentBlock;
                     if(tx) {
                         tx.order = order + 1;
+                        console.log('tx.order', tx.order)
                         globalCheckVinVoutCluster(tx);
                     } else {
                         cluster.worker.send({finished: true});
