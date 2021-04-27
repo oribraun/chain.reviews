@@ -2135,16 +2135,24 @@ if (wallet) {
                                     }
                                     for (let i = 0; i < cpuCount; i++) {
                                         var worker = cluster.fork();
-                                        (function (w) {
-                                            getNext().then(function (tx) {
-                                                w.send({currentBlock: tx, order: lastOrder + countBlocks});
-                                                countBlocks++;
-                                                currentBlocks.shift();
-                                            }).catch(function (err) {
-                                                console.log('cursor err', err);
-                                                w.send({kill: true});
-                                            })
-                                        })(worker);
+                                        if(!gettingNextInProgress) {
+                                            function getNextForAllClusters() {
+                                                getNext().then(function (tx) {
+                                                    cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
+                                                    clusterQ.shift();
+                                                    countBlocks++;
+                                                    currentBlocks.shift();
+                                                    if(clusterQ.length) {
+                                                        getNextForAllClusters();
+                                                    }
+                                                }).catch(function (err) {
+                                                    cluster.workers[clusterQ[0]].send({kill: true});
+                                                    clusterQ.shift();
+                                                })
+                                            }
+                                            getNextForAllClusters();
+                                        }
+                                        clusterQ.push(worker.id);
                                         worker.on('exit', (code, signal) => {
                                             exit_count++;
                                             if (exit_count === cpuCount) {
@@ -2485,10 +2493,11 @@ if (wallet) {
                             console.log('val', val)
                             var diff = val.toString().length - Number.MAX_SAFE_INTEGER.toString().length;
                             if(diff > 0) {
-                                val = Math.round(val / (diff * 10))
-                                for(var i = 0; i < diff; i++) {
-                                    val = val * 10;
-                                }
+                                val = Math.round(val / (diff * 10)) * (diff * 10);
+                                // val = Math.round(val / (diff * 10))
+                                // for(var i = 0; i < diff; i++) {
+                                //     val = val * 10;
+                                // }
                             }
                             // console.log('diff', diff)
                             // console.log('rounded val', val)
@@ -2508,16 +2517,24 @@ if (wallet) {
                             var amount = roundToMaxSafeInt(addr.amount);
                             if(addr.address === 'coinbase') {
                                 addr.sent += parseFloat(amount);
+                                // addr.sent = roundToMaxSafeInt(addr.sent);
                             }
                             else if(addr.type === 'vin') {
                                 addr.sent += parseFloat(amount);
+                                // addr.sent = roundToMaxSafeInt(addr.sent);
                             }
                             else if(addr.type === 'vout') {
                                 addr.received += parseFloat(amount);
+                                // addr.received = roundToMaxSafeInt(addr.received);
                             }
                             addr.balance = addr.received - addr.sent;
-                            // if(addr.balance < 0) {
-                            //     addr.balance = 0;
+                            // if(addr.balance < 0) { // correcting precision issues
+                            //     if(addr.received < add.sent) {
+                            //         addr.received = addr.sent;
+                            //     } else {
+                            //         addr.sent = addr.received;
+                            //     }
+                            //     addr.balance = addr.received - addr.sent;
                             // }
                             lastOrder++;
                             addr.order = lastOrder;
