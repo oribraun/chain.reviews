@@ -2095,7 +2095,7 @@ if (wallet) {
                 var startedFromBlock;
                 var lastOrder = 0;
                 var startVinVoutClusterLinerAll = function() {
-                    TxVinVoutController.getAll('blockindex', 'desc', 1, function(latestTx) {
+                    TxVinVoutController.getAll('order', 'desc', 1, function(latestTx) {
                         var currentBlockIndex = 0;
                         var lastTx;
                         if(latestTx.length) {
@@ -2260,11 +2260,9 @@ if (wallet) {
                 });
                 var startVinVoutClusterLiner = function(currentBlock, order) {
                     var tx = currentBlock;
-                    console.log('currentBlock', currentBlock)
                     if(tx) {
                         tx.order = order + 1;
-                        console.log('tx.order', tx.order)
-                        // globalCheckVinVoutCluster(tx);
+                        globalCheckVinVoutCluster(tx);
                     } else {
                         cluster.worker.send({finished: true});
                     }
