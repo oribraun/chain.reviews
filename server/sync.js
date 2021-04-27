@@ -2251,7 +2251,8 @@ if (wallet) {
                 // In this case it is an HTTP server
                 process.on('message', function(msg) {
                     if(msg.currentBlock !== undefined) {
-                        startVinVoutClusterLiner(msg.currentBlock, msg.order);
+                        console.log('msg.order', msg.order)
+                        // startVinVoutClusterLiner(msg.currentBlock, msg.order);
                     }
                     if(msg.kill) {
                         db.multipleDisconnect();
