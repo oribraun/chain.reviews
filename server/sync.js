@@ -2251,8 +2251,7 @@ if (wallet) {
                 // In this case it is an HTTP server
                 process.on('message', function(msg) {
                     if(msg.currentBlock !== undefined) {
-                        console.log('msg.order', msg.order)
-                        // startVinVoutClusterLiner(msg.currentBlock, msg.order);
+                        startVinVoutClusterLiner(msg.currentBlock, msg.order);
                     }
                     if(msg.kill) {
                         db.multipleDisconnect();
@@ -2261,10 +2260,11 @@ if (wallet) {
                 });
                 var startVinVoutClusterLiner = function(currentBlock, order) {
                     var tx = currentBlock;
+                    console.log('currentBlock', currentBlock)
                     if(tx) {
                         tx.order = order + 1;
                         console.log('tx.order', tx.order)
-                        globalCheckVinVoutCluster(tx);
+                        // globalCheckVinVoutCluster(tx);
                     } else {
                         cluster.worker.send({finished: true});
                     }
