@@ -2092,6 +2092,7 @@ if (wallet) {
                 var gettingNextTxsInProgress = false;
                 var exit_count = 0;
                 var mongoTimeout = false;
+                var duplicateOrder = false;
                 var startedFromBlock;
                 var lastOrder = 0;
                 var startVinVoutClusterLinerAll = function() {
@@ -2138,6 +2139,7 @@ if (wallet) {
                                         if(!gettingNextInProgress) {
                                             function getNextForAllClusters() {
                                                 getNext().then(function (tx) {
+                                                    console.log('lastOrder + countBlocks', lastOrder + countBlocks)
                                                     cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
                                                     clusterQ.shift();
                                                     countBlocks++;
@@ -2169,6 +2171,14 @@ if (wallet) {
                                                         db.multipleDisconnect();
                                                         process.exit(1);
                                                     }
+                                                    if (duplicateOrder) {
+                                                        console.log('\n*******************************************************************');
+                                                        console.log('****** duplicate key error collection - ' + lastOrder + currentBlocks + '******')
+                                                        console.log('*******************************************************************\n');
+                                                        deleteFile();
+                                                        db.multipleDisconnect();
+                                                        process.exit(1);
+                                                    }
                                                     endReindexNew();
                                                     // console.log('countBlocks', countBlocks)
                                                     // console.log('took ', helpers.getFinishTime(startTime));
@@ -2190,6 +2200,7 @@ if (wallet) {
                                                     if(!gettingNextInProgress) {
                                                         function getNextForAllClusters() {
                                                             getNext().then(function (tx) {
+                                                                console.log('lastOrder + countBlocks', lastOrder + countBlocks)
                                                                 cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
                                                                 clusterQ.shift();
                                                                 countBlocks++;
@@ -2208,6 +2219,12 @@ if (wallet) {
                                             }
                                             if (msg.mongoTimeout) {
                                                 mongoTimeout = true;
+                                                for (var id in cluster.workers) {
+                                                    cluster.workers[id].send({kill: true});
+                                                }
+                                            }
+                                            if (msg.duplicateOrder) {
+                                                duplicateOrder = true;
                                                 for (var id in cluster.workers) {
                                                     cluster.workers[id].send({kill: true});
                                                 }
@@ -8103,7 +8120,11 @@ var globalCheckVinVoutCluster = function(tx) {
                                 err.stack.indexOf('interrupted at shutdown') > -1) {
                                 cluster.worker.send({mongoTimeout: true});
                             }
-                            insertTx();
+                            else if (err.stack.indexOf(' duplicate key error collection') > -1) {
+                                cluster.worker.send({duplicateOrder: true});
+                            } else {
+                                insertTx();
+                            }
                         } else {
                             finishUpdateTx = true;
                             console.log('updated vin vout - ' + vinvout.blockindex, tx.txid);
