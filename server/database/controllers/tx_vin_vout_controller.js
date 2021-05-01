@@ -960,7 +960,7 @@ function getLastTx(cb) {
     });
 }
 
-function getLatestOrder() {
+function getLatestOrder(cb) {
     TxVinVout[db.getCurrentConnection()].find({}, {order: 1}).sort({order: -1}).limit(1).exec(function(err, txs){
         if(txs && txs.length) {
             return cb(txs[0].order);
