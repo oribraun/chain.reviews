@@ -749,9 +749,6 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
         sortOposite[sortBy] = order == 'desc' ? 1 : -1;
     }
     Block[db.getCurrentConnection()].findOne({blockhash: hash}, (err, block) => {
-        if(err) {
-            console.log('no block', err)
-        }
         if(block) {
             var blockindex = block.blockindex;
             this.getFirstByOrder(blockindex, sort, (tx) => {
@@ -794,18 +791,15 @@ function getBlockTxs(hash, sortBy, order, limit, offset, cb) {
                             if (txs) {
                                 return cb(txs);
                             } else {
-                                console.log('no txs')
                                 return cb([]);
                             }
                         });
                     });
                 } else {
-                    console.log('no first tx')
                     return cb([]);
                 }
             });
         } else {
-            console.log('no block')
             return cb([]);
         }
     })
@@ -965,6 +959,16 @@ function getLastTx(cb) {
         }
     });
 }
+
+function getLatestOrder(cb) {
+    TxVinVout[db.getCurrentConnection()].find({}, {order: 1}).sort({order: -1}).limit(1).exec(function(err, txs){
+        if(txs && txs.length) {
+            return cb(txs[0].order);
+        } else {
+            return cb(0);
+        }
+    })
+}
 module.exports.getAll = getAll;
 module.exports.getAll1 = getAll1;
 module.exports.updateOne = updateOne;
@@ -995,3 +999,4 @@ module.exports.getUsersTxsCount24Hours = getUsersTxsCount24Hours;
 module.exports.getUsersTxsWeeklyChart = getUsersTxsWeeklyChart;
 module.exports.getLastTx = getLastTx;
 module.exports.getBlockTxs = getBlockTxs;
+module.exports.getLatestOrder = getLatestOrder;
