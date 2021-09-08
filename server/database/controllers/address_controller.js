@@ -733,11 +733,17 @@ function getRichlistAndExtraStats2(sortBy, order, limit, dev_address, cb) {
     }))
     Promise.all(promises).then((response) => {
         cb(data);
+    }).catch((err) => {
+        console.log('err', err);
+        cb(null);
     });
 }
 
 function getAddressDetailsWithLastestTxs(address, cb) {
     getOne(address, function(addr) {
+        if (!addr) {
+            return cb('no address details in database yet, still not fully synced');
+        }
         const obj = {
             "address": addr["a_id"],
             "sent": addr["sent"],

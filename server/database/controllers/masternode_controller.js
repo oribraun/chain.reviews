@@ -171,7 +171,7 @@ function getMasternodesCountByCollateral(masternode_required, cb) {
         }});
     Masternode[db.getCurrentConnection()].aggregate(aggregate).exec( function(err, masternodes) {
         // Tx[db.getCurrentConnection()].find({}).distinct('blockhash').exec( function(err, tx) {
-        if(masternodes) {
+        if(masternodes && masternodes.length) {
             return cb(masternodes[0].count);
         } else {
             return cb(err);
