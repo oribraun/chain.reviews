@@ -1144,7 +1144,8 @@ var getNetworkHashps = function(wallet){
                     }
                 },
                 (error) => {
-                    reject(error);
+                    // reject(error);
+                    resolve(0);
                 }
             )
         } else {
@@ -1159,7 +1160,8 @@ var getNetworkHashps = function(wallet){
                     }
                 },
                 (error) => {
-                    reject(error);
+                    // reject(error);
+                    resolve(0);
                 }
             )
         }

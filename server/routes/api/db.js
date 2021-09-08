@@ -719,30 +719,30 @@ router.get('/getUsersTxsWeeklyChart', (req, res) => {
 //         res.send(JSON.stringify(response, null, 2));
 //     })
 // });
-router.get('/getAllClustersWithAddressAndTxsCount/:limit/:offset', (req, res) => {
-    const response = helpers.getGeneralResponse();
-    if(isNaN(parseInt(req.params['limit']))) {
-        res.send('limit value have to be number');
-        return;
-    }
-    if((parseInt(req.params['limit']) > 50)) {
-        res.send('max limit value is 50');
-        return;
-    }
-    if(isNaN(parseInt(req.params['offset']))) {
-        res.send('offset value have to be number');
-        return;
-    }
-    ClusterController.getAllClustersWithAddressAndTxsCount(null, req.params['limit'], req.params['offset'], function(results) {
-        if(results) {
-            response.data = results;
-        } else {
-            response.err = 1;
-            response.errMessage = 'no clusters found';
-        }
-        res.send(JSON.stringify(response, null, 2));
-    })
-})
+// router.get('/getAllClustersWithAddressAndTxsCount/:limit/:offset', (req, res) => {
+//     const response = helpers.getGeneralResponse();
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     if((parseInt(req.params['limit']) > 50)) {
+//         res.send('max limit value is 50');
+//         return;
+//     }
+//     if(isNaN(parseInt(req.params['offset']))) {
+//         res.send('offset value have to be number');
+//         return;
+//     }
+//     ClusterController.getAllClustersWithAddressAndTxsCount(null, req.params['limit'], req.params['offset'], function(results) {
+//         if(results) {
+//             response.data = results;
+//         } else {
+//             response.err = 1;
+//             response.errMessage = 'no clusters found';
+//         }
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// })
 // router.get('/getClusterChart/:clusterId', (req, res) => {
 //     const response = helpers.getGeneralResponse();
 //     ClusterTxByDayController.getAllForChart(req.params['clusterId'].toString(), "d", -1, 0, function(results) {
@@ -780,54 +780,54 @@ router.get('/getAllClustersWithAddressAndTxsCount/:limit/:offset', (req, res) =>
 //     })
 // })
 
-router.get('/getAddressByTx/:tx', (req, res) => {
-    var where = {};
-    where.txid = req.params['tx'];
-    var fields = {_id:0, address: 1, type: 1};
-    var results = [];
-    AddressToUpdateController.getAll2(where, fields, "", "", 0, 0, function(addresses) {
-        if(addresses && addresses.length) {
-            function findAddressCluster(i) {
-                results[i] = {};
-                results[i].address = addresses[i].address;
-                results[i].type = addresses[i].type;
-                ClusterController.getClusterByAddress(addresses[i].address, function(clusters){
-                    results[i].clusters = [];
-                    if(clusters) {
-                        results[i].clusters = clusters;
-                    }
-                    i++
-                    if(i < addresses.length) {
-                        findAddressCluster(i);
-                    } else {
-                        results[0].test = 'asdfasdf'
-                        console.log('results', results)
-                        res.send(JSON.stringify(results, null, 2));
-                    }
-                })
-            }
-            findAddressCluster(0);
-        } else {
-            res.send('no address found');
-        }
-    });
-})
+// router.get('/getAddressByTx/:tx', (req, res) => {
+//     var where = {};
+//     where.txid = req.params['tx'];
+//     var fields = {_id:0, address: 1, type: 1};
+//     var results = [];
+//     AddressToUpdateController.getAll2(where, fields, "", "", 0, 0, function(addresses) {
+//         if(addresses && addresses.length) {
+//             function findAddressCluster(i) {
+//                 results[i] = {};
+//                 results[i].address = addresses[i].address;
+//                 results[i].type = addresses[i].type;
+//                 ClusterController.getClusterByAddress(addresses[i].address, function(clusters){
+//                     results[i].clusters = [];
+//                     if(clusters) {
+//                         results[i].clusters = clusters;
+//                     }
+//                     i++
+//                     if(i < addresses.length) {
+//                         findAddressCluster(i);
+//                     } else {
+//                         results[0].test = 'asdfasdf'
+//                         console.log('results', results)
+//                         res.send(JSON.stringify(results, null, 2));
+//                     }
+//                 })
+//             }
+//             findAddressCluster(0);
+//         } else {
+//             res.send('no address found');
+//         }
+//     });
+// })
 
-router.get('/getBlockTxs/:hash/:limit/:offset', (req, res) => {
-    if(isNaN(parseInt(req.params['limit']))) {
-        res.send('limit value have to be number');
-        return;
-    }
-    if(isNaN(parseInt(req.params['offset']))) {
-        res.send('offset value have to be number');
-        return;
-    }
-    const response = helpers.getGeneralResponse();
-    TxVinVoutController.getBlockTxs(req.params['hash'], 'order', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function (txs) {
-        var data = {txs: txs}
-        response.data = data;
-        res.send(JSON.stringify(response, null, 2));
-    })
-})
+// router.get('/getBlockTxs/:hash/:limit/:offset', (req, res) => {
+//     if(isNaN(parseInt(req.params['limit']))) {
+//         res.send('limit value have to be number');
+//         return;
+//     }
+//     if(isNaN(parseInt(req.params['offset']))) {
+//         res.send('offset value have to be number');
+//         return;
+//     }
+//     const response = helpers.getGeneralResponse();
+//     TxVinVoutController.getBlockTxs(req.params['hash'], 'order', 'desc', parseInt(req.params['limit']), parseInt(req.params['offset']), function (txs) {
+//         var data = {txs: txs}
+//         response.data = data;
+//         res.send(JSON.stringify(response, null, 2));
+//     })
+// })
 module.exports = router;
 

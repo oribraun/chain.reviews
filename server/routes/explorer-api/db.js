@@ -678,7 +678,19 @@ router.get('/getTxDetails/:txid', (req, res) => {
     TxController.getTxBlockByTxid(req.params['txid'], function(tx) {
         if(tx) {
             TxVinVoutController.getTxBlockByTxid(req.params['txid'], function (txVinVout) {
+                if (!txVinVout) {
+                    response.err = 1;
+                    response.errMessage = 'tx vin vout not found';
+                    res.send(JSON.stringify(response, null, 2));
+                    return;
+                }
                 BlockController.getOne(txVinVout.blockindex, function (block) {
+                    if (!block) {
+                        response.err = 1;
+                        response.errMessage = 'no block found';
+                        res.send(JSON.stringify(response, null, 2));
+                        return;
+                    }
                     var results = {
                         blockhash: block.blockhash,
                         txid: txVinVout.txid,
