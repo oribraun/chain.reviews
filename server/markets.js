@@ -41,8 +41,10 @@ const obj = {
         });
     },
     getStatsCoincodex: (wallet, fullUrl, cb) => {
-        db.setCurrentConnection(wallet);
+        @TODO
+        //make sure db connection is the right one
         let symbol = settings[wallet].symbol.toUpperCase();
+        db.setCurrentConnection(wallet);
         coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
             // console.log('market_cap', market_cap);
             const market =  {summary: {"24hVolume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
@@ -50,14 +52,20 @@ const obj = {
             //     if (!market) {
             //         market = {summary: {"24hVolume": {BTC: "0"}, usd_price: {BTC: "0"}}};
             //     }
+                db.setCurrentConnection(wallet);
                 MarketsController.getAllSummary('symbol', 'desc', 0, 0, function (markets) {
                     var markets_stats = {};
                     if(markets) {
                         markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
                         markets_stats = helpers.calcMarketData(markets, {}, wallet);
                     }
+                    db.setCurrentConnection(wallet);
                     StatsController.getOne(wallet, function (stats) {
+                        // console.log('wallet', wallet)
                         // console.log('stats', stats)
+                        if (!stats) {
+                            stats = {users_tx_count_24_hours: 0}
+                        }
                         var obj = {
                             wallet: helpers.ucfirst(wallet),
                             symbol: settings[wallet].symbol,
