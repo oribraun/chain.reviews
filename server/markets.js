@@ -88,9 +88,7 @@ const obj = {
             // stats: stats,
             // markets_stats: markets_stats,
             // market_summary: market.summary,
-        }
-        @TODO
-            //make sure db connection is the right one
+        };
         var promise1 = new Promise((resolve, reject) => {
             let symbol = settings[wallet].symbol.toUpperCase();
             coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
