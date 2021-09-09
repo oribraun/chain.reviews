@@ -41,10 +41,10 @@ const obj = {
         });
     },
     getStatsCoincodex: (wallet, fullUrl, cb) => {
-        @TODO
-        //make sure db connection is the right one
-        let symbol = settings[wallet].symbol.toUpperCase();
         db.setCurrentConnection(wallet);
+        @TODO
+            //make sure db connection is the right one
+        let symbol = settings[wallet].symbol.toUpperCase();
         coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
             // console.log('market_cap', market_cap);
             const market =  {summary: {"24hVolume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
@@ -52,33 +52,73 @@ const obj = {
             //     if (!market) {
             //         market = {summary: {"24hVolume": {BTC: "0"}, usd_price: {BTC: "0"}}};
             //     }
-                db.setCurrentConnection(wallet);
-                MarketsController.getAllSummary('symbol', 'desc', 0, 0, function (markets) {
-                    var markets_stats = {};
-                    if(markets) {
-                        markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
-                        markets_stats = helpers.calcMarketData(markets, {}, wallet);
+            MarketsController.getAllSummary('symbol', 'desc', 0, 0, function (markets) {
+                var markets_stats = {};
+                if(markets) {
+                    markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
+                    markets_stats = helpers.calcMarketData(markets, {}, wallet);
+                }
+                StatsController.getOne(wallet, function (stats) {
+                    // console.log('wallet', wallet)
+                    // console.log('stats', stats)
+                    if (!stats) {
+                        stats = {users_tx_count_24_hours: 0}
                     }
-                    db.setCurrentConnection(wallet);
-                    StatsController.getOne(wallet, function (stats) {
-                        // console.log('wallet', wallet)
-                        // console.log('stats', stats)
-                        if (!stats) {
-                            stats = {users_tx_count_24_hours: 0}
-                        }
-                        var obj = {
-                            wallet: helpers.ucfirst(wallet),
-                            symbol: settings[wallet].symbol,
-                            explorer: fullUrl + '/explorer/' + wallet,
-                            api: fullUrl + '/public-api/db/' + wallet,
-                            stats: stats,
-                            markets_stats: markets_stats,
-                            market_summary: market.summary,
-                        }
-                        cb(obj);
-                    });
-                })
+                    var obj = {
+                        wallet: helpers.ucfirst(wallet),
+                        symbol: settings[wallet].symbol,
+                        explorer: fullUrl + '/explorer/' + wallet,
+                        api: fullUrl + '/public-api/db/' + wallet,
+                        stats: stats,
+                        markets_stats: markets_stats,
+                        market_summary: market.summary,
+                    }
+                    cb(obj);
+                });
+            })
             // });
+        });
+    },
+    getStatsCoincodexPromise: (wallet, fullUrl, cb) => {
+        db.setCurrentConnection(wallet);
+        var obj = {
+            wallet: helpers.ucfirst(wallet),
+            symbol: settings[wallet].symbol,
+            explorer: fullUrl + '/explorer/' + wallet,
+            api: fullUrl + '/public-api/db/' + wallet,
+            // stats: stats,
+            // markets_stats: markets_stats,
+            // market_summary: market.summary,
+        }
+        @TODO
+            //make sure db connection is the right one
+        var promise1 = new Promise((resolve, reject) => {
+            let symbol = settings[wallet].symbol.toUpperCase();
+            coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
+                const market =  {summary: {"24hVolume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
+                obj.market_summary = market;
+            })
+        });
+        var promise2 = new Promise((resolve, reject) => {
+            MarketsController.getAllSummary('symbol', 'desc', 0, 0, function (markets) {
+                var markets_stats = {};
+                if(markets) {
+                    markets = helpers.removeDuplicateSummary(markets, settings[wallet].symbol);
+                    markets_stats = helpers.calcMarketData(markets, {}, wallet);
+                }
+                obj.markets_stats = markets_stats;
+            })
+        });
+        var promise3 = new Promise((resolve, reject) => {
+            StatsController.getOne(wallet, function (stats) {
+                if (!stats) {
+                    stats = {users_tx_count_24_hours: 0}
+                }
+                obj.stats = stats;
+            })
+        });
+        Promise.all([promise1, promise2, promise3]).then((values) => {
+            cb(obj);
         });
     }
 }
