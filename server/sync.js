@@ -7520,6 +7520,13 @@ function updateRichlistAndExtraStats() {
             console.log('got received')
             var received = results.data;
             AddressController.getRichlistAndExtraStats2('balance', 'desc', 100, settings[wallet].dev_address, function(results){
+                if (!results) {
+                    console.log('failed getting getRichlistAndExtraStats2');
+                    deleteFile('richlist');
+                    db.multipleDisconnect();
+                    process.exit();
+                    return;
+                }
                 console.log('got all')
                 var active_wallets_count = results.countActive;
                 var total_wallets_count = results.countUnique;
@@ -8288,6 +8295,12 @@ function updateMarket(wallet) {
 
 function updateTxByDay(wallet) {
     TxByDayController.getAll('d', 'desc', 2, function(data) {
+        if (!data) {
+            console.log('Error something went wrong getting data');
+            deleteFile('txByDay');
+            db.multipleDisconnect();
+            return;
+        }
         if(data.length) {
             var lastDate = data[0].d
             if(data.length > 1) {
@@ -8355,6 +8368,12 @@ function updateClusterTxByDay(wallet) {
             // console.log('clusterId', clusterId)
             clusters.shift();
             ClusterTxByDayController.getAllForCluster(clusterId, 'd', 'desc', 1, function(data) {
+                if (!data) {
+                    console.log('Error something went wrong getting data');
+                    deleteFile('clustersTxByDay');
+                    db.multipleDisconnect();
+                    return;
+                }
                 var currentDate = new Date(new Date().setHours(0,0,0,0));
                 var currentDateString = currentDate.getFullYear() + "-" + ("0"+(currentDate.getMonth()+1)).slice(-2) + "-" + ("0" + currentDate.getDate()).slice(-2);
 

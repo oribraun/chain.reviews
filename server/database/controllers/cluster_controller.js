@@ -617,6 +617,9 @@ function getAllClustersWithAddressAndTxsCount(id, limit, offset,  cb) {
                         //     resolve();
                         // })
                         AddressController.getClusterDetails(addresses, function (details) {
+                            if (!details) {
+                                return cb('no details for cluster')
+                            }
                             clusters[i].tx_count = details.count;
                             clusters[i].tx_sent = details.sent;
                             clusters[i].tx_received = details.received;
