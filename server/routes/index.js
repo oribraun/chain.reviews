@@ -22,7 +22,7 @@ app.get('/', function(req, res) {
         if(!wallets.length) {
             returnData();
         } else {
-            markets_helper.getStatsCoincodex(wallets[0], fullUrl, function (stats) {
+            markets_helper.getStatsCoincodexPromise(wallets[0], fullUrl, function (stats) {
                 array.push(stats);
                 wallets.shift();
                 addingWalletsStats(wallets);
