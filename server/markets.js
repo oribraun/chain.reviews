@@ -93,7 +93,7 @@ const obj = {
             let symbol = settings[wallet].symbol.toUpperCase();
             coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
                 const market =  {summary: {"24hVolume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
-                obj.market_summary = market;
+                obj.market_summary = market.summary;
                 resolve()
             })
         });
