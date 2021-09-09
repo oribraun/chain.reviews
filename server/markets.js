@@ -42,8 +42,6 @@ const obj = {
     },
     getStatsCoincodex: (wallet, fullUrl, cb) => {
         db.setCurrentConnection(wallet);
-        @TODO
-            //make sure db connection is the right one
         let symbol = settings[wallet].symbol.toUpperCase();
         coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
             // console.log('market_cap', market_cap);
