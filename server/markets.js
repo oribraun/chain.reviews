@@ -81,6 +81,7 @@ const obj = {
     },
     getStatsCoincodexPromise: (wallet, fullUrl, cb) => {
         db.setCurrentConnection(wallet);
+        console.log('db.getCurrentConnection()', db.getCurrentConnection())
         var obj = {
             wallet: helpers.ucfirst(wallet),
             symbol: settings[wallet].symbol,
