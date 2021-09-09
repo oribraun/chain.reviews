@@ -14,17 +14,19 @@ router.get('/getUsersStats', (req, res) => {
     var wallets = markets_helper.getAllWallets();
     var fullUrl = req.protocol + '://' + req.get('host');
 
-    function addingWalletsStats(wallets) {
-        if(!wallets.length) {
-            returnData();
-        } else {
-            markets_helper.getStatsCoincodexPromise(wallets[0], fullUrl, function (stats) {
+    var promises = [];
+    for (var i in wallets) {
+        var promise = new Promise((resolve, reject) => {
+            markets_helper.getStatsCoincodexPromise(wallets[i], fullUrl, function (stats) {
                 array.push(stats);
-                wallets.shift();
-                addingWalletsStats(wallets);
-            })
-        }
+                resolve();
+            });
+        });
+        promises.push(promise)
     }
+    Promise.all(promises).then((values) => {
+        returnData();
+    })
     function returnData() {
         response.data = array;
         res.header('Content-Type', 'application/json');
