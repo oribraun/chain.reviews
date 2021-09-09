@@ -94,6 +94,7 @@ const obj = {
             coincodexMarketCap.getCoinFromCache(symbol).then((market_cap) => {
                 const market =  {summary: {"24hVolume": {BTC: market_cap.volume_24_usd}, usd_price: {BTC:  market_cap.last_price_usd}}}
                 obj.market_summary = market;
+                resolve()
             })
         });
         var promise2 = new Promise((resolve, reject) => {
@@ -104,6 +105,7 @@ const obj = {
                     markets_stats = helpers.calcMarketData(markets, {}, wallet);
                 }
                 obj.markets_stats = markets_stats;
+                resolve()
             })
         });
         var promise3 = new Promise((resolve, reject) => {
@@ -112,6 +114,7 @@ const obj = {
                     stats = {users_tx_count_24_hours: 0}
                 }
                 obj.stats = stats;
+                resolve()
             })
         });
         Promise.all([promise1, promise2, promise3]).then((values) => {
