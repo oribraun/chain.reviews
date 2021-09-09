@@ -32,8 +32,6 @@ router.get('/getUsersStats', (req, res) => {
         res.header('Content-Type', 'application/json');
         res.send(JSON.stringify(response, null, 2));
     }
-
-    addingWalletsStats(wallets);
 });
 
 module.exports = router;
