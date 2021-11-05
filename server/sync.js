@@ -2103,6 +2103,7 @@ if (wallet) {
                             currentBlockIndex = latestTx[0].blockindex + 1;
                             startedFromBlock = latestTx[0].blockindex;
                             lastOrder = latestTx[0].order;
+                            console.log('lastOrder got from db', lastOrder);
                         } else {
                             // console.log('no blocks found - please run save_tx_vin_vout_and_addresses first');
                             // deleteFile();
@@ -2139,7 +2140,7 @@ if (wallet) {
                                         if(!gettingNextInProgress) {
                                             function getNextForAllClusters() {
                                                 getNext().then(function (tx) {
-                                                    console.log('lastOrder + countBlocks', lastOrder + countBlocks)
+                                                    console.log('lastOrder sent to tx', lastOrder + countBlocks)
                                                     cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
                                                     clusterQ.shift();
                                                     countBlocks++;
@@ -2200,7 +2201,7 @@ if (wallet) {
                                                     if(!gettingNextInProgress) {
                                                         function getNextForAllClusters() {
                                                             getNext().then(function (tx) {
-                                                                console.log('lastOrder + countBlocks', lastOrder + countBlocks)
+                                                                console.log('lastOrder sent to tx 2', lastOrder + countBlocks)
                                                                 cluster.workers[clusterQ[0]].send({currentBlock: tx, order: lastOrder + countBlocks});
                                                                 clusterQ.shift();
                                                                 countBlocks++;
@@ -2279,6 +2280,7 @@ if (wallet) {
                     var tx = currentBlock;
                     if(tx) {
                         tx.order = order + 1;
+                        console.log('lastOrder inside tx', lastOrder);
                         globalCheckVinVoutCluster(tx);
                     } else {
                         cluster.worker.send({finished: true});
