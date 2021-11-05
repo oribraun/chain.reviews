@@ -825,7 +825,7 @@ function getUsersTxsCount24Hours(cb) {
     // });
     TxVinVout[db.getCurrentConnection()].aggregate([
         {$sort: {"blockindex": -1}},
-        {$limit: 100000},
+        // {$limit: 100000},
         {"$match" : {timestamp:{$gte: Date.now() / 1000 - 24*60*60}}},
         {"$match" : {type: {$eq: tx_types.NORMAL}}},
         {$group: {_id: 0, count: {$sum: 1}}}
