@@ -2173,7 +2173,7 @@ if (wallet) {
                                                     }
                                                     if (duplicateOrder) {
                                                         console.log('\n*******************************************************************');
-                                                        console.log('****** duplicate key error collection - ' + lastOrder + currentBlocks + '******')
+                                                        console.log('****** duplicate key error collection - ' + lastOrder + ', ' + currentBlocks + '******')
                                                         console.log('*******************************************************************\n');
                                                         deleteFile();
                                                         db.multipleDisconnect();
