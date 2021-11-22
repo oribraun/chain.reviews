@@ -2280,7 +2280,7 @@ if (wallet) {
                     var tx = currentBlock;
                     if(tx) {
                         tx.order = order + 1;
-                        console.log('lastOrder inside tx', lastOrder);
+                        console.log('lastOrder inside tx', tx.order);
                         globalCheckVinVoutCluster(tx);
                     } else {
                         cluster.worker.send({finished: true});
